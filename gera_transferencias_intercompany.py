@@ -27,7 +27,7 @@ import pymysql
 LUMI = dict(host=os.environ.get("LUMI_HOST", "10.17.0.100"),
             port=int(os.environ.get("LUMI_PORT", "3306")),
             user=os.environ.get("LUMI_USER", "sac"),
-            password=os.environ.get("LUMI_PW", "2713"),
+            password=os.environ["LUMI_PW"],   # obrigatório — exporte em ~/.controllsv.env
             database="SAC", connect_timeout=10, charset="utf8mb4")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dados_fluxo_intercompany")
 CONTA_LOJA = {"0004": "FLUXO", "0006": "LP", "0008": "LP", "0007": "TARES", "0009": "PEGUI", "0010": "RETA"}

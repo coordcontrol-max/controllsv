@@ -12,7 +12,7 @@ import os, json, glob, pymysql
 from collections import defaultdict
 
 LUMI = dict(host="10.17.0.100", port=3306, user="sac",
-            password=os.environ.get("LUMI_PW", "2713"), db="SAC",
+            password=os.environ["LUMI_PW"], db="SAC",
             connect_timeout=8, charset="utf8mb4")
 
 # natureza (TABMOVTO.DESCRICAO) -> linha amigável da DFC

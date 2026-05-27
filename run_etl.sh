@@ -35,6 +35,10 @@ export PATH="/root/.nvm/versions/node/v24.15.0/bin:/usr/local/sbin:/usr/local/bi
 # (oracledb.init_oracle_client carrega libclntsh.so + libnnz.so)
 export LD_LIBRARY_PATH="/opt/oracle/instantclient_23_5:${LD_LIBRARY_PATH:-}"
 
+# Credenciais sensíveis (LUMI_PW, etc.) — sourceadas de fora do git.
+# Crie ~/.controllsv.env com: export LUMI_PW=...; export ORA_PWD=...
+[ -f /root/.controllsv.env ] && source /root/.controllsv.env
+
 # Limpa logs com mais de 30 dias (mantém o histórico recente)
 find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
 

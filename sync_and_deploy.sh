@@ -11,6 +11,9 @@
 set -euo pipefail
 cd /root/projeto_dre
 
+# Credenciais (não usadas direto aqui, mas se houver hook pós-deploy)
+[ -f /root/.controllsv.env ] && source /root/.controllsv.env
+
 mkdir -p logs
 TS=$(date -Iseconds)
 

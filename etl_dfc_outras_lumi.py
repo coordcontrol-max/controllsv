@@ -32,7 +32,7 @@ import pymysql
 LUMI = dict(host=os.environ.get("LUMI_HOST", "10.17.0.100"),
             port=int(os.environ.get("LUMI_PORT", "3306")),
             user=os.environ.get("LUMI_USER", "sac"),
-            password=os.environ.get("LUMI_PW", "2713"),
+            password=os.environ["LUMI_PW"],   # obrigatório — exporte em ~/.controllsv.env
             database="SAC", connect_timeout=10, charset="utf8mb4")
 
 # Diretório canônico do segmento 'outras' (mesmo que o dashboard/upload consomem).
