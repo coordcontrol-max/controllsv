@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Fatura Equatorial Goiás · ABR/2026</title>
+<style>
+  :root {
+    --green: #2F855A;
+    --green-soft: #E6F4EA;
+    --green-dark: #1A3A2F;
+    --ink: #2D3748;
+    --line: #E2E8F0;
+    --red: #C0392B;
+    --bg: #F7FAFC;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); margin: 0; padding: 24px;
+    line-height: 1.45;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+    color: #fff; padding: 24px 28px; border-radius: 12px 12px 0 0;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+  }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: 0.2px; }
+  header .ref {
+    background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 999px;
+    font-weight: 600; font-size: 13px;
+  }
+  .totalbar {
+    background: #fff; padding: 18px 28px; border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  }
+  .totalbar .kpi { display: flex; flex-direction: column; gap: 2px; }
+  .totalbar .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #718096; }
+  .totalbar .val { font-size: 20px; font-weight: 700; color: var(--green-dark); }
+  .totalbar .val.red { color: var(--red); }
+
+  main { background: #fff; padding: 28px; border-radius: 0 0 12px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  section { margin-bottom: 28px; }
+  section h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
+    color: #fff; background: var(--green); padding: 8px 14px;
+    border-radius: 6px; margin: 0 0 12px 0;
+  }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+    background: #fff;
+  }
+  table.kv td { padding: 9px 14px; border-bottom: 1px solid var(--line); }
+  table.kv td:first-child {
+    background: var(--green-soft); font-weight: 600;
+    width: 35%; color: var(--green-dark);
+  }
+  table.grid th, table.grid td {
+    padding: 9px 12px; border: 1px solid var(--line); text-align: center;
+  }
+  table.grid th {
+    background: var(--green); color: #fff; font-weight: 600;
+    text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;
+  }
+  table.grid td.label { text-align: left; font-weight: 600; background: var(--green-soft); color: var(--green-dark); }
+  table.grid tr.total td { background: #FFFBEB; font-weight: 700; }
+  table.grid tr.total td:last-child { color: var(--red); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) {
+    .totalbar { grid-template-columns: 1fr 1fr; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  footer { text-align: center; color: #A0AEC0; font-size: 12px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div style="font-size:11px;opacity:.85;letter-spacing:1px;text-transform:uppercase;">Equatorial Goiás · Distribuidora de Energia</div>
+      <h1>Fatura de Energia Elétrica</h1>
+    </div>
+    <div class="ref">REF · ABR/2026</div>
+  </header>
+
+  <div class="totalbar">
+    <div class="kpi"><span class="lbl">Total a pagar</span><span class="val red">R$ 1.348,27</span></div>
+    <div class="kpi"><span class="lbl">Vencimento</span><span class="val">12/05/2026</span></div>
+    <div class="kpi"><span class="lbl">Consumo</span><span class="val">1.144 kWh</span></div>
+    <div class="kpi"><span class="lbl">Período</span><span class="val">30 dias</span></div>
+  </div>
+
+  <main>
+
+    <section>
+      <h2>Identificação</h2>
+      <div class="grid2">
+        <table class="kv">
+          <tr><td>Cliente</td><td>ANTONIO BATISTA LIMA SILVA</td></tr>
+          <tr><td>CPF</td><td>821.775.621-04</td></tr>
+          <tr><td>Endereço</td><td>Rua Sem Nome, Q. 27, L. 18, S/N · Jardim Oriente · Valparaíso de Goiás · GO</td></tr>
+          <tr><td>Unidade Consumidora</td><td><strong>2.960.249.012-88</strong></td></tr>
+        </table>
+        <table class="kv">
+          <tr><td>Classificação</td><td>B1 Residencial — Normal Convencional</td></tr>
+          <tr><td>Tipo de fornecimento</td><td>Trifásico</td></tr>
+          <tr><td>Tensão nominal</td><td>220 V (mín 200,2 V · máx 231,0 V)</td></tr>
+          <tr><td>Distribuidora</td><td>Equatorial Goiás · CNPJ 01.543.032/0001-04</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Período &amp; Leitura</h2>
+      <table class="grid">
+        <tr>
+          <th>Leitura anterior</th>
+          <th>Leitura atual</th>
+          <th>Nº de dias</th>
+          <th>Próxima leitura</th>
+          <th>Emissão NFe</th>
+        </tr>
+        <tr>
+          <td>30/03/2026</td>
+          <td>29/04/2026</td>
+          <td><strong>30</strong></td>
+          <td>29/05/2026</td>
+          <td>29/04/2026 11:46</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Consumo &amp; Medidor</h2>
+      <table class="grid">
+        <tr>
+          <th>Medidor</th>
+          <th>Leitura ant.</th>
+          <th>Leitura atual</th>
+          <th>Constante</th>
+          <th>Consumo</th>
+          <th>Preço unit. c/ trib.</th>
+          <th>Tarifa</th>
+          <th>kWh/dia</th>
+        </tr>
+        <tr>
+          <td>13985177-1</td>
+          <td class="num">2.288</td>
+          <td class="num">3.432</td>
+          <td class="num">1,000000</td>
+          <td class="num"><strong>1.144 kWh</strong></td>
+          <td class="num">R$ 1,125925</td>
+          <td class="num">R$ 0,891810</td>
+          <td class="num">38,13</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Composição da Fatura</h2>
+      <table class="grid">
+        <tr>
+          <th style="width:60%;">Item</th>
+          <th>Quantidade</th>
+          <th>Valor (R$)</th>
+        </tr>
+        <tr>
+          <td class="label">Fornecimento — Consumo kWh</td>
+          <td class="num">1.144 kWh</td>
+          <td class="num">1.288,06</td>
+        </tr>
+        <tr>
+          <td class="label">Contrib. Ilum. Pública (CIP)</td>
+          <td class="num">—</td>
+          <td class="num">60,21</td>
+        </tr>
+        <tr>
+          <td class="label">Multas e juros (mês atual)</td>
+          <td class="num">—</td>
+          <td class="num">0,00</td>
+        </tr>
+        <tr class="total">
+          <td class="label">TOTAL A PAGAR</td>
+          <td></td>
+          <td class="num">R$ 1.348,27</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Tributos</h2>
+      <table class="grid">
+        <tr>
+          <th>Tributo</th>
+          <th>Base (R$)</th>
+          <th>Alíquota</th>
+          <th>Valor (R$)</th>
+        </tr>
+        <tr>
+          <td class="label">COFINS</td>
+          <td class="num">1.043,33</td>
+          <td class="num">1,8220%</td>
+          <td class="num">19,01</td>
+        </tr>
+        <tr>
+          <td class="label">ICMS</td>
+          <td class="num">1.288,06</td>
+          <td class="num">19,0000%</td>
+          <td class="num">244,73</td>
+        </tr>
+        <tr>
+          <td class="label">PIS/PASEP</td>
+          <td class="num">1.043,33</td>
+          <td class="num">0,3918%</td>
+          <td class="num">4,09</td>
+        </tr>
+        <tr class="total">
+          <td class="label">Total Tributos</td>
+          <td></td>
+          <td></td>
+          <td class="num">267,83</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Histórico de Consumo</h2>
+      <table class="grid">
+        <tr>
+          <th>Mês/Ano</th>
+          <th>Consumo (kWh)</th>
+          <th>Dias</th>
+          <th>Tipo</th>
+        </tr>
+        <tr><td class="label">ABR/26</td><td class="num"><strong>1.144</strong></td><td>30</td><td>LIDA</td></tr>
+        <tr><td class="label">MAR/26</td><td class="num">1.193</td><td>31</td><td>LIDA</td></tr>
+        <tr><td class="label">FEV/26</td><td class="num">0</td><td>29</td><td>—</td></tr>
+        <tr><td class="label">JAN/26</td><td class="num">0</td><td>30</td><td>—</td></tr>
+        <tr><td class="label">DEZ/25</td><td class="num">0</td><td>31</td><td>—</td></tr>
+        <tr><td class="label">NOV/25</td><td class="num">0</td><td>31</td><td>—</td></tr>
+        <tr><td class="label">OUT/25</td><td class="num">0</td><td>32</td><td>—</td></tr>
+        <tr><td class="label">SET/25</td><td class="num">0</td><td>30</td><td>—</td></tr>
+        <tr><td class="label">AGO/25</td><td class="num">0</td><td>30</td><td>—</td></tr>
+        <tr><td class="label">JUL/25</td><td class="num">0</td><td>31</td><td>—</td></tr>
+        <tr><td class="label">JUN/25</td><td class="num">0</td><td>29</td><td>—</td></tr>
+        <tr><td class="label">MAI/25</td><td class="num">0</td><td>31</td><td>—</td></tr>
+        <tr><td class="label">ABR/25</td><td class="num">0</td><td>31</td><td>—</td></tr>
+        <tr class="total"><td class="label">Média</td><td class="num">179,77</td><td></td><td></td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Nota Fiscal Eletrônica</h2>
+      <table class="kv">
+        <tr><td>Nº NFe</td><td>189059964 · Série 0</td></tr>
+        <tr><td>CFOP</td><td>5258 — Venda de energia elétrica para não contribuinte</td></tr>
+        <tr><td>Chave de acesso</td><td style="font-family:monospace;font-size:12px;">5226 0401 5430 3200 0104 6600 0189 0599 6420 0057 2762</td></tr>
+        <tr><td>Protocolo de autorização</td><td>3522600014083717 · 29/04/2026 13:20:48</td></tr>
+      </table>
+    </section>
+
+  </main>
+
+  <footer>
+    Modelo gerado a partir da fatura UC 2.960.249.012-88 · Equatorial Goiás
+  </footer>
+</div>
+</body>
+</html>

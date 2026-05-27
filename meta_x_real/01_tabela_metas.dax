@@ -1,0 +1,45 @@
+// =====================================================================
+// Tabela:  Metas AV%
+// Como usar: Power BI Desktop > guia "Modelagem" > "Nova tabela"
+//            Cole TODO o conteúdo abaixo (sem este cabeçalho).
+// =====================================================================
+
+'Metas AV%' =
+DATATABLE(
+    "AGRUPAMENTO",   STRING,
+    "Meta AV%",      DOUBLE,
+    "Ordem",         INTEGER,
+    "Tipo",          STRING,
+    {
+        { "Venda Bruta",                          1.0000,   1, "Receita"   },
+        { "Mercadoria para Revenda",             -0.7930,   2, "Custo"     },
+        { "Embalagens",                          -0.0020,   3, "Custo"     },
+        { "Margem C/ Acordos Lançados",           0.2000,   4, "Margem"    },
+        { "Verba Bonificação",                    0.0200,   5, "Receita"   },
+        { "Margem S/ Acordos",                    0.2050,   6, "Total"     },
+        { "Receitas Comerciais",                  0.0300,   7, "Receita"   },
+        { "Margem C/ Acordos",                    0.2350,   8, "Total"     },
+        { "Quebra Contábil",                     -0.0160,   9, "Custo"     },
+        { "Margem Operacional",                   0.2190,  10, "Total"     },
+        { "Despesas c/ Pessoal",                 -0.1200,  11, "Despesa"   },
+        { "Serviços Públicos",                   -0.0140,  12, "Despesa"   },
+        { "Manutenção do Imóvel",                -0.0050,  13, "Despesa"   },
+        { "Material de Expediente",              -0.0030,  14, "Despesa"   },
+        { "Despesas com Vendas",                 -0.0100,  15, "Despesa"   },
+        { "Serviços Terceirizados",              -0.0040,  16, "Despesa"   },
+        { "Despesas com Informática",            -0.0030,  17, "Despesa"   },
+        { "Despesas Tributárias",                -0.0010,  18, "Despesa"   },
+        { "Aluguéis",                            -0.0100,  19, "Despesa"   },
+        { "Despesas Jurídicas",                  -0.0030,  20, "Despesa"   },
+        { "Manutenção de Veículos",              -0.0020,  21, "Despesa"   },
+        { "Manutenção de Equipamentos",          -0.0040,  22, "Despesa"   },
+        { "Despesas Gerais",                     -0.0010,  23, "Despesa"   },
+        { "Publicidade e Propaganda",            -0.0100,  24, "Despesa"   },
+        { "Receitas Financeiras",                 0.0010,  25, "Receita"   },
+        { "Despesas Financeiras",                -0.0050,  26, "Despesa"   },
+        { "IRPJ/CSLL",                           -0.0100,  27, "Despesa"   },
+        { "EBITDA",                               0.0290,  28, "Total"     },
+        { "LAIR",                                 0.0250,  29, "Total"     },
+        { "Lucro Líquido",                       0.0150,  30, "Total"     }
+    }
+)

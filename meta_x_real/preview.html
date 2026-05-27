@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>META x REAL — Preview</title>
+<style>
+  body { background:#f4f6f9; padding:24px; margin:0; }
+  .page-frame { max-width:1400px; margin:0 auto; }
+  .page-head {
+    background:linear-gradient(90deg, #0d2b1d 0%, #1a3a2f 100%);
+    color:#fff; padding:14px 22px; border-radius:8px 8px 0 0;
+    display:flex; align-items:center; gap:16px;
+    font-family:'Segoe UI', Arial, sans-serif;
+  }
+  .page-head .dot { width:8px; height:8px; border-radius:50%; background:#ffd54a; }
+  .page-head .title { font-size:16px; font-weight:700; letter-spacing:.02em; }
+  .page-head .tab-active {
+    background:#000; color:#fff; padding:6px 14px; border-radius:4px;
+    margin-left:auto; font-size:12px; font-weight:600;
+  }
+  .frame { background:#fff; padding:20px 24px; border-radius:0 0 8px 8px; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+  .slicers {
+    display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;
+    font-family:'Segoe UI', Arial, sans-serif;
+  }
+  .sl {
+    background:#fff; border:1px solid #d4dbe2; border-radius:4px;
+    padding:6px 12px; display:flex; flex-direction:column; min-width:90px;
+  }
+  .sl .lbl { font-size:9px; color:#1a3a2f; font-weight:700; letter-spacing:.05em; }
+  .sl .val { font-size:12px; color:#222; }
+  .mxr { font-family:'Segoe UI', Arial, sans-serif; width:100%; color:#222; }
+  .mxr table { width:100%; border-collapse:collapse; font-size:12px; }
+  .mxr thead th {
+    background:#1a3a2f; color:#fff; padding:8px 8px;
+    text-align:left; font-weight:600; font-size:10px;
+    letter-spacing:.04em; text-transform:uppercase;
+  }
+  .mxr thead th.num { text-align:right; }
+  .mxr thead th.sep, .mxr tbody td.sep { border-left:2px solid #d8dde2; }
+  .mxr tbody td { padding:6px 8px; border-bottom:1px solid #ececec; font-variant-numeric: tabular-nums; }
+  .mxr tbody td.num { text-align:right; }
+  .mxr tbody tr:hover { background:#f7f9fb; }
+  .mxr tr.tot { background:#FFF2A8; font-weight:700; }
+  .mxr tr.tot:hover { background:#FFE988; }
+  .mxr tr.tot td { border-bottom:1px solid #d4b923; }
+  .pos { color:#1e7a4a; font-weight:600; }
+  .neg { color:#c0392b; font-weight:600; }
+  .muted { color:#999; }
+  .bar-track {
+    position:relative; display:inline-block; width:100px; height:10px;
+    background:#eee; border-radius:5px; overflow:hidden; vertical-align:middle;
+  }
+  .bar-fill { position:absolute; top:0; height:100%; }
+  .bar-zero { position:absolute; top:-2px; left:50%; width:1px; height:14px; background:#888; }
+  h2 { margin:0 0 6px 0; color:#1a3a2f; font-size:15px; font-weight:700; letter-spacing:.02em; }
+  .sub { color:#666; font-size:11px; margin-bottom:12px; }
+  .section { margin-top:24px; }
+  .rank { width:100%; border-collapse:collapse; }
+  .rank td { padding:3px 6px; border-bottom:1px solid #f1f1f1; font-size:11px; vertical-align:middle; }
+  .rank td.lbl { width:28%; }
+  .rank td.val { width:14%; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+  .rank td.bar { width:58%; }
+  .rank .bartrack { position:relative; height:14px; background:#f4f4f4; border-radius:3px; }
+  .rank .zero { position:absolute; top:-2px; left:50%; width:1px; height:18px; background:#888; }
+  .rank .barfill { position:absolute; top:0; height:100%; border-radius:2px; }
+  .rank .pos { background:#1e7a4a; }
+  .rank .neg { background:#c0392b; }
+</style>
+</head>
+<body>
+<div class="page-frame">
+  <div class="page-head">
+    <div class="dot"></div>
+    <div class="title">Dashboard Executivo • META x REAL</div>
+    <div class="tab-active">Meta e Real</div>
+  </div>
+  <div class="frame">
+    
+<div class='slicers'>
+  <div class='sl'><span class='lbl'>ANO</span><span class='val'>2026 ▾</span></div>
+  <div class='sl'><span class='lbl'>MÊS</span><span class='val'>Todos ▾</span></div>
+  <div class='sl'><span class='lbl'>LOJA</span><span class='val'>Todas ▾</span></div>
+  <div class='sl'><span class='lbl'>EMPRESA</span><span class='val'>Todas ▾</span></div>
+</div>
+
+    <div class="mxr">
+      <h2>Comparativo META x REAL</h2>
+      <div class="sub">Análise vertical por agrupamento • Meta R$ = Venda Bruta Realizada (R$ 205,68 M) × Meta AV% • Totais em amarelo</div>
+      <table>
+        <thead><tr>
+          <th>Agrupamento</th>
+          <th class="num">Real R$</th>
+          <th class="num">Meta R$</th>
+          <th class="num">Δ R$</th>
+          <th class="num sep">Real AV%</th>
+          <th class="num">Meta AV%</th>
+          <th class="num">Δ p.p.</th>
+          <th class="num" style="width:120px;">Comparativo</th>
+        </tr></thead>
+        <tbody>
+<tr class=''><td>Venda Bruta</td><td class='num'>R$ 205,68 M</td><td class='num'>R$ 205,68 M</td><td class='num pos'>+R$ 0,00 M</td><td class='num sep'>100,00%</td><td class='num'>100,00%</td><td class='num pos'>+0,00 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='left:50%;background:#1e7a4a;width:0px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Mercadoria para Revenda</td><td class='num'>-R$ 170,36 M</td><td class='num'>-R$ 163,11 M</td><td class='num neg'>-R$ 7,25 M</td><td class='num sep'>-82,83%</td><td class='num'>-79,30%</td><td class='num neg'>-3,53 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:28px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Embalagens</td><td class='num'>-R$ 0,43 M</td><td class='num'>-R$ 0,41 M</td><td class='num neg'>-R$ 0,02 M</td><td class='num sep'>-0,21%</td><td class='num'>-0,20%</td><td class='num neg'>-0,01 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:0px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Margem C/ Acordos Lançados</td><td class='num'>R$ 38,58 M</td><td class='num'>R$ 41,14 M</td><td class='num neg'>-R$ 2,56 M</td><td class='num sep'>18,76%</td><td class='num'>20,00%</td><td class='num neg'>-1,24 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:10px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Verba Bonificação</td><td class='num'>R$ 2,91 M</td><td class='num'>R$ 4,11 M</td><td class='num neg'>-R$ 1,21 M</td><td class='num sep'>1,41%</td><td class='num'>2,00%</td><td class='num neg'>-0,59 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:5px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class='tot'><td>Margem S/ Acordos</td><td class='num'>R$ 34,89 M</td><td class='num'>R$ 42,16 M</td><td class='num neg'>-R$ 7,27 M</td><td class='num sep'>16,97%</td><td class='num'>20,50%</td><td class='num neg'>-3,53 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:28px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Receitas Comerciais</td><td class='num'>R$ 10,02 M</td><td class='num'>R$ 6,17 M</td><td class='num pos'>+R$ 3,85 M</td><td class='num sep'>4,87%</td><td class='num'>3,00%</td><td class='num pos'>+1,87 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='left:50%;background:#1e7a4a;width:15px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class='tot'><td>Margem C/ Acordos</td><td class='num'>R$ 44,92 M</td><td class='num'>R$ 48,34 M</td><td class='num neg'>-R$ 3,42 M</td><td class='num sep'>21,84%</td><td class='num'>23,50%</td><td class='num neg'>-1,66 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:13px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Quebra Contábil</td><td class='num'>-R$ 3,70 M</td><td class='num'>-R$ 3,29 M</td><td class='num neg'>-R$ 0,41 M</td><td class='num sep'>-1,80%</td><td class='num'>-1,60%</td><td class='num neg'>-0,20 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:2px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class='tot'><td>Margem Operacional</td><td class='num'>R$ 41,22 M</td><td class='num'>R$ 45,04 M</td><td class='num neg'>-R$ 3,83 M</td><td class='num sep'>20,04%</td><td class='num'>21,90%</td><td class='num neg'>-1,86 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:15px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Despesas c/ Pessoal</td><td class='num'>-R$ 24,61 M</td><td class='num'>-R$ 24,68 M</td><td class='num pos'>+R$ 0,07 M</td><td class='num sep'>-11,97%</td><td class='num'>-12,00%</td><td class='num pos'>+0,03 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='left:50%;background:#1e7a4a;width:0px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Serviços Públicos</td><td class='num'>-R$ 4,16 M</td><td class='num'>-R$ 2,88 M</td><td class='num neg'>-R$ 1,28 M</td><td class='num sep'>-2,02%</td><td class='num'>-1,40%</td><td class='num neg'>-0,62 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:5px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Manutenção do Imóvel</td><td class='num'>-R$ 0,28 M</td><td class='num'>-R$ 1,03 M</td><td class='num pos'>+R$ 0,75 M</td><td class='num sep'>-0,13%</td><td class='num'>-0,50%</td><td class='num pos'>+0,37 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='left:50%;background:#1e7a4a;width:3px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Material de Expediente</td><td class='num'>-R$ 1,68 M</td><td class='num'>-R$ 0,62 M</td><td class='num neg'>-R$ 1,06 M</td><td class='num sep'>-0,82%</td><td class='num'>-0,30%</td><td class='num neg'>-0,52 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:4px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Despesas com Vendas</td><td class='num'>-R$ 2,40 M</td><td class='num'>-R$ 2,06 M</td><td class='num neg'>-R$ 0,34 M</td><td class='num sep'>-1,17%</td><td class='num'>-1,00%</td><td class='num neg'>-0,17 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:1px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Serviços Terceirizados</td><td class='num'>-R$ 1,76 M</td><td class='num'>-R$ 0,82 M</td><td class='num neg'>-R$ 0,94 M</td><td class='num sep'>-0,86%</td><td class='num'>-0,40%</td><td class='num neg'>-0,46 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:4px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Despesas com Informática</td><td class='num'>-R$ 1,05 M</td><td class='num'>-R$ 0,62 M</td><td class='num neg'>-R$ 0,43 M</td><td class='num sep'>-0,51%</td><td class='num'>-0,30%</td><td class='num neg'>-0,21 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:2px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Despesas Tributárias</td><td class='num'>-R$ 0,25 M</td><td class='num'>-R$ 0,21 M</td><td class='num neg'>-R$ 0,05 M</td><td class='num sep'>-0,12%</td><td class='num'>-0,10%</td><td class='num neg'>-0,02 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:0px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Aluguéis</td><td class='num'>-R$ 3,26 M</td><td class='num'>-R$ 2,06 M</td><td class='num neg'>-R$ 1,20 M</td><td class='num sep'>-1,58%</td><td class='num'>-1,00%</td><td class='num neg'>-0,58 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:5px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Despesas Jurídicas</td><td class='num'>-R$ 0,84 M</td><td class='num'>-R$ 0,62 M</td><td class='num neg'>-R$ 0,22 M</td><td class='num sep'>-0,41%</td><td class='num'>-0,30%</td><td class='num neg'>-0,11 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:1px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Manutenção de Veículos</td><td class='num'>-R$ 1,15 M</td><td class='num'>-R$ 0,41 M</td><td class='num neg'>-R$ 0,74 M</td><td class='num sep'>-0,56%</td><td class='num'>-0,20%</td><td class='num neg'>-0,36 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:3px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Manutenção de Equipamentos</td><td class='num'>-R$ 0,65 M</td><td class='num'>-R$ 0,82 M</td><td class='num pos'>+R$ 0,18 M</td><td class='num sep'>-0,31%</td><td class='num'>-0,40%</td><td class='num pos'>+0,09 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='left:50%;background:#1e7a4a;width:1px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Despesas Gerais</td><td class='num'>-R$ 0,23 M</td><td class='num'>-R$ 0,21 M</td><td class='num neg'>-R$ 0,03 M</td><td class='num sep'>-0,11%</td><td class='num'>-0,10%</td><td class='num neg'>-0,01 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:0px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Publicidade e Propaganda</td><td class='num'>-R$ 1,39 M</td><td class='num'>-R$ 2,06 M</td><td class='num pos'>+R$ 0,67 M</td><td class='num sep'>-0,67%</td><td class='num'>-1,00%</td><td class='num pos'>+0,33 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='left:50%;background:#1e7a4a;width:3px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Receitas Financeiras</td><td class='num'>R$ 0,09 M</td><td class='num'>R$ 0,21 M</td><td class='num neg'>-R$ 0,12 M</td><td class='num sep'>0,04%</td><td class='num'>0,10%</td><td class='num neg'>-0,06 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:0px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>Despesas Financeiras</td><td class='num'>-R$ 1,08 M</td><td class='num'>-R$ 1,03 M</td><td class='num neg'>-R$ 0,05 M</td><td class='num sep'>-0,52%</td><td class='num'>-0,50%</td><td class='num neg'>-0,02 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:0px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class=''><td>IRPJ/CSLL</td><td class='num'>-R$ 0,36 M</td><td class='num'>-R$ 2,06 M</td><td class='num pos'>+R$ 1,69 M</td><td class='num sep'>-0,18%</td><td class='num'>-1,00%</td><td class='num pos'>+0,82 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='left:50%;background:#1e7a4a;width:7px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class='tot'><td>EBITDA</td><td class='num'>-R$ 2,49 M</td><td class='num'>R$ 5,96 M</td><td class='num neg'>-R$ 8,46 M</td><td class='num sep'>-1,21%</td><td class='num'>2,90%</td><td class='num neg'>-4,11 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:33px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class='tot'><td>LAIR</td><td class='num'>-R$ 3,49 M</td><td class='num'>R$ 5,14 M</td><td class='num neg'>-R$ 8,63 M</td><td class='num sep'>-1,70%</td><td class='num'>2,50%</td><td class='num neg'>-4,20 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:34px;'></span><span class='bar-zero'></span></span></td></tr>
+<tr class='tot'><td>Lucro Líquido</td><td class='num'>-R$ 3,85 M</td><td class='num'>R$ 3,09 M</td><td class='num neg'>-R$ 6,94 M</td><td class='num sep'>-1,87%</td><td class='num'>1,50%</td><td class='num neg'>-3,37 p.p.</td><td class='num'><span class='bar-track'><span class='bar-fill' style='right:50%;background:#c0392b;width:27px;'></span><span class='bar-zero'></span></span></td></tr>
+        </tbody>
+      </table>
+      <div class="section">
+        <h2>Ranking de Impacto (Δ R$ vs Meta)</h2>
+        <div class="sub">Ordenado da maior contribuição positiva à maior contribuição negativa</div>
+        <table class="rank"><tbody>
+<tr><td class='lbl'>Receitas Comerciais</td><td class='val pos'>+R$ 3,85 M</td><td class='bar'><div class='bartrack'><div class='barfill pos' style='left:50%;width:21.87%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>IRPJ/CSLL</td><td class='val pos'>+R$ 1,69 M</td><td class='bar'><div class='bartrack'><div class='barfill pos' style='left:50%;width:9.61%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Manutenção do Imóvel</td><td class='val pos'>+R$ 0,75 M</td><td class='bar'><div class='bartrack'><div class='barfill pos' style='left:50%;width:4.26%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Publicidade e Propaganda</td><td class='val pos'>+R$ 0,67 M</td><td class='bar'><div class='bartrack'><div class='barfill pos' style='left:50%;width:3.80%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Manutenção de Equipamentos</td><td class='val pos'>+R$ 0,18 M</td><td class='bar'><div class='bartrack'><div class='barfill pos' style='left:50%;width:1.00%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Despesas c/ Pessoal</td><td class='val pos'>+R$ 0,07 M</td><td class='bar'><div class='bartrack'><div class='barfill pos' style='left:50%;width:0.39%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Venda Bruta</td><td class='val pos'>+R$ 0,00 M</td><td class='bar'><div class='bartrack'><div class='barfill pos' style='left:50%;width:0.00%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Embalagens</td><td class='val neg'>-R$ 0,02 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:0.12%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Despesas Gerais</td><td class='val neg'>-R$ 0,03 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:0.16%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Despesas Tributárias</td><td class='val neg'>-R$ 0,05 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:0.27%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Despesas Financeiras</td><td class='val neg'>-R$ 0,05 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:0.29%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Receitas Financeiras</td><td class='val neg'>-R$ 0,12 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:0.66%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Despesas Jurídicas</td><td class='val neg'>-R$ 0,22 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:1.25%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Despesas com Vendas</td><td class='val neg'>-R$ 0,34 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:1.95%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Quebra Contábil</td><td class='val neg'>-R$ 0,41 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:2.33%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Despesas com Informática</td><td class='val neg'>-R$ 0,43 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:2.46%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Manutenção de Veículos</td><td class='val neg'>-R$ 0,74 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:4.17%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Serviços Terceirizados</td><td class='val neg'>-R$ 0,94 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:5.35%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Material de Expediente</td><td class='val neg'>-R$ 1,06 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:6.04%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Aluguéis</td><td class='val neg'>-R$ 1,20 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:6.82%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Verba Bonificação</td><td class='val neg'>-R$ 1,21 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:6.84%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Serviços Públicos</td><td class='val neg'>-R$ 1,28 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:7.29%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Margem C/ Acordos Lançados</td><td class='val neg'>-R$ 2,56 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:14.53%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Margem C/ Acordos</td><td class='val neg'>-R$ 3,42 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:19.40%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Margem Operacional</td><td class='val neg'>-R$ 3,83 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:21.74%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Lucro Líquido</td><td class='val neg'>-R$ 6,94 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:39.39%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Mercadoria para Revenda</td><td class='val neg'>-R$ 7,25 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:41.16%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>Margem S/ Acordos</td><td class='val neg'>-R$ 7,27 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:41.27%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>EBITDA</td><td class='val neg'>-R$ 8,46 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:48.01%;'></div><div class='zero'></div></div></td></tr>
+<tr><td class='lbl'>LAIR</td><td class='val neg'>-R$ 8,63 M</td><td class='bar'><div class='bartrack'><div class='barfill neg' style='right:50%;width:49.00%;'></div><div class='zero'></div></div></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

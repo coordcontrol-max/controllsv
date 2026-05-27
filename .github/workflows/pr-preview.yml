@@ -1,0 +1,42 @@
+name: PR Preview Deploy
+
+# Deploya o código do PR num CANAL EFÊMERO do Firebase Hosting
+# (URL única tipo controllsv--pr-42-xxxx.web.app, expira em 7 dias).
+# Os 3 devs podem revisar a UI antes de mergear, sem mexer no canônico.
+#
+# Os dados (dados_*/, dados.json, etc.) NÃO sobem do CI — quem cuida deles é o
+# cron na WSL. Por isso usamos firebase.ci.json (data folders no ignore).
+# Resultado: preview tem o código novo + dados do canônico continuam intactos.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use CI hosting config (ignore data folders)
+        run: cp firebase.ci.json firebase.json
+
+      - name: Deploy to Firebase Hosting preview channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: projeto-686e2
+          target: controllsv
+          channelId: pr-${{ github.event.pull_request.number }}
+          expires: 7d
+          firebaseToolsVersion: latest
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks

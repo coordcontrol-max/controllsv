@@ -1,0 +1,254 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: usuário autenticado E doc em users/{email} com status=ativo.
+    // Fonte única de verdade é a coleção `users/` (gerida pela UI). Não usamos
+    // mais `meta/whitelist` — quem está em users/ com status=ativo entra; quem
+    // está como inativo, ou nem tem doc, é bloqueado aqui na regra.
+    function isAuthorized() {
+      return request.auth != null
+          && request.auth.token.email_verified == true
+          && exists(/databases/$(database)/documents/users/$(request.auth.token.email))
+          && get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.status == 'ativo';
+    }
+
+    // Helper: papel do usuário no doc users/{email}
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role;
+    }
+
+    // Helper: usuário pode gerenciar (criar/editar/excluir) outros usuários
+    function isAdminOrDirector() {
+      return isAuthorized()
+          && userRole() in ['administrador', 'diretoria'];
+    }
+
+    // /meta/whitelist -> obsoleto (não é mais consultado pelas regras nem pela UI).
+    // Mantido bloqueado pra ninguém ler/escrever; pode ser apagado depois.
+    match /meta/whitelist {
+      allow read, write: if false;
+    }
+    // /meta/permissoes -> matriz de níveis de acesso × relatórios.
+    //   Leitura: qualquer usuário autorizado (UI precisa pra filtrar menu).
+    //   Escrita: apenas administrador/diretoria (gerência via tela de Configurações).
+    match /meta/permissoes {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+    // /meta/lojas, /meta/grupos, /meta/agrupamentos, /meta/mapeamentoKPI ->
+    // cadastros editáveis em Configurações > Dimensões. Substituem o Excel
+    // 01 - Classificação. Mesma regra: leitura geral, escrita por admin/diretoria.
+    match /meta/lojas          { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    match /meta/grupos         { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    match /meta/agrupamentos   { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    match /meta/mapeamentoKPI  { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    match /meta/linhas         { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    // Cadastros do Fluxo de Caixa
+    match /meta/bancos               { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    match /meta/linhasFluxo          { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    match /meta/gruposFluxo          { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    match /meta/agrupamentosFluxo    { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    match /meta/mapeamentoKPIFluxo   { allow read: if isAuthorized(); allow write: if isAdminOrDirector(); }
+    // Demais docs em /meta (ex: dimensoes) podem ser lidos por usuário autorizado.
+    match /meta/{doc} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+
+    // /meses/{ano-mes} -> dados pré-agregados (somente leitura)
+    match /meses/{doc} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+
+    // /drePB/{ano-mes} -> snapshot do export do PowerBI (aba "VALORES RATEADOS")
+    // usado pela tela "Comparativo DRE". Upload via UI a cada conferência.
+    //  - Leitura: usuário autorizado
+    //  - Escrita: admin/diretoria (só quem cuida da consolidação sobe)
+    match /drePB/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+
+    // /drePBDespesas/{ano-mes} -> snapshot da aba "DESPESAS CLASS" (título a
+    // título). Alimenta o Detalhamento da view "DRE PowerBI (Excel)". Buckets
+    // grandes são quebrados na sub-coleção chunks/ (igual rawOracle).
+    match /drePBDespesas/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+    match /drePBDespesas/{id}/chunks/{n} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+
+    // /metasDRE/{ano} -> metas em % por linha × mês. Upload manual via UI.
+    //  - Leitura: usuário autorizado
+    //  - Escrita: admin/diretoria
+    match /metasDRE/{ano} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+
+    // /users/{email} -> perfis + níveis de acesso
+    //  - Qualquer usuário autorizado pode LER (a UI precisa saber o próprio role/lojas).
+    //  - Apenas administrador/diretoria pode CRIAR/EDITAR/EXCLUIR.
+    match /users/{email} {
+      allow read:   if isAuthorized();
+      allow create: if isAdminOrDirector();
+      allow update: if isAdminOrDirector();
+      allow delete: if isAdminOrDirector();
+    }
+
+    // /rateios/{id} -> regras de rateio cadastradas pela tela "Rateios"
+    //  - Leitura: qualquer usuário autorizado (engine de execução vai precisar)
+    //  - Escrita: apenas admin/diretoria cadastra/altera regras
+    match /rateios/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+
+    // /lancamentosManuais/{id} -> provisões e ajustes lançados na tela
+    // "Lançamentos Manuais" da aba Rateios. Engine trata como fato bruto.
+    //  - Leitura: usuário autorizado (engine precisa)
+    //  - Escrita: apenas admin/diretoria
+    match /lancamentosManuais/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+
+    // /rawOracle/{id} -> dados brutos do Consinco (gravados pelo agente local
+    // via serviceAccount). Browser só lê; Cloud Function ou agente escreve.
+    //  - Leitura: usuário autorizado (engine vai consumir esses dados)
+    //  - Escrita: ninguém via browser (vem do serviceAccount, que bypassa rules)
+    match /rawOracle/{id} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+    // Sub-collection chunks/ (quando uma query passa de 1MB)
+    match /rawOracle/{id}/chunks/{n} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+
+    // /fatosClassificados/{ano-mes} -> resultado da classificação
+    // (rawOracle → ANO,MES,NROEMPRESA,LINHA,VALOR). Engine de rateio lê isso.
+    //  - Leitura: usuário autorizado
+    //  - Escrita: só pelo agente (serviceAccount)
+    match /fatosClassificados/{id} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+
+    // /despesasDetalhadas/{ano-mes} -> drill-down das despesas
+    // (NROTITULO, FORNECEDOR, DTA_CONTABIL, OBSERVACAO).
+    //  - Leitura: usuário autorizado (UI vai mostrar no clique)
+    //  - Escrita: só pelo agente
+    match /despesasDetalhadas/{id} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+    match /despesasDetalhadas/{id}/chunks/{n} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+
+    // /provisoesDetalhadas/{ano-mes} -> drill-down das provisões rateadas
+    // (13º salário etc): {loja, linha, valor, obs} por loja. Escrito pelo engine.
+    //  - Leitura: usuário autorizado (UI mostra no detalhamento)
+    //  - Escrita: só pelo agente (serviceAccount)
+    match /provisoesDetalhadas/{id} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+
+    // ─── FLUXO DE CAIXA ────────────────────────────────────────────────
+    // /saldosBancarios/{ano-mes} -> saldo inicial de cada banco no início
+    // do mês (input do usuário pra começar o cálculo de saldo acumulado).
+    //  - Leitura: usuário autorizado
+    //  - Escrita: admin/diretoria (cadastro manual)
+    match /saldosBancarios/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+
+    // /extratoBancario/{ano-mes} -> extrato bancário consolidado diário
+    // (coluna "Atacado e Varejo"): alimenta "Total Bancos" e "Pagamento
+    // Autorizado" do DFC Consolidado. Input manual.
+    //  - Leitura: usuário autorizado
+    //  - Escrita: admin/diretoria (cadastro manual)
+    match /extratoBancario/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+
+    // /comentariosDFC/{ano-mes} -> justificativas das "Diferenças Pag Autorizado"
+    // (e futuras linhas comentáveis) por dia, no DFC Consolidado.
+    //  - Leitura: usuário autorizado
+    //  - Escrita: qualquer usuário autorizado (justificar é tarefa operacional)
+    match /comentariosDFC/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAuthorized();
+    }
+
+    // /tasks/{id} -> fila de jobs pra o agente da 225 (mobile-friendly).
+    //   Qualquer usuário autorizado pode CRIAR (dispara um job).
+    //   Qualquer usuário autorizado pode LER (acompanhar status).
+    //   Apenas serviceAccount (agente) ESCREVE (resultado/erro/status). UI não atualiza.
+    //   Exceção: tipo "set_password" só pode ser criado por admin/diretoria
+    //   (troca de senha de outros usuários via Firebase Admin SDK no agente).
+    match /tasks/{id} {
+      allow read:   if isAuthorized();
+      allow create: if isAuthorized()
+                     && (
+                       !("tipo" in request.resource.data)
+                       || request.resource.data.tipo != "set_password"
+                       || isAdminOrDirector()
+                     );
+      allow update: if false;   // só serviceAccount via Admin SDK
+      allow delete: if isAdminOrDirector();
+    }
+
+    // /lancamentosManuaisFluxo/{id} -> lançamentos manuais de fluxo de caixa
+    // (provisões, ajustes, transferências) que não vêm do Oracle.
+    //  - Leitura: usuário autorizado
+    //  - Escrita: admin/diretoria
+    match /lancamentosManuaisFluxo/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAdminOrDirector();
+    }
+
+    // /fatosFluxoCaixa/{ano-mes} -> resultado do classifier do fluxo
+    // (rawOracle/{ano-mes}__fluxo_* + lancamentosManuaisFluxo → fatos).
+    //  - Leitura: usuário autorizado
+    //  - Escrita: só pelo agente (serviceAccount)
+    match /fatosFluxoCaixa/{id} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+    match /fatosFluxoCaixa/{id}/chunks/{n} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+
+    // /fluxoCaixa/{ano-mes} -> resultado da engine de fluxo
+    // (saldo acumulado por dia × banco) — lido pela tela Fluxo de Caixa.
+    //  - Leitura: usuário autorizado
+    //  - Escrita: só pelo agente
+    match /fluxoCaixa/{id} {
+      allow read:  if isAuthorized();
+      allow write: if false;
+    }
+
+    // /energiaLancamentos/{loja-uc-mes} -> contas de energia importadas via PDF
+    // pela tela "Energia > Importar PDF". Cada doc é um (loja, UC, mês ref).
+    //  - Leitura: qualquer usuário autorizado (dashboard de Energia consome)
+    //  - Escrita: qualquer usuário autorizado (lançar conta é tarefa
+    //    operacional, não restrita à diretoria)
+    match /energiaLancamentos/{id} {
+      allow read:  if isAuthorized();
+      allow write: if isAuthorized();
+    }
+  }
+}

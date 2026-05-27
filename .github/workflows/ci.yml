@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Syntax & JSON check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile-check all Python files
+        run: |
+          find . -name "*.py" -not -path "./.git/*" -not -path "./__pycache__/*" \
+            -not -path "./node_modules/*" -not -name "_*.py" \
+            -print0 | xargs -0 -n50 python -m py_compile
+
+      - name: Validate JSON config files
+        run: |
+          for f in firebase.json firebase.ci.json .firebaserc \
+                  firestore.rules firestore.indexes.json \
+                  importacoes_historicas_outras.json manifest.json; do
+            if [ -f "$f" ]; then
+              case "$f" in
+                *.rules) echo "skip (rules) $f" ;;
+                *) python -c "import json; json.load(open('$f', encoding='utf-8'))" \
+                     && echo "OK $f" || (echo "FAIL $f" && exit 1) ;;
+              esac
+            fi
+          done
+
+      - name: Check dashboard.html parses as HTML
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          class P(HTMLParser):
+              def error(self, msg): raise RuntimeError(msg)
+          P().feed(open("dashboard.html", encoding="utf-8").read())
+          print("dashboard.html OK")
+          PY

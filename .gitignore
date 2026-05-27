@@ -1,0 +1,87 @@
+# ──────────────────────────────────────────────────────────────
+# Credenciais — NUNCA commitar
+# ──────────────────────────────────────────────────────────────
+serviceAccount.json
+*service-account*.json
+*-firebase-adminsdk-*.json
+*.key.json
+.env
+.env.local
+
+# ──────────────────────────────────────────────────────────────
+# Cache do Firebase CLI (auth tokens, deploy state local)
+# ──────────────────────────────────────────────────────────────
+.firebase/
+
+# ──────────────────────────────────────────────────────────────
+# Dados gerados por ETL — vivem só no servidor WSL.
+# O cron local regenera + deploya; CI nunca toca neles.
+# ──────────────────────────────────────────────────────────────
+dados.json
+dados_bp/
+dados_dre_postos/
+dados_dre_postos_adaptive/
+dados_fluxo_intercompany/
+dados_fluxo_outras/
+dados_fluxo_outras_lumi/
+dados_fluxo_postos/
+dados_fluxo_supermercados/
+apuracao_contratos.json
+energia.json
+saldos_oficiais_master.json
+titulos_aberto_data.json
+titulos_aberto_detalhe.json
+
+# ──────────────────────────────────────────────────────────────
+# Backups locais (dashboard.html.bak, _backup_*, etc.) — fica só
+# na máquina, não polui o histórico do git.
+# ──────────────────────────────────────────────────────────────
+_backup_*
+*.bak*
+
+# ──────────────────────────────────────────────────────────────
+# Scripts de dry-run/comparação (prefixo _) — uso pontual local.
+# ──────────────────────────────────────────────────────────────
+_compare_*.py
+_dry_run_*.py
+_gen_*.py
+_build_*.py
+_bp_*.py
+_atualizar_*.py
+_make_icons.py
+
+# ──────────────────────────────────────────────────────────────
+# Python
+# ──────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+# ──────────────────────────────────────────────────────────────
+# Logs
+# ──────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ──────────────────────────────────────────────────────────────
+# IDE / OS
+# ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*:Zone.Identifier
+# Atalhos Windows que vazam pela montagem do WSL
+
+# ──────────────────────────────────────────────────────────────
+# Pasta de memória do Claude Code (local, por dev)
+# ──────────────────────────────────────────────────────────────
+.claude/
+
+# Saídas de inspeção locais
+inspect_output.txt
+domain_output.txt

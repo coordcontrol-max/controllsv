@@ -1,0 +1,133 @@
+{
+  "00 - Base.xlsx": [
+    {
+      "nome": "Venda Acum",
+      "fonte": "excel",
+      "caminho": "\\\\10.61.1.13\\controller\\13 - PROJETOS\\Projetos Pivot\\Financeiro\\Dados DRE\\00 - Acumulado.xlsx"
+    },
+    {
+      "nome": "Compra Func Acum",
+      "fonte": "excel",
+      "caminho": "\\\\10.61.1.13\\controller\\13 - PROJETOS\\Projetos Pivot\\Financeiro\\Dados DRE\\00 - Acumulado.xlsx"
+    },
+    {
+      "nome": "Venda Atual",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "SELECT\n    TO_CHAR(V.DTAVDA, 'YYYY')                              AS ANO,\n    TO_CHAR(V.DTAVDA, 'MM')                                AS MES,\n    E.NROEMPRESA,\n\n    COUNT(DISTINCT V.ROWIDDOCTO)                            AS TICKETS,\n\n    ROUND(SUM(\n        (ROUND(V.VLRITEM, 2)) - (ROUND(V.VLRDEVOLITEM, 2))\n    ), 2)                                                   AS VENDA,\n\n    ROUND(SUM(\n        FC5_AbcDistribLucratividade(\n            'L', 'L', 'N',\n            V.VLRITEM, 'N',\n            V.VLRICMSST, V.VLRFCPST, V.VLRICMSSTEMPORIG,\n            E.UF, V.UFPESSOA, 'N', 0, 'N',\n            V.VLRIPIITEM, V.VLRIPIDEVOLITEM, 'N',\n            V.VLRDESCFORANF,\n            Y.CMDIAVLRNF - 0,\n            Y.CMDIAIPI,\n            NVL(Y.CMDIACREDPIS, 0),\n            NVL(Y.CMDIACREDCOFINS, 0),\n            Y.CMDIAICMSST, Y.CMDIADESPNF, Y.CMDIADESPFORANF, Y.CMDIADCTOFORANF,\n            'S', A.PROPQTDPRODUTOBASE,\n            V.QTDITEM, V.VLREMBDESCRESSARCST, V.ACMCOMPRAVENDA,\n            V.PISITEM, V.COFINSITEM,\n            DECODE(V.TIPCGO, 'S', Y.QTDVDA, NVL(Y.QTDDEVOL, Y.QTDVDA)),\n            DECODE(V.TIPCGO, 'S',\n                Y.VLRIMPOSTOVDA - NVL(Y.VLRIPIVDA, 0),\n                NVL(Y.VLRIMPOSTODEVOL - NVL(V.VLRIPIDEVOLITEM, 0),\n                    Y.VLRIMPOSTOVDA - NVL(Y.VLRIPIVDA, 0))),\n            'N', V.VLRDESPOPERACIONALITEM, Y.VLRDESPESAVDA,\n            'N', NVL(Y.VLRVERBAVDAACR, 0),\n            DECODE(V.TIPDOCFISCALCGO, 'T', 0, Y.QTDVERBAVDA),\n            Y.VLRVERBAVDA - NVL(Y.VLRVERBAVDAINDEVIDA, 0),\n            'N', NVL(V.VLRTOTCOMISSAOITEM, 0),\n            V.VLRDEVOLITEM, V.VLRDEVOLICMSST, V.DVLRFCPST,\n            V.QTDDEVOLITEM, V.PISDEVOLITEM, V.COFINSDEVOLITEM,\n            V.VLRDESPOPERACIONALITEMDEVOL, V.VLRTOTCOMISSAOITEMDEVOL,\n            E.PERIRLUCRAT, E.PERCSLLLUCRAT,\n            Y.CMDIACREDICMS,\n            DECODE(V.ICMSEFETIVOITEM, 0, V.ICMSITEM, V.ICMSEFETIVOITEM) + 0,\n            V.VLRFCPICMS, V.PERCPMF, V.PEROUTROIMPOSTO,\n            DECODE(V.ICMSEFETIVODEVOLITEM, 0, V.ICMSDEVOLITEM, V.ICMSEFETIVODEVOLITEM) + 0,\n            V.DVLRFCPICMS,\n            0,\n            CASE WHEN DV.UTILACRESCCUSTPRODRELAC = 'S'\n                  AND NVL(A.SEQPRODUTOBASE, A.SEQPRODUTOBASEANTIGO) IS NOT NULL\n                 THEN COALESCE(PR.PERCACRESCCUSTORELACVIG,\n                               NVL(F_RETACRESCCUSTORELACABC(V.SEQPRODUTO, V.DTAVDA), 1))\n                 ELSE 1\n            END,\n            'N', 0, 0, 'S',\n            V.VLRDESCMEDALHA, 'S',\n            V.VLRDESCFORNEC, V.VLRDESCFORNECDEVOL,\n            'N', V.VLRFRETEITEMRATEIO, V.VLRFRETEITEMRATEIODEV,\n            'S', V.VLRICMSSTEMBUTPROD, V.VLRICMSSTEMBUTPRODDEV,\n            V.VLREMBDESCRESSARCSTDEVOL,\n            0,\n            NVL(Y.CMDIACREDIPI, 0),\n            NVL(V.VLRITEMRATEIOCTE, 0),\n            'N', 'C',\n            V.VLRIPIPRECOVDA, V.VLRIPIPRECODEVOL,\n            V.VLRDESCMEDALHADEVOL, 'N'\n        )\n    ), 2)                                                   AS MARGEM,\n\n    ROUND(SUM(\n        DECODE(DECODE(V.TIPDOCFISCALCGO, 'T', 0, Y.QTDVERBAVDA), 0, 0,\n            (Y.VLRVERBAVDA - NVL(Y.VLRVERBAVDAINDEVIDA, 0))\n            * NVL(A.PROPQTDPRODUTOBASE, 1)\n            / Y.QTDVDA\n        ) * (V.QTDITEM - 0)\n        + NVL(V.VLRVERBACOMPRA, 0)       - NVL(V.VLRVERBACOMPRADEV, 0)\n        + NVL(V.VLRVERBABONIFINCID, 0)   - NVL(V.VLRVERBABONIFINCIDDEV, 0)\n        + NVL(V.VLRVERBABONIFSEMINCID, 0)- NVL(V.VLRVERBABONIFSEMINCIDDEV, 0)\n    ), 2)                                                   AS VERBA\n\nFROM\n    MRL_CUSTODIA            Y,\n    MAXV_ABCDISTRIBBASE     V,\n    MAP_PRODUTO             A,\n    MAP_PRODUTO             PB,\n    MAP_FAMDIVISAO          D,\n    MAP_FAMEMBALAGEM        K,\n    MAX_EMPRESA             E,\n    MAX_DIVISAO             DV,\n    MAP_PRODACRESCCUSTORELAC PR\n\nWHERE\n    D.SEQFAMILIA              = A.SEQFAMILIA\n    AND D.NRODIVISAO          = V.NRODIVISAO\n    AND V.SEQPRODUTO          = A.SEQPRODUTO\n    AND V.SEQPRODUTOCUSTO     = PB.SEQPRODUTO\n    AND V.NROSEGMENTO         IN (2, 4, 5, 6, 1, 3)\n    AND V.NRODIVISAO          = D.NRODIVISAO\n    AND E.NROEMPRESA          = V.NROEMPRESA\n    AND E.NRODIVISAO          = DV.NRODIVISAO\n    AND V.SEQPRODUTO          = PR.SEQPRODUTO(+)\n    AND V.DTAVDA              = PR.DTAMOVIMENTACAO(+)\n    AND Y.NROEMPRESA          = NVL(E.NROEMPCUSTOABC, E.NROEMPRESA)\n    AND Y.DTAENTRADASAIDA     = V.DTAVDA\n    AND K.SEQFAMILIA          = A.SEQFAMILIA\n    AND K.QTDEMBALAGEM        = 1\n    AND Y.SEQPRODUTO          = PB.SEQPRODUTO\n    AND DECODE(V.TIPTABELA, 'S', V.CGOACMCOMPRAVENDA, V.ACMCOMPRAVENDA) IN ('S', 'I')\n    AND E.NROEMPRESA NOT IN (1,2,3,4,6,8,9,12,15,19,22,25,17)\nAND V.DTAVDA BETWEEN \n    TO_DATE('01/apr/2026', 'DD/MM/YYYY') \n    AND trunc(sysdate)-1 \nGROUP BY\n    TO_CHAR(V.DTAVDA, 'YYYY'),\n    TO_CHAR(V.DTAVDA, 'MM'),\n    E.NROEMPRESA,\n    E.NOMEREDUZIDO\n\nORDER BY\n    ANO,\n    MES,\n    E.NROEMPRESA"
+    },
+    {
+      "nome": "Consumo Interno",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select \nE.NROEMPRESA as SEQDETALHE1,\ntrunc( L3.DTAENTRADASAIDA, 'MM' ) as mes,\n\nsum( L3.VLRENTRADACOMPRA )\n+ sum( L3.VLRENTRADAOUTRAS )\n- sum( L3.VLRSAIDAVENDA )\n- sum( L3.VLRSAIDAOUTRAS )\nas VLRCTOLIQUIDO\n\nfrom MAXV_ABCMOVTOBASE_PROD L3, MAP_FAMDIVISAO D, MAP_FAMEMBALAGEM K, MAX_EMPRESA E , MRL_PRODUTOEMPRESA C \n\nwhere D.SEQFAMILIA = L3.SEQFAMILIA\nand D.NRODIVISAO in ( 1 )\nand K.SEQFAMILIA = D.SEQFAMILIA\nand K.QTDEMBALAGEM = 1\nand L3.DTAENTRADASAIDA between '01/jan/2026' and TRUNC(SYSDATE)-1\nand L3.NRODIVISAO = D.NRODIVISAO\nand E.NROEMPRESA = L3.NROEMPRESA and C.SEQPRODUTO = L3.SEQPRODUTO\n and C.NROEMPRESA = E.NROEMPRESA \n\n\nand L3.CODGERALOPER in ( 808 )\n\ngroup by E.NROEMPRESA,\ntrunc( L3.DTAENTRADASAIDA, 'MM' )"
+    },
+    {
+      "nome": "Cesta Básica",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select \nE.NROEMPRESA as nroempresa,\ntrunc( L3.DTAENTRADASAIDA, 'MM' ) as mes,\n\nsum( L3.VLRENTRADACOMPRA )\n+ sum( L3.VLRENTRADAOUTRAS )\n- sum( L3.VLRSAIDAVENDA )\n- sum( L3.VLRSAIDAOUTRAS )\nas VLRCTOLIQUIDO\n\nfrom MAXV_ABCMOVTOBASE_PROD L3, MAP_FAMDIVISAO D, MAP_FAMEMBALAGEM K, MAX_EMPRESA E , MRL_PRODUTOEMPRESA C \n\nwhere D.SEQFAMILIA = L3.SEQFAMILIA\nand D.NRODIVISAO in ( 1 )\nand K.SEQFAMILIA = D.SEQFAMILIA\nand K.QTDEMBALAGEM = 1\nand L3.DTAENTRADASAIDA between '01/jan/2026' and TRUNC(SYSDATE)-1\nand L3.NRODIVISAO = D.NRODIVISAO\nand E.NROEMPRESA = L3.NROEMPRESA and C.SEQPRODUTO = L3.SEQPRODUTO\n and C.NROEMPRESA = E.NROEMPRESA \n\n\nand L3.CODGERALOPER in ( 808 )\nand L3.SEQPRODUTO = 14642\n\ngroup by E.NROEMPRESA,\ntrunc( L3.DTAENTRADASAIDA, 'MM' )"
+    },
+    {
+      "nome": "Material de Expediente",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select E.NROEMPRESA , e2.DTAENTRADA, e2.seqproduto, a.desccompleta,\n       sum(E2.VLRITEM + E2.VLRIPI + E2.VLRICMSDI + E2.VLRDESPTRIBUTITEM +\n           E2.VLRDESPNTRIBUTITEM + E2.VLRDESPFORANF + E2.VLRICMSST +\n           E2.VLRFCPST - E2.VLRDESCITEM) -\n       sum(E2.DVLRITEM + E2.DVLRIPI + E2.DVLRICMSDI + E2.DVLRDESPTRIBUTITEM +\n           E2.DVLRDESPNTRIBUTITEM + E2.DVLRDESPFORANF + E2.DVLRICMSST +\n           E2.DVLRFCPST - E2.DVLRDESCITEM) compra\n\nfrom MAXV_ABCENTRADABASE E2, MAP_PRODUTO A, MAP_FAMDIVISAO D, MAD_FAMSEGMENTO H, MAP_FAMEMBALAGEM K, MAX_EMPRESA E, MAX_DIVISAO DV  , MRL_PRODUTOEMPRESA  C  \nwhere D.SEQFAMILIA = A.SEQFAMILIA\nand D.NRODIVISAO = 1\nand E2.SEQPRODUTO = A.SEQPRODUTO\nand E2.NRODIVISAO = D.NRODIVISAO\nand E2.NROSEGMENTOPRINC = H.NROSEGMENTO\nand D.SEQFAMILIA = H.SEQFAMILIA\nand e2.DTAENTRADA between '01/jan/2026' and TRUNC(SYSDATE)-1\nand K.SEQFAMILIA = A.SEQFAMILIA\nand DV.NRODIVISAO = E2.NRODIVISAO\nand K.QTDEMBALAGEM = D.PADRAOEMBCOMPRA and  C.SEQPRODUTO = E2.SEQPRODUTO\nand C.NROEMPRESA = E2.NROEMPRESA \nand E2.NROEMPRESA = E.NROEMPRESA\nand E2.CODGERALOPER in (2)\n\ngroup by E.NROEMPRESA, e2.DTAENTRADA,e2.seqproduto,a.desccompleta"
+    },
+    {
+      "nome": "Perdas e Quebras",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/ORCL",
+      "sql": "select \nE.NROEMPRESA as LOJA,\nVW.DTAENTRADASAIDA AS DATA,\nsum( VW.VALORLANCTO )\nas VLRLIQUIDO\n\nfrom MAP_FAMDIVISAO D, MAX_EMPRESA E, MAX_DIVISAO I2, MAP_CLASSIFABC Z2, MAXV_ABCPERDABASE VW,\nMAP_TRIBUTACAOUF T3, \nMAP_FAMILIA B, MAD_FAMSEGMENTO H, MAP_FAMEMBALAGEM K, \nMRL_PRODUTOEMPRESA C, MRL_PRODEMPSEG C3,\n\n(select A.SEQPRODUTO,\n A.NROEMPRESA,\n SUM( A.ESTQLOJA ) ESTQLOJA, \n SUM( A.ESTQDEPOSITO ) ESTQDEPOSITO,\n SUM( A.ESTQTROCA ) as ESTQTROCA,\n SUM( A.ESTQALMOXARIFADO ) as ESTQALMOXARIFADO,\n SUM( A.ESTQOUTRO ) as ESTQOUTRO,\n 0 \n VLRDESCTRANSFCB\n\n from MRL_PRODUTOEMPRESA A\n group by A.SEQPRODUTO, A.NROEMPRESA ) SX\n\n , \n\nMAD_SEGMENTO SE, MAP_PRODUTO PR,\n\n(SELECT MAX(DX.UTILACRESCCUSTPRODRELAC) UTILACRESCCUSTPRODRELAC\n FROM MAX_DIVISAO DX, MAX_EMPRESA EX\n WHERE DX.NRODIVISAO = EX.NRODIVISAO\n ) I3\n\n\n\nwhere E.NROEMPRESA = VW.NROEMPRESA\nand E.NRODIVISAO = D.NRODIVISAO\n\nand H.SEQFAMILIA = VW.SEQFAMILIA\nand H.NROSEGMENTO = E.NROSEGMENTOPRINC\nand H.NROSEGMENTO = SE.NROSEGMENTO\n\nand D.SEQFAMILIA = VW.SEQFAMILIA\nand D.NRODIVISAO in (1)\n\nand B.SEQFAMILIA = VW.SEQFAMILIA\n\nand I2.NRODIVISAO = D.NRODIVISAO\n\nand Z2.NROSEGMENTO = H.NROSEGMENTO\nand Z2.CLASSIFCOMERCABC = H.CLASSIFCOMERCABC\n\nand K.SEQFAMILIA = H.SEQFAMILIA\nand K.QTDEMBALAGEM = (case when instr('1', ',') > 0 then\n fPadraoEmbVenda2(D.SEQFAMILIA,'1')\n else\n H.PADRAOEMBVENDA\n end)\n\nand C.SEQPRODUTO = VW.SEQPRODUTO\nand C.NROEMPRESA = nvl( E.NROEMPCUSTOABC, E.NROEMPRESA )\n\nand C3.NROEMPRESA = VW.NROEMPRESA\nand C3.SEQPRODUTO = VW.SEQPRODUTO\nand C3.NROSEGMENTO = E.NROSEGMENTOPRINC\nand C3.QTDEMBALAGEM = H.PADRAOEMBVENDA\n\nand T3.NROTRIBUTACAO = D.NROTRIBUTACAO\nand T3.UFEMPRESA = E.UF\nand T3.UFCLIENTEFORNEC = E.UF\nand T3.TIPTRIBUTACAO = decode( I2.TIPDIVISAO, 'V', 'SN', 'SC' )\nand T3.NROREGTRIBUTACAO = nvl( E.NROREGTRIBUTACAO, 0 ) \n\nand PR.SEQPRODUTO = VW.SEQPRODUTO\n\nand SX.SEQPRODUTO = VW.SEQPRODUTO \n\nand SX.NROEMPRESA = VW.NROEMPRESA\n\nand VW.DTAENTRADASAIDA between '01/JAN/2026' and trunc(sysdate)-1\n\nand VW.TIPCLASSINTERNO in ( 'P', 'R', 'C', 'A' )\nand VW.CODGERALOPER = 549\n\n\nand VW.TIPLANCTO IN ('S') \n\n\n\n\ngroup by E.NROEMPRESA, VW.DTAENTRADASAIDA"
+    },
+    {
+      "nome": "Receitas Comerciais",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select a.dtaoperacao,\n       a.dtacontabiliza,\n       a.vlroperacao,\n       a.nroprocesso,\n       b.codespecie,\n       b.nroempresa,\n       b.seqpessoa,\n       c.nomerazao,\n       b.obrigdireito,\n       b.nrotitulo,\n       b.serietitulo,\n       b.nroparcela,\n       b.qtdparcela,\n       b.dtavencimento,\n       b.abertoquitado,\n       b.observacao\nfrom fi_titoperacao a, fi_titulo b, ge_pessoa c\nwhere a.dtacontabiliza between '01/jan/2026' and trunc(sysdate) -1\nand a.codoperacao in (5,17,28)\nand a.seqtitulo = b.seqtitulo\nand b.seqpessoa = c.seqpessoa\nand b.situacao not in 'C'\nand b.codespecie IN ('ACRA22','ACRA23','ACRA24','ACRA25','ACRCOM','ACREX2','ACRFOR','ACRINA','ACRINT','ACRLOG','ACRMGM','ACRMKT','ACRPEN','ACRPON','ACRPRE','ACRQUE','ACRTRO','ACRXTR','CONTRT','DEVREC','CONTEV')\nand a.seqtitoperacao not in (SELECT B.SEQTITOPERACAO FROM FI_TITULO A, FI_TITOPERACAO B WHERE B.OPCANCELADA = ('C'))"
+    },
+    {
+      "nome": "Descontos Obtidos",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/ORCL",
+      "sql": "select \nb.codespecie,\na.dtacontabiliza,\na.vlroperacao,\nb.nroempresa\nfrom fi_titoperacao a, fi_titulo b, ge_pessoa c\nwhere a.dtacontabiliza between '01/JAN/2026' and TRUNC(SYSDATE)-1\nand a.codoperacao = 29\nand a.seqtitulo = b.seqtitulo\nand b.seqpessoa = c.seqpessoa\nand b.situacao != 'C'\nand a.seqtitoperacao not in (SELECT B.SEQTITOPERACAO FROM FI_TITULO A, FI_TITOPERACAO B WHERE B.OPCANCELADA = ('C'))"
+    },
+    {
+      "nome": "Despesas C/ Vendas",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select \n       b.nroempresa,\n       b.codespecie,\n       a.dtaoperacao AS DTAEMISSAO,\n       a.vlroperacao AS VLRADMINISTRACAO\n  from fi_titoperacao a, fi_titulo b\n where a.dtacontabiliza between '01/jan/2026' and trunc(sysdate) -1\n   and a.codoperacao in (77,156)\n   and b.codespecie in ('TICKET','CARTAO','CARDEB','CARDIG')\n   and a.seqtitulo = b.seqtitulo"
+    },
+    {
+      "nome": "Operação Financeira",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select * from FI_CTACORLANCA a\nwhere a.dtalancto between '01/jan/2026' and trunc(sysdate) -1\nand a.codoperacao in (223, 205, 142, 139, 129, 112, 108, 34, 69, 132, 136, 130, 140, 73, 191, 217, 225, 214, 218, 220, 216, 167, 219, 157)\nand a.seqlancto not in (select b.seqlancto from fi_ctacorlanca b where b.opcancelada = 'C')\nAND A.SEQCTACORRENTE != 50"
+    },
+    {
+      "nome": "Transf Consumo",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "SELECT\n    TO_CHAR(V.DTAVDA, 'YYYY')                              AS ANO,\n    TO_CHAR(V.DTAVDA, 'MM')                                AS MES,\n    E.NROEMPRESA,\n    A.SEQPRODUTO as PLU,\n    A.DESCCOMPLETA as PRODUTO,\n    sum( ( round( V.VLRITEM, 2 ) ) - ( round( V.VLRDEVOLITEM, 2 ) - ( 0 ) ) )\nas VLRVENDA\n    \nfrom MRL_CUSTODIA Y, MAXV_ABCDISTRIBBASE V, MAP_PRODUTO A, MAP_PRODUTO PB, MAP_FAMDIVISAO D, MAP_FAMEMBALAGEM K, MAX_EMPRESA E, MAX_DIVISAO DV, MAP_PRODACRESCCUSTORELAC PR where D.SEQFAMILIA = A.SEQFAMILIA\nand D.NRODIVISAO = V.NRODIVISAO\nand V.SEQPRODUTO = A.SEQPRODUTO\nand V.SEQPRODUTOCUSTO = PB.SEQPRODUTO\nand V.NROSEGMENTO in ( 2,4,5,6,1,3 )\nand V.NRODIVISAO = D.NRODIVISAO\nand E.NROEMPRESA = V.NROEMPRESA\nand E.NRODIVISAO = DV.NRODIVISAO\nAND V.SEQPRODUTO = PR.SEQPRODUTO(+)\nAND V.DTAVDA = PR.DTAMOVIMENTACAO(+)\nAND V.DTAVDA BETWEEN \n    TO_DATE('01/01/2026', 'DD/MM/YYYY') \n    AND TRUNC(SYSDATE) - 1\nand Y.NROEMPRESA = nvl( E.NROEMPCUSTOABC, E.NROEMPRESA ) \nand Y.DTAENTRADASAIDA = V.DTAVDA\n and K.SEQFAMILIA = A.SEQFAMILIA and K.QTDEMBALAGEM = 1 \nand Y.SEQPRODUTO = PB.SEQPRODUTO \n\n\nand V.CODGERALOPER in ( 850, 851 )\nand D.SEQCOMPRADOR = 14\n\n group by E.NROEMPRESA,\nA.SEQPRODUTO,\nA.DESCCOMPLETA,\nTO_CHAR(V.DTAVDA, 'YYYY'),\nTO_CHAR(V.DTAVDA, 'MM')\n"
+    },
+    {
+      "nome": "Despesas (2)",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select TO_CHAR(a.dtacontabiliza, 'YYYY') as Ano,\n       TO_CHAR(a.dtacontabiliza, 'MM') as MÊS,\n       TO_CHAR(a.dtacontabiliza, 'DD/MM/YYYY') as Dta_Contabil,\n       b.nroempresa,\nTO_CHAR(b.dtavencimento, 'DD/MM/YYYY') as Dta_Vencimento,\n       c.nomerazao,\n       g.DESCRICAO,\n       B.NROTITULO,\n       b.codespecie,\n       A.USUALTERACAO AS USUARIO,\n       B.VLRNOMINAL,\n       a.vlroperacao AS VALOR_LIQUIDO,\n       b.observacao\n  from fi_titoperacao a, fi_titulo b, ge_pessoa c, RF_PARAMNATNFDESP         e,\n       ABA_HISTORICOCONTA        f,\n       ABA_PLANOCONTA            g,\n       RF_PARAMNATNFDESP_ESPECIE h\n where a.dtacontabiliza between '01/jan/2026' and trunc(sysdate) -1\n   and a.codoperacao in (6)\n   and b.codespecie not in ('PAGNFC','DESP91')\n   and b.codespecie = h.codespecie\n   and a.seqtitulo = b.seqtitulo\n   and b.seqpessoa = c.seqpessoa\n   and b.situacao not in 'C'\n   and e.CODHISTORICOCONTABIL = f.SEQHISTORICO\n   AND f.SEQPLANOCONTA = g.SEQPLANOCONTA\n   AND e.CODHISTORICO = h.CODHISTORICO\n   AND e.NROEMPRESA = h.MATRIZ\n   AND e.NROEMPRESA = '1'\n   AND f.TIPO = 'D'\n   AND g.CLASSIFICACAO ='D'\n   and a.seqtitoperacao not in\n       (SELECT B.SEQTITOPERACAO\n          FROM FI_TITULO A, FI_TITOPERACAO B\n         WHERE B.OPCANCELADA = ('C'))"
+    },
+    {
+      "nome": "Quebra/Sobra",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select \n    extract(year from b.dtamovimento)  as ANO,\n    extract(month from b.dtamovimento) as MES,\n    b.nroempresa                        as NROEMPRESA,\n    case \n        when b.tipo = 'QUE' then '(-) Quebra Caixa'\n        when b.tipo = 'SOB' then 'Sobra de Caixa PDV'\n    end                                 as ATRIBUTO,\n    case \n        when b.tipo = 'QUE' then b.valor * -1\n        when b.tipo = 'SOB' then b.valor\n    end                                 as VALOR\n\nfrom fi_tsmovtoopedetalhe b,\n     ge_usuario c\n\nwhere b.codoperador = c.sequsuario\nand   b.tipo in ('QUE', 'SOB')\nand   b.dtamovimento between to_date('01/jan/2026', 'dd/mm/yyyy') and trunc(sysdate) - 1\n\norder by ANO, MES, b.nroempresa, ATRIBUTO"
+    },
+    {
+      "nome": "Compra Transf",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select  \n    extract(year from E2.DTAENTRADA)    as ANO,\n    extract(month from E2.DTAENTRADA)   as MES,\n    E2.NROEMPRESA                        as NROEMPRESA,\n    A.SEQPRODUTO                         as COD,\n    A.DESCCOMPLETA                       as PRODUTO,\n\n    sum( E2.VLRITEM + E2.VLRIPI + E2.VLRICMSDI\n       + E2.VLRDESPTRIBUTITEM + E2.VLRDESPNTRIBUTITEM + E2.VLRDESPFORANF \n       + E2.VLRICMSST + E2.VLRFCPST - E2.VLRDESCITEM )\n    - \n    sum( E2.DVLRITEM + E2.DVLRIPI + E2.DVLRICMSDI\n       + E2.DVLRDESPTRIBUTITEM + E2.DVLRDESPNTRIBUTITEM + E2.DVLRDESPFORANF \n       + E2.DVLRICMSST + E2.DVLRFCPST - E2.DVLRDESCITEM )\n    as VLRENTRADA\n\nfrom MAXV_ABCENTRADABASE E2\njoin MAP_PRODUTO A         on E2.SEQPRODUTO = A.SEQPRODUTO\njoin MAP_FAMDIVISAO D      on D.SEQFAMILIA = A.SEQFAMILIA and D.NRODIVISAO = 1\n\nwhere E2.DTAENTRADA between '01/jan/2026' and trunc(sysdate) -1\n  and E2.CODGERALOPER in ( 51, 50 )\n  and D.SEQCOMPRADOR = 14\n\ngroup by\n    extract(year from E2.DTAENTRADA),\n    extract(month from E2.DTAENTRADA),\n    E2.NROEMPRESA,\n    A.SEQPRODUTO,\n    A.DESCCOMPLETA\n\norder by ANO, MES, NROEMPRESA, COD"
+    },
+    {
+      "nome": "Juros Recebidos",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select a.dtaoperacao,\n       a.dtacontabiliza,\n       a.vlroperacao,\n       a.nroprocesso,\n       b.codespecie,\n       b.nroempresa,\n       b.seqpessoa,\n       c.nomerazao,\n       b.obrigdireito,\n       b.nrotitulo,\n       b.serietitulo,\n       b.nroparcela,\n       b.qtdparcela,\n       b.dtavencimento,\n       b.abertoquitado,\n       b.observacao\nfrom fi_titoperacao a, fi_titulo b, ge_pessoa c\nwhere a.dtacontabiliza between '01/jan/2026' and trunc(sysdate) -1\nand a.codoperacao in (8,10)\nand a.seqtitulo = b.seqtitulo\nand b.seqpessoa = c.seqpessoa\nand b.situacao not in 'C'\nand a.seqtitoperacao not in (SELECT B.SEQTITOPERACAO FROM FI_TITULO A, FI_TITOPERACAO B WHERE B.OPCANCELADA = ('C'))"
+    },
+    {
+      "nome": "Juros Emprestimo",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select a.dtaoperacao,\n       a.dtacontabiliza,\n       a.vlroperacao,\n       a.nroprocesso,\n       b.codespecie,\n       b.nroempresa,\n       b.seqpessoa,\n       c.nomerazao,\n       b.obrigdireito,\n       b.nrotitulo,\n       b.serietitulo,\n       b.nroparcela,\n       b.qtdparcela,\n       b.dtavencimento,\n       b.abertoquitado,\n       b.observacao\nfrom fi_titoperacao a, fi_titulo b, ge_pessoa c\nwhere a.dtacontabiliza between '01/jan/2026' and trunc(sysdate) -1\nand a.codoperacao in (7)\nand a.seqtitulo = b.seqtitulo\nand b.seqpessoa = c.seqpessoa\nand b.situacao not in 'C'\nand b.codespecie IN ('EMPRE2')\nand a.seqtitoperacao not in (SELECT B.SEQTITOPERACAO FROM FI_TITULO A, FI_TITOPERACAO B WHERE B.OPCANCELADA = ('C'))"
+    },
+    {
+      "nome": "Juros pAGO",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "select a.dtaoperacao,\n       a.dtacontabiliza,\n       a.vlroperacao,\n       a.nroprocesso,\n       b.codespecie,\n       b.nroempresa,\n       b.seqpessoa,\n       c.nomerazao,\n       b.obrigdireito,\n       b.nrotitulo,\n       b.serietitulo,\n       b.nroparcela,\n       b.qtdparcela,\n       b.dtavencimento,\n       b.abertoquitado,\n       b.observacao\nfrom fi_titoperacao a, fi_titulo b, ge_pessoa c\nwhere a.dtacontabiliza between '01/jan/2026' and trunc(sysdate) -1\nand a.codoperacao in (7)\nand a.seqtitulo = b.seqtitulo\nand b.seqpessoa = c.seqpessoa\nand b.situacao not in 'C'\nand b.codespecie NOT IN ('EMPRE2')\nand a.seqtitoperacao not in (SELECT B.SEQTITOPERACAO FROM FI_TITULO A, FI_TITOPERACAO B WHERE B.OPCANCELADA = ('C'))"
+    },
+    {
+      "nome": "Venda Bruta",
+      "fonte": "combine",
+      "partes": "#\"Venda Acum\", #\"Venda Atual\""
+    },
+    {
+      "nome": "Compra Func Atual",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "SELECT\n    TO_CHAR(V.DTAVDA, 'YYYY')                                      AS ANO,\n    TO_CHAR(V.DTAVDA, 'MM')                                        AS MES,\n    E.NROEMPRESA                                                AS EMPRESA,\n\n    ROUND(SUM(\n        (V.VLRITEM) - (V.VLRDEVOLITEM - 0)\n    ), 2)                                                           AS VENDA\n\nFROM\n    MRL_CUSTODIA             Y,\n    MAXV_ABCFORMAPAGTO       V,\n    MAP_PRODUTO              A,\n    MAP_PRODUTO              PB,\n    MAP_FAMDIVISAO           D,\n    MAP_FAMEMBALAGEM         K,\n    MAX_EMPRESA              E,\n    MAX_DIVISAO              DV,\n    MAP_PRODACRESCCUSTORELAC PR\n\nWHERE\n    D.SEQFAMILIA          = A.SEQFAMILIA\n    AND D.NRODIVISAO      = V.NRODIVISAO\n    AND V.SEQPRODUTO      = A.SEQPRODUTO\n    AND V.SEQPRODUTOCUSTO = PB.SEQPRODUTO\n    AND V.NROSEGMENTO     IN (2, 4, 5, 6, 1, 3)\n    AND V.NRODIVISAO      = D.NRODIVISAO\n    AND E.NROEMPRESA      = V.NROEMPRESA\n    AND E.NRODIVISAO      = DV.NRODIVISAO\n    AND V.SEQPRODUTO      = PR.SEQPRODUTO(+)\n    AND V.DTAVDA          = PR.DTAMOVIMENTACAO(+)\n    AND Y.NROEMPRESA      = NVL(E.NROEMPCUSTOABC, E.NROEMPRESA)\n    AND Y.DTAENTRADASAIDA = V.DTAVDA\n    AND K.SEQFAMILIA      = A.SEQFAMILIA\n    AND K.QTDEMBALAGEM    = 1\n    AND Y.SEQPRODUTO      = PB.SEQPRODUTO\n    AND DECODE(V.TIPTABELA, 'S', V.CGOACMCOMPRAVENDA, V.ACMCOMPRAVENDA) IN ('S', 'I')\n    AND D.SEQCOMPRADOR    != 14\n    AND NVL(V.NROFORMAPAGTO, -1) = 20\nAND V.DTAVDA BETWEEN '01/apr/2026' AND trunc(sysdate)-1\n\nGROUP BY\n    TO_CHAR(V.DTAVDA, 'YYYY'),\n    TO_CHAR(V.DTAVDA, 'MM'),\n    E.NROEMPRESA"
+    },
+    {
+      "nome": "Compra de Funcionários",
+      "fonte": "combine",
+      "partes": "#\"Compra Func Acum\", #\"Compra Func Atual\""
+    },
+    {
+      "nome": "Material de Expediente da Operação",
+      "fonte": "oracle",
+      "servidor": "10.61.1.1/orcl",
+      "sql": "SELECT\n    A.NROEMPRESA                          AS EMPRESA,\n    C.NOMERAZAO                           AS RAZAO_SOCIAL,\n    A.DTAENTRADA                          AS DATA_LANCAMENTO,\n    B.VALORLIQ                            AS VALOR_LIQUIDO\nFROM OR_NFDESPESA A\nINNER JOIN GE_PESSOA C ON A.SEQPESSOA = C.SEQPESSOA\nINNER JOIN OR_NFVENCIMENTO B ON A.SEQNOTA = B.SEQNOTA\nWHERE A.CODHISTORICO = 2119\nAND A.DTAENTRADA BETWEEN TO_DATE('01/01/2026', 'DD/MM/YYYY')\n                     AND TRUNC(SYSDATE) -1"
+    }
+  ],
+  "02 - Valores Rateados.xlsx": []
+}

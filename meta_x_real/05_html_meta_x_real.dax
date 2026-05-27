@@ -1,0 +1,187 @@
+// =====================================================================
+// Medida HTML — visão META x REAL (com R$, AV% e ranking de variação)
+// Paleta alinhada ao Dashboard Executivo
+// Visual: "HTML Content" (Daniel Marsh-Patrick) ou "HTML Viewer"
+// =====================================================================
+
+META x REAL HTML =
+VAR _VBRS =
+    CALCULATE(
+        SUM('VALORES RATEADOS'[VALORES]),
+        ALL('PLANO'),
+        'PLANO'[GRUPO] = "Venda Bruta"
+    )
+
+// ---------- Pré-computa tudo numa única tabela virtual ---------------
+VAR _Enriched =
+    ADDCOLUMNS(
+        SELECTCOLUMNS(
+            'Metas AV%',
+            "Agr",   'Metas AV%'[AGRUPAMENTO],
+            "Ordem", 'Metas AV%'[Ordem],
+            "Tipo",  'Metas AV%'[Tipo],
+            "MetaP", 'Metas AV%'[Meta AV%],
+            "RealR",
+                VAR _A = 'Metas AV%'[AGRUPAMENTO]
+                RETURN
+                    CALCULATE(
+                        SUM('VALORES RATEADOS'[VALORES]),
+                        FILTER( ALL('PLANO'[AGRUPAMENTO]), 'PLANO'[AGRUPAMENTO] = _A )
+                    )
+        ),
+        "MetaR", _VBRS * [MetaP],
+        "RealP", DIVIDE( [RealR], _VBRS ),
+        "VarR",  IF( ISBLANK([RealR]), BLANK(), [RealR] - _VBRS * [MetaP] ),
+        "VarP",  IF( ISBLANK([RealR]), BLANK(), DIVIDE([RealR], _VBRS) - [MetaP] )
+    )
+
+VAR _MaxAbsVarR = MAXX( _Enriched, ABS([VarR]) ) + 1
+
+// ---------- Estilo ---------------------------------------------------
+VAR _Style = "
+<style>
+.mxr { font-family:'Segoe UI', Arial, sans-serif; width:100%; color:#222; }
+.mxr table { width:100%; border-collapse:collapse; font-size:11px; }
+.mxr thead th {
+    background:#1a3a2f; color:#fff; padding:8px 8px;
+    text-align:left; font-weight:600; font-size:10px;
+    letter-spacing:.04em; text-transform:uppercase;
+}
+.mxr thead th.num { text-align:right; }
+.mxr thead th.sep, .mxr tbody td.sep { border-left:2px solid #d8dde2; }
+.mxr tbody td { padding:6px 8px; border-bottom:1px solid #ececec; font-variant-numeric: tabular-nums; }
+.mxr tbody td.num { text-align:right; }
+.mxr tbody tr:hover { background:#f7f9fb; }
+.mxr tr.tot { background:#FFF2A8; font-weight:700; }
+.mxr tr.tot:hover { background:#FFE988; }
+.mxr tr.tot td { border-bottom:1px solid #d4b923; }
+.mxr .pos { color:#1e7a4a; font-weight:600; }
+.mxr .neg { color:#c0392b; font-weight:600; }
+.mxr .muted { color:#999; }
+.mxr .bar-track {
+    position:relative; display:inline-block; width:100px; height:10px;
+    background:#eee; border-radius:5px; overflow:hidden; vertical-align:middle;
+}
+.mxr .bar-fill { position:absolute; top:0; height:100%; }
+.mxr .bar-zero { position:absolute; top:-2px; left:50%; width:1px; height:14px; background:#888; }
+.mxr h2 { margin:0 0 6px 0; color:#1a3a2f; font-size:14px; font-weight:700; letter-spacing:.02em; }
+.mxr .sub { color:#666; font-size:10px; margin-bottom:10px; }
+.mxr .section { margin-top:18px; }
+.mxr .rank { width:100%; border-collapse:collapse; }
+.mxr .rank td { padding:3px 6px; border-bottom:1px solid #f1f1f1; font-size:11px; vertical-align:middle; }
+.mxr .rank td.lbl { width:30%; }
+.mxr .rank td.val { width:16%; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+.mxr .rank td.bar { width:54%; }
+.mxr .rank .bartrack { position:relative; height:14px; background:#f4f4f4; border-radius:3px; }
+.mxr .rank .zero { position:absolute; top:-2px; left:50%; width:1px; height:18px; background:#888; }
+.mxr .rank .barfill { position:absolute; top:0; height:100%; border-radius:2px; }
+.mxr .rank .pos { background:#1e7a4a; }
+.mxr .rank .neg { background:#c0392b; }
+</style>"
+
+// ---------- Tabela detalhada ----------------------------------------
+VAR _Header = "
+<div class='mxr'>
+<h2>Comparativo META x REAL</h2>
+<div class='sub'>Análise vertical por agrupamento • Meta R$ = Venda Bruta Realizada × Meta AV% • Totais em amarelo</div>
+<table>
+  <thead><tr>
+    <th>Agrupamento</th>
+    <th class='num'>Real R$</th>
+    <th class='num'>Meta R$</th>
+    <th class='num'>Δ R$</th>
+    <th class='num sep'>Real AV%</th>
+    <th class='num'>Meta AV%</th>
+    <th class='num'>Δ p.p.</th>
+    <th class='num' style='width:120px;'>Comparativo</th>
+  </tr></thead>
+  <tbody>"
+
+VAR _Body =
+    CONCATENATEX(
+        _Enriched,
+        VAR _Agr   = [Agr]
+        VAR _Tipo  = [Tipo]
+        VAR _MetaP = [MetaP]
+        VAR _RealR = [RealR]
+        VAR _MetaR = [MetaR]
+        VAR _RealP = [RealP]
+        VAR _VarP  = [VarP]
+        VAR _VarR  = [VarR]
+        VAR _RowCls = IF( _Tipo = "Total", "tot", "" )
+        VAR _CorP   = IF( ISBLANK(_VarP), "muted", IF( _VarP >= 0, "pos", "neg" ) )
+        VAR _CorR   = IF( ISBLANK(_VarR), "muted", IF( _VarR >= 0, "pos", "neg" ) )
+        VAR _RealRFmt =
+            IF( ISBLANK(_RealR), "—",
+                FORMAT( _RealR / 1000000, "R$ #,##0.00\M;-R$ #,##0.00\M;R$ 0,00\M" )
+            )
+        VAR _MetaRFmt = FORMAT( _MetaR / 1000000, "R$ #,##0.00\M;-R$ #,##0.00\M;R$ 0,00\M" )
+        VAR _VarRFmt  =
+            IF( ISBLANK(_VarR), "—",
+                FORMAT( _VarR / 1000000, "+R$ #,##0.00\M;-R$ #,##0.00\M;R$ 0,00\M" )
+            )
+        VAR _RealPFmt = IF( ISBLANK(_RealP), "—", FORMAT( _RealP, "0.00%;-0.00%;0.00%" ) )
+        VAR _MetaPFmt = FORMAT( _MetaP, "0.00%;-0.00%;0.00%" )
+        VAR _VarPFmt  = IF( ISBLANK(_VarP), "—", FORMAT( _VarP * 100, "+0.00;-0.00;0.00" ) & " p.p." )
+        VAR _BarW   = MIN( 45, ABS(_VarP) * 100 * 8 )
+        VAR _BarPos = IF( _VarP >= 0, "left:50%;background:#1e7a4a;", "right:50%;background:#c0392b;left:auto;" )
+        VAR _BarHtml =
+            IF( ISBLANK(_VarP),
+                "<span class='muted'>—</span>",
+                "<span class='bar-track'>"
+                & "<span class='bar-fill' style='" & _BarPos & "width:" & FORMAT(_BarW, "0") & "px;'></span>"
+                & "<span class='bar-zero'></span>"
+                & "</span>"
+            )
+        RETURN
+            "<tr class='" & _RowCls & "'>"
+            & "<td>" & _Agr & "</td>"
+            & "<td class='num'>" & _RealRFmt & "</td>"
+            & "<td class='num'>" & _MetaRFmt & "</td>"
+            & "<td class='num " & _CorR & "'>" & _VarRFmt & "</td>"
+            & "<td class='num sep'>" & _RealPFmt & "</td>"
+            & "<td class='num'>" & _MetaPFmt & "</td>"
+            & "<td class='num " & _CorP & "'>" & _VarPFmt & "</td>"
+            & "<td class='num'>" & _BarHtml & "</td>"
+            & "</tr>",
+        "",
+        [Ordem], ASC
+    )
+
+VAR _BodyEnd = "</tbody></table>"
+
+// ---------- Ranking de Δ R$ -----------------------------------------
+VAR _RankHeader = "
+<div class='section'>
+<h2>Ranking de Impacto (Δ R$ vs Meta)</h2>
+<div class='sub'>Ordenado da maior contribuição positiva à maior contribuição negativa</div>
+<table class='rank'><tbody>"
+
+VAR _Filtered = FILTER( _Enriched, NOT ISBLANK([VarR]) )
+
+VAR _RankBody =
+    CONCATENATEX(
+        _Filtered,
+        VAR _Agr  = [Agr]
+        VAR _VarR = [VarR]
+        VAR _Cor  = IF( _VarR >= 0, "pos", "neg" )
+        VAR _Pct  = ABS(_VarR) / _MaxAbsVarR
+        VAR _W    = FORMAT( _Pct * 49, "0.00" )
+        VAR _Side = IF( _VarR >= 0, "left:50%;", "right:50%;" )
+        VAR _Fmt  = FORMAT( _VarR / 1000000, "+R$ #,##0.00\M;-R$ #,##0.00\M;R$ 0,00\M" )
+        RETURN
+            "<tr>"
+            & "<td class='lbl'>" & _Agr & "</td>"
+            & "<td class='val " & _Cor & "'>" & _Fmt & "</td>"
+            & "<td class='bar'><div class='bartrack'>"
+            & "<div class='barfill " & _Cor & "' style='" & _Side & "width:" & _W & "%;'></div>"
+            & "<div class='zero'></div>"
+            & "</div></td>"
+            & "</tr>",
+        "",
+        [VarR], DESC
+    )
+
+VAR _RankEnd = "</tbody></table></div></div>"
+
+RETURN _Style & _Header & _Body & _BodyEnd & _RankHeader & _RankBody & _RankEnd

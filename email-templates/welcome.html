@@ -1,0 +1,150 @@
+<!--
+  Template "Boas-vindas / Definir senha"
+  ───────────────────────────────────────────────────────────────────────
+  Onde colar:
+    Firebase Console → Authentication → Templates → "Password reset"
+    → "Edit template" (ícone de lápis) → Customize → cole o HTML abaixo no
+    campo "Message".
+
+  Assunto sugerido:
+    Bem-vindo à Controladoria · defina sua senha de acesso
+
+  Variáveis disponíveis (não inventar — só essas funcionam):
+    %APP_NAME%       — nome do app (configurado no projeto Firebase)
+    %DISPLAY_NAME%   — nome do usuário (campo display_name no Auth)
+    %EMAIL%          — e-mail do destinatário
+    %LINK%           — link único de redefinição (válido por 1h)
+
+  Dicas de compatibilidade (já consideradas):
+    - Layout em tabelas (Outlook Windows não suporta flex/grid)
+    - Gradiente com fallback de cor sólida via bgcolor
+    - Sem web fonts (clientes de e-mail bloqueiam)
+    - Botão com padding em <td> + bgcolor (clicável até em Outlook)
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bem-vindo à Controladoria</title>
+</head>
+<body style="margin:0;padding:0;background:#eef1f4;font-family:'Aptos','Segoe UI',Tahoma,Arial,sans-serif;color:#2b2b2b;-webkit-font-smoothing:antialiased;">
+
+<!-- preheader (texto invisível que aparece no preview do inbox) -->
+<div style="display:none;max-height:0;overflow:hidden;color:#eef1f4;font-size:1px;line-height:1px;">
+  Sua conta foi criada. Defina sua senha pra entrar no painel.
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef1f4;padding:32px 16px;">
+  <tr>
+    <td align="center">
+
+      <!-- card -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(13,59,42,0.10);">
+
+        <!-- HERO: header verde com logo -->
+        <tr>
+          <td bgcolor="#0d3b2a" align="center" style="background:#0d3b2a;background-image:linear-gradient(160deg,#1f5a44 0%,#0d3b2a 65%,#062418 100%);padding:36px 28px 28px;color:#ffffff;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td valign="middle" style="padding-right:10px;">
+                  <!-- ícone (mesmo do login: gráfico + crescimento) -->
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffd24a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 14l4-4 3 3 5-6"/>
+                  </svg>
+                </td>
+                <td valign="middle" style="font-size:22px;font-weight:800;letter-spacing:1px;color:#ffffff;">
+                  CONTROLLERSHIP
+                </td>
+              </tr>
+            </table>
+            <div style="margin-top:6px;font-size:10px;letter-spacing:4px;color:rgba(255,255,255,0.75);font-weight:500;text-transform:uppercase;">
+              SISTEMA DE GESTÃO
+            </div>
+
+            <div style="margin-top:26px;font-size:18px;font-weight:700;color:#ffffff;">
+              Bem-vindo, %DISPLAY_NAME%!
+            </div>
+            <div style="margin-top:6px;font-size:13px;color:rgba(255,255,255,0.78);">
+              Sua conta foi criada com sucesso.
+            </div>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="padding:28px 28px 8px;">
+            <p style="margin:0 0 14px;font-size:14px;line-height:1.55;color:#2b2b2b;">
+              Olá, <strong>%DISPLAY_NAME%</strong>. Você foi cadastrado na plataforma de
+              controladoria. Pra entrar pela primeira vez, defina uma senha pessoal
+              clicando no botão abaixo:
+            </p>
+
+            <!-- BOTÃO (table pra Outlook compat) -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:22px auto;">
+              <tr>
+                <td bgcolor="#0d3b2a" style="background:#0d3b2a;border-radius:8px;">
+                  <a href="%LINK%"
+                     style="display:inline-block;padding:14px 32px;font-size:13px;font-weight:700;letter-spacing:2px;color:#ffffff;text-decoration:none;border-radius:8px;font-family:'Aptos','Segoe UI',Tahoma,Arial,sans-serif;">
+                    DEFINIR MINHA SENHA
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 14px;font-size:12px;line-height:1.55;color:#6b7a73;text-align:center;">
+              Ou copie e cole esse endereço no navegador:<br>
+              <a href="%LINK%" style="color:#0d3b2a;word-break:break-all;text-decoration:underline;">%LINK%</a>
+            </p>
+
+            <!-- divisor -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 18px;">
+              <tr><td style="border-top:1px solid #e5ebe8;height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr>
+            </table>
+
+            <!-- caixa de credenciais / dica -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f6f9f7;border-radius:8px;border:1px solid #e0eae4;">
+              <tr>
+                <td style="padding:14px 16px;font-size:12px;line-height:1.55;color:#2c5a47;">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;color:#2c5a47;margin-bottom:6px;text-transform:uppercase;">
+                    SEU LOGIN
+                  </div>
+                  <div style="font-size:14px;font-weight:600;color:#0d3b2a;">%EMAIL%</div>
+                  <div style="margin-top:8px;font-size:11px;color:#6b7a73;">
+                    O link expira em 1 hora. Se acabar o prazo, peça um novo
+                    no botão "Esqueci minha senha" da tela de login.
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:22px 0 0;font-size:11px;line-height:1.5;color:#9aa6a1;">
+              Se você não esperava esse e-mail, pode ignorar — sua conta só fica
+              ativa depois que <em>você</em> definir a senha.
+            </p>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td bgcolor="#fafbfc" style="background:#fafbfc;padding:16px 28px;border-top:1px solid #eef1f4;text-align:center;">
+            <div style="font-size:11px;color:#b8c0bb;letter-spacing:0.5px;">
+              %APP_NAME% · Controllership · Sistema de Gestão
+            </div>
+          </td>
+        </tr>
+
+      </table>
+
+      <!-- nota fora do card -->
+      <div style="margin-top:18px;font-size:10px;color:#9aa6a1;letter-spacing:0.5px;">
+        Esta mensagem foi enviada automaticamente. Não responda.
+      </div>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

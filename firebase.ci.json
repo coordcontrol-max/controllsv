@@ -1,0 +1,81 @@
+{
+  "_comment": "Config usada SÓ pelo GitHub Actions (deploy via PR merged a main).",
+  "_comment2": "Adiciona dados_*/ + JSONs grandes ao ignore — esses arquivos vivem no cron WSL e o CI NÃO deve sobrescrevê-los no Hosting. O cron usa firebase.json (sem esses ignores).",
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "site": "controllsv",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firebase.ci.json",
+      ".firebaserc",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "serviceAccount.json",
+      "_make_icons.py",
+      "**/.*",
+      "**/__pycache__/**",
+      "*.py",
+      "*.txt",
+      "*.md",
+      "PIPELINE.md",
+      "domain_output.txt",
+      "inspect_output.txt",
+      "run.sh",
+      "_backup_*",
+      "dados_fluxo_outras_lumi",
+      "dados/**",
+      "dados_bp/**",
+      "dados_dre_postos/**",
+      "dados_dre_postos_adaptive/**",
+      "dados_fluxo_intercompany/**",
+      "dados_fluxo_outras/**",
+      "dados_fluxo_postos/**",
+      "dados_fluxo_supermercados/**",
+      "dados.json",
+      "apuracao_contratos.json",
+      "energia.json",
+      "saldos_oficiais_master.json",
+      "titulos_aberto_data.json",
+      "titulos_aberto_detalhe.json",
+      ".github/**",
+      "logs/**",
+      "node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "service-worker.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      },
+      {
+        "source": "manifest.json",
+        "headers": [
+          { "key": "Content-Type", "value": "application/manifest+json" }
+        ]
+      },
+      {
+        "source": "**/*.@(png|jpg|jpeg|svg|webp|ico)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        ]
+      },
+      {
+        "source": "**/*.woff2",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Content-Type",  "value": "font/woff2" }
+        ]
+      }
+    ],
+    "rewrites": [
+      { "source": "/",          "destination": "/login.html" },
+      { "source": "/dashboard", "destination": "/dashboard.html" },
+      { "source": "**",         "destination": "/login.html" }
+    ]
+  }
+}

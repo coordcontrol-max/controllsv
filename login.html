@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a1a1a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Controladoria" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="preload" href="fonts/aptos-regular.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="fonts/aptos-semibold.woff2" as="font" type="font/woff2" crossorigin />
+<title>Controladoria · Login</title>
+<style>
+  /* Fonte Aptos (Microsoft 365 default) — self-hosted em /fonts/ */
+  @font-face {
+    font-family: 'Aptos';
+    font-style: normal; font-weight: 400; font-display: swap;
+    src: url('fonts/aptos-regular.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Aptos';
+    font-style: normal; font-weight: 600; font-display: swap;
+    src: url('fonts/aptos-semibold.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Aptos';
+    font-style: normal; font-weight: 700; font-display: swap;
+    src: url('fonts/aptos-bold.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Aptos';
+    font-style: italic; font-weight: 400; font-display: swap;
+    src: url('fonts/aptos-italic.woff2') format('woff2');
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: 'Aptos', 'Segoe UI', Tahoma, Arial, sans-serif;
+    color: #2b2b2b;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: #eef1f4;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    /* respeita o status bar / notch quando o PWA roda em tela cheia */
+    padding-top: calc(24px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .card {
+    width: 100%; max-width: 380px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  /* Header preto com logotipo + ilustração */
+  .hero {
+    position: relative;
+    background: linear-gradient(160deg, #2e2e2e 0%, #1a1a1a 65%, #000000 100%);
+    color: #fff;
+    /* respeita o status bar do celular em modo PWA fullscreen */
+    padding: calc(32px + env(safe-area-inset-top, 0px)) 28px 28px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .hero::before, .hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    pointer-events: none;
+  }
+  .hero::before { width: 220px; height: 220px; top: -90px; right: -70px; }
+  .hero::after  { width: 160px; height: 160px; bottom: -60px; left: -50px; }
+
+  .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 22px; letter-spacing: 1px;
+    position: relative;
+  }
+  .brand .logo-icon {
+    width: 24px; height: 24px;
+    color: #f5d30c;
+  }
+  .tagline {
+    margin-top: 4px;
+    font-size: 10px; letter-spacing: 4px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 500;
+    position: relative;
+  }
+  .illu {
+    margin: 22px auto 18px;
+    width: 150px; height: 110px;
+    color: rgba(255,255,255,0.78);
+    position: relative;
+  }
+  .illu svg { width: 100%; height: 100%; }
+  .welcome {
+    font-size: 18px; font-weight: 700;
+    position: relative;
+  }
+  .welcome-sub {
+    font-size: 12px; color: rgba(255,255,255,0.78);
+    margin-top: 4px;
+    position: relative;
+  }
+
+  /* Formulário */
+  .form { padding: 26px 28px 22px; }
+  .field { margin-bottom: 16px; }
+  .label {
+    display: block;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 1.2px;
+    color: #3a3a3a;
+    margin-bottom: 6px;
+  }
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap .icon {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    width: 16px; height: 16px;
+    color: #8b95a7;
+    pointer-events: none;
+  }
+  .input {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #d8dde0;
+    border-radius: 8px;
+    padding: 0 12px 0 38px;
+    font-size: 14px;
+    background: #fafbfc;
+    color: #2b2b2b;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .input::placeholder { color: #b3b7bc; }
+  .input:focus {
+    outline: none;
+    border-color: #1a1a1a;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.12);
+  }
+  .input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .submit {
+    width: 100%;
+    height: 46px;
+    margin-top: 8px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+  }
+  .submit:hover:not(:disabled) { background: #333333; }
+  .submit:active:not(:disabled) { transform: translateY(1px); }
+  .submit:disabled { background: #7a7a7a; cursor: not-allowed; }
+
+  .error {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #c0392b;
+    min-height: 16px;
+    text-align: center;
+  }
+  .error.success { color: #2f8a55; }
+
+  .forgot {
+    display: block;
+    margin-top: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: #3a3a3a;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(0,0,0,0.3);
+    transition: color 0.15s;
+  }
+  .forgot:hover, .forgot:focus { color: #1a1a1a; outline: none; }
+  .forgot:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .footer {
+    padding: 12px 16px 18px;
+    font-size: 11px;
+    color: #b8c0bb;
+    text-align: center;
+  }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: -2px;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Mobile fine-tuning */
+  @media (max-width: 420px) {
+    body { padding: 0; background: #fff; align-items: stretch; }
+    .card {
+      max-width: none; min-height: 100vh; min-height: 100dvh;
+      border-radius: 0; box-shadow: none;
+      display: flex; flex-direction: column;
+    }
+    .form { flex: 1; }
+  }
+
+  /* ============== DARK MODE ============== */
+  body.dark { background: #0f1115; color: #e6e8eb; }
+  body.dark .card {
+    background: #11141c;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.35);
+  }
+  /* hero já é gradient preto — combina com dark, não muda */
+  body.dark .form { background: #11141c; }
+  body.dark .label { color: #f5d30c; }
+  body.dark .input {
+    background: #1f2533;
+    border-color: #2c3346;
+    color: #e6e8eb;
+  }
+  body.dark .input::placeholder { color: #6c7873; }
+  body.dark .input:focus {
+    border-color: #f5d30c;
+    background: #232938;
+    box-shadow: 0 0 0 3px rgba(255,210,74,0.15);
+  }
+  body.dark .submit { background: #1a1a1a; color: #f5d30c; border: 1px solid #2c3346; }
+  body.dark .submit:hover:not(:disabled) { background: #2a2a2a; }
+  body.dark .submit:disabled { background: #2c3346; color: #6c7873; }
+  body.dark .forgot { color: #f5d30c; text-decoration-color: rgba(255,210,74,0.4); }
+  body.dark .forgot:hover, body.dark .forgot:focus { color: #ffe488; }
+  body.dark .footer { color: #6c7873; }
+  body.dark .error { color: #ff7a6c; }
+  body.dark .error.success { color: #5fd4a4; }
+  @media (max-width: 420px) {
+    body.dark { background: #0f1115; }
+    body.dark .card { background: #11141c; }
+  }
+</style>
+</head>
+<body>
+
+<script>
+  // Default = dark. Aplica antes do paint pra evitar flash.
+  (function () {
+    try {
+      var t = localStorage.getItem("theme");
+      if (t !== "light") {
+        document.body.classList.add("dark");
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", "#0f0f0f");
+      }
+    } catch (_) {
+      document.body.classList.add("dark");
+    }
+  })();
+</script>
+
+<main class="card" role="main">
+
+  <header class="hero">
+    <div class="brand">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3v18h18" />
+        <path d="M7 15l4-5 3 3 5-7" />
+      </svg>
+      <span>CONTROLADORIA</span>
+    </div>
+    <div class="tagline">GESTÃO DE RESULTADOS</div>
+
+    <div class="illu" aria-hidden="true">
+      <!-- Ilustração de carrinho de supermercado em linhas -->
+      <svg viewBox="0 0 200 140" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- linhas de movimento -->
+        <line x1="10" y1="60"  x2="46" y2="60" />
+        <line x1="6"  y1="74"  x2="38" y2="74" />
+        <line x1="14" y1="88"  x2="42" y2="88" />
+        <!-- haste -->
+        <path d="M52 36 h12 a4 4 0 0 1 4 4 v6" />
+        <circle cx="52" cy="36" r="3" />
+        <!-- corpo do carrinho -->
+        <path d="M68 52 L186 52 L172 100 L82 100 Z" />
+        <!-- divisões internas verticais -->
+        <line x1="92"  y1="52" x2="92"  y2="100" />
+        <line x1="116" y1="52" x2="116" y2="100" />
+        <line x1="140" y1="52" x2="140" y2="100" />
+        <line x1="164" y1="52" x2="164" y2="100" />
+        <!-- divisões horizontais -->
+        <line x1="74" y1="68" x2="180" y2="68" />
+        <line x1="78" y1="84" x2="174" y2="84" />
+        <!-- rodas -->
+        <circle cx="96"  cy="116" r="8" />
+        <circle cx="156" cy="116" r="8" />
+      </svg>
+    </div>
+
+    <div class="welcome">Bem-vindo de volta</div>
+    <div class="welcome-sub">Acesse sua conta para continuar</div>
+  </header>
+
+  <form class="form" id="loginForm" autocomplete="on" novalidate>
+    <div class="field">
+      <label class="label" for="email">E-MAIL</label>
+      <div class="input-wrap">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="M3 7l9 6 9-6" />
+        </svg>
+        <input class="input" id="email" name="email" type="email"
+               placeholder="seu@email.com.br" autocomplete="username"
+               inputmode="email" required />
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="label" for="password">SENHA</label>
+      <div class="input-wrap">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="9" rx="2" />
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+        </svg>
+        <input class="input" id="password" name="password" type="password"
+               placeholder="Digite sua senha" autocomplete="current-password"
+               required minlength="6" />
+      </div>
+    </div>
+
+    <button type="submit" class="submit" id="submitBtn">ENTRAR</button>
+    <button type="button" class="forgot" id="forgotBtn">Esqueci minha senha</button>
+    <div class="error" id="error" role="alert" aria-live="polite"></div>
+  </form>
+
+  <div class="footer">© 2025 Controllership · Sistema de Gestão para Supermercados</div>
+</main>
+
+<script type="module">
+import { initializeApp }
+  from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail,
+         onAuthStateChanged, setPersistence, browserLocalPersistence }
+  from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyBA1uhTyiEVY7NaBe-HjDwSU4EsvfY9Y60",
+  authDomain:        "projeto-686e2.firebaseapp.com",
+  projectId:         "projeto-686e2",
+  storageBucket:     "projeto-686e2.firebasestorage.app",
+  messagingSenderId: "23869616521",
+  appId:             "1:23869616521:web:66448531f431c17c6ab158",
+  measurementId:     "G-C6R1WDP7CF",
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+await setPersistence(auth, browserLocalPersistence);
+
+const form    = document.getElementById("loginForm");
+const emailEl = document.getElementById("email");
+const passEl  = document.getElementById("password");
+const btn     = document.getElementById("submitBtn");
+const forgotBtn = document.getElementById("forgotBtn");
+const errEl   = document.getElementById("error");
+
+// Se já estiver logado, manda direto pro dashboard
+onAuthStateChanged(auth, user => {
+  if (user) window.location.replace("dashboard.html");
+});
+
+// Limpa mensagens ao começar a digitar de novo
+[emailEl, passEl].forEach(el => el.addEventListener("input", () => {
+  if (errEl.textContent) showError("");
+}));
+
+function setLoading(isLoading) {
+  btn.disabled = isLoading;
+  emailEl.disabled = isLoading;
+  passEl.disabled = isLoading;
+  btn.innerHTML = isLoading
+    ? '<span class="spinner"></span>ENTRANDO...'
+    : 'ENTRAR';
+}
+
+function showError(msg)   { errEl.textContent = msg || ""; errEl.classList.remove("success"); }
+function showSuccess(msg) { errEl.textContent = msg || ""; errEl.classList.add("success"); }
+
+function friendlyError(code) {
+  switch (code) {
+    case "auth/invalid-email":            return "E-mail inválido.";
+    case "auth/user-disabled":            return "Conta desativada.";
+    case "auth/user-not-found":           return "Não encontramos uma conta com esse e-mail.";
+    case "auth/wrong-password":
+    case "auth/invalid-credential":       return "E-mail ou senha incorretos.";
+    case "auth/too-many-requests":        return "Muitas tentativas. Tente novamente em alguns minutos.";
+    case "auth/network-request-failed":   return "Sem conexão. Verifique sua internet.";
+    case "auth/operation-not-allowed":    return "Login por e-mail/senha não está ativado no projeto Firebase.";
+    case "auth/unauthorized-domain":      return "Este domínio não está autorizado no Firebase Auth.";
+    case "auth/missing-email":            return "Digite seu e-mail antes de continuar.";
+    case "auth/api-key-not-valid":
+    case "auth/invalid-api-key":          return "Configuração do Firebase inválida (API key).";
+    default:                              return "Não foi possível continuar (" + (code || "erro desconhecido") + ").";
+  }
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  showError("");
+  const email = emailEl.value.trim();
+  const pass  = passEl.value;
+  if (!email || !pass) { showError("Preencha e-mail e senha."); return; }
+
+  setLoading(true);
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    // onAuthStateChanged faz o redirect
+  } catch (e) {
+    console.error(e);
+    showError(friendlyError(e.code));
+    setLoading(false);
+  }
+});
+
+// "Esqueci minha senha" → envia link de reset por e-mail
+forgotBtn.addEventListener("click", async () => {
+  const email = emailEl.value.trim();
+  if (!email) {
+    showError("Digite seu e-mail acima e clique de novo em \"Esqueci minha senha\".");
+    emailEl.focus();
+    return;
+  }
+  forgotBtn.disabled = true;
+  forgotBtn.textContent = "Enviando…";
+  showError("");
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showSuccess("Enviamos um link de redefinição para " + email + ". Confira sua caixa de entrada (e o spam).");
+  } catch (e) {
+    console.error(e);
+    showError(friendlyError(e.code));
+  } finally {
+    forgotBtn.disabled = false;
+    forgotBtn.textContent = "Esqueci minha senha";
+  }
+});
+
+// SW: registra + força check de update a cada load + auto-reload na ativação
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js")
+      .then(reg => reg.update().catch(() => {}))
+      .catch(() => {});
+  });
+  navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data?.type === "SW_UPDATED") {
+      if (!sessionStorage.getItem("__sw_reload_done")) {
+        sessionStorage.setItem("__sw_reload_done", "1");
+        window.location.reload();
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>

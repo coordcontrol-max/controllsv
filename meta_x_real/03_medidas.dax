@@ -1,0 +1,128 @@
+// =====================================================================
+// MEDIDAS COMPARAÇÃO META x REAL
+// Como usar: clique direito na tabela "Metas AV%" > "Nova medida".
+//            Cole UMA medida por vez (sem o cabeçalho).
+// =====================================================================
+
+
+// ---------------------------------------------------------------------
+// META AV% — busca a meta em % do AGRUPAMENTO no contexto atual
+// ---------------------------------------------------------------------
+Meta AV% =
+SELECTEDVALUE( 'Metas AV%'[Meta AV%] )
+
+
+// ---------------------------------------------------------------------
+// REAL AV% — análise vertical realizada por AGRUPAMENTO
+// ---------------------------------------------------------------------
+Real AV% =
+VAR _Valor =
+    CALCULATE(
+        SUM( 'VALORES RATEADOS'[VALORES] ),
+        ALLEXCEPT( 'PLANO', 'PLANO'[GRUPO], 'PLANO'[AGRUPAMENTO] )
+    )
+VAR _VendaBruta =
+    CALCULATE(
+        SUM( 'VALORES RATEADOS'[VALORES] ),
+        ALL( 'PLANO' ),
+        'PLANO'[GRUPO] = "Venda Bruta"
+    )
+RETURN
+    IF(
+        ISBLANK( _VendaBruta ) || _VendaBruta = 0,
+        BLANK(),
+        DIVIDE( _Valor, _VendaBruta )
+    )
+
+
+// ---------------------------------------------------------------------
+// VENDA BRUTA R$ — total da Venda Bruta no contexto atual (base para meta R$)
+// ---------------------------------------------------------------------
+Venda Bruta R$ =
+CALCULATE(
+    SUM( 'VALORES RATEADOS'[VALORES] ),
+    ALL( 'PLANO' ),
+    'PLANO'[GRUPO] = "Venda Bruta"
+)
+
+
+// ---------------------------------------------------------------------
+// REAL R$ — valor realizado no AGRUPAMENTO (em R$)
+// ---------------------------------------------------------------------
+Real R$ =
+CALCULATE(
+    SUM( 'VALORES RATEADOS'[VALORES] ),
+    ALLEXCEPT( 'PLANO', 'PLANO'[GRUPO], 'PLANO'[AGRUPAMENTO] )
+)
+
+
+// ---------------------------------------------------------------------
+// META R$ — meta em R$ derivada da Venda Bruta realizada × Meta AV%
+// Convenção: na linha de Venda Bruta, meta R$ = real R$ (porque Meta% = 100%).
+// ---------------------------------------------------------------------
+Meta R$ =
+[Venda Bruta R$] * [Meta AV%]
+
+
+// ---------------------------------------------------------------------
+// VARIAÇÃO R$ — Real menos Meta (em R$)
+// Positivo = favorável (receita maior, ou despesa "menos negativa" que meta)
+// ---------------------------------------------------------------------
+Variação R$ (Real vs Meta) =
+VAR _R = [Real R$]
+VAR _M = [Meta R$]
+RETURN
+    IF(
+        ISBLANK( _R ) || ISBLANK( _M ),
+        BLANK(),
+        _R - _M
+    )
+
+
+// ---------------------------------------------------------------------
+// VARIAÇÃO P.P. — Real AV% menos Meta AV% em pontos percentuais
+// ---------------------------------------------------------------------
+Variação p.p. (Real vs Meta) =
+VAR _Real = [Real AV%]
+VAR _Meta = [Meta AV%]
+RETURN
+    IF(
+        ISBLANK( _Real ) || ISBLANK( _Meta ),
+        BLANK(),
+        _Real - _Meta
+    )
+
+
+// ---------------------------------------------------------------------
+// ATINGIMENTO % — Real / Meta (em base AV%)
+// ---------------------------------------------------------------------
+Atingimento Meta AV% =
+DIVIDE( [Real AV%], [Meta AV%] )
+
+
+// ---------------------------------------------------------------------
+// COR DA VARIAÇÃO — verde quando favorável, vermelho quando desfavorável
+// ---------------------------------------------------------------------
+Cor Variação Meta =
+VAR _Var = [Variação p.p. (Real vs Meta)]
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK( _Var ),  "#808080",
+        _Var >= 0,        "#1e7a4a",
+        "#c0392b"
+    )
+
+
+// ---------------------------------------------------------------------
+// STATUS — rótulo textual ("✓ Atingiu" / "✗ Abaixo")
+// ---------------------------------------------------------------------
+Status Meta =
+VAR _Var = [Variação p.p. (Real vs Meta)]
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK( _Var ), BLANK(),
+        _Var >= 0,       "✓ Atingiu",
+        "✗ Abaixo"
+    )
