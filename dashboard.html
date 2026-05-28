@@ -194,6 +194,8 @@
   .side-menu-footer-link img { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 5px; object-fit: cover; }
   /* Dashboard DFC: usa dropdowns inline (dfc-dash-filtros) — esconde o funil global aqui */
   body[data-view="fluxocaixa-dashboard"] #filterToggle { display: none; }
+  /* Dashboard DRE (home): filtros inline na barra do topo — esconde o funil */
+  body[data-view="home"] #filterToggle { display: none; }
   .dfc-dash-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 14px; }
   .dfc-dash-filtros label { font-size: 12px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
   .dfc-dash-filtros select {
@@ -305,6 +307,9 @@
   .side-menu.collapsed .side-subsection-title { display: none; }
   .side-menu.collapsed .side-sub-sub-list { display: block !important; }
   .side-menu.collapsed .side-sub-sub-list .side-item { padding-left: 18px; }
+  /* Colapsado: a lista de relatórios NÃO aparece inline (mesmo com a seção
+     expandida) — só no flyout do hover. Evita o texto cortado na faixa estreita. */
+  .side-menu.collapsed .side-section.has-children.expanded > .side-sub-list { display: none; }
 
   /* No modo colapsado, ela vira um flyout à direita no hover */
   .side-menu.collapsed .side-section.has-children:hover > .side-sub-list {
@@ -504,6 +509,20 @@
   }
 
   /* === HOME view === */
+  .dre-home-filtros {
+    display: flex; gap: 14px; align-items: center; justify-content: flex-end;
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .dre-home-filtros label {
+    font-size: 12px; font-weight: 700; color: #6c757d;
+    display: flex; gap: 6px; align-items: center; letter-spacing: .3px;
+  }
+  .dre-home-filtros select {
+    padding: 6px 10px; border: 1px solid #d8e0dc; border-radius: 6px;
+    font-size: 13px; background: #fff; color: #222; cursor: pointer;
+  }
+  body.dark .dre-home-filtros label { color: #9aa5b4; }
+  body.dark .dre-home-filtros select { background: #1a2026; color: #c5cad4; border-color: #2c3346; }
   .kpi-grid {
     display: grid; grid-template-columns: repeat(5, 1fr);
     gap: 12px; margin-bottom: 18px;
@@ -523,7 +542,7 @@
   .mini-bar .bar { width: 100%; background: #d9d9d9; border-radius: 2px; margin-bottom: 3px; }
   .mini-bar .month { font-size: 10px; color: #444; }
   .mini-bar .yoy { font-size: 8px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; }
-  .mini-bar .yoy-up   { color: #925e2a; }
+  .mini-bar .yoy-up   { color: #1f9d6a; }
   .mini-bar .yoy-down { color: #e23434; }
   /* Quando há muitos meses, reduz a fonte pra caber */
   .mini-bars:has(> .mini-bar:nth-child(5)) .pct,
@@ -531,27 +550,68 @@
   .mini-bars:has(> .mini-bar:nth-child(7)) .pct,
   .mini-bars:has(> .mini-bar:nth-child(7)) .month { font-size: 7px; }
 
-  .c-green  { border-top-color: var(--brand); }
+  .c-green  { border-top-color: #1f9d6a; }
   .c-red    { border-top-color: #e23434; }
-  .c-mint   { border-top-color: #925e2a; }
+  .c-mint   { border-top-color: var(--accent); }
+  .c-blue   { border-top-color: var(--accent); }
   .c-orange { border-top-color: #d99a2b; }
   .c-purple { border-top-color: #5b21b6; }
   .c-gray   { border-top-color: #8a9b95; }
-  .v-red    { color: #e23434; } .v-green  { color: #925e2a; }
+  .v-red    { color: #e23434; } .v-green  { color: #1f9d6a; }
+  .v-mint   { color: var(--accent); } .v-blue { color: var(--accent); }
   .v-orange { color: #d99a2b; } .v-purple { color: #5b21b6; } .v-gray { color: #5a6a64; }
   /* Pct das mini-bars herda a cor do KPI quando recebe v-* (specifity precisa
      ser maior que .mini-bar .pct). Light: */
   .mini-bar .pct.v-red    { color: #e23434; }
-  .mini-bar .pct.v-green  { color: #925e2a; }
+  .mini-bar .pct.v-green  { color: #1f9d6a; }
+  .mini-bar .pct.v-mint   { color: var(--accent); }
+  .mini-bar .pct.v-blue   { color: var(--accent); }
   .mini-bar .pct.v-orange { color: #d99a2b; }
   .mini-bar .pct.v-purple { color: #5b21b6; }
   .mini-bar .pct.v-gray   { color: #5a6a64; }
-  .mini-bar .bar.b-green  { background: var(--brand); }
+  .mini-bar .bar.b-green  { background: #1f9d6a; }
   .mini-bar .bar.b-red    { background: #e23434; }
-  .mini-bar .bar.b-mint   { background: #925e2a; }
+  .mini-bar .bar.b-mint   { background: var(--accent); }
+  .mini-bar .bar.b-blue   { background: var(--accent); }
   .mini-bar .bar.b-orange { background: #d99a2b; }
   .mini-bar .bar.b-purple { background: #5b21b6; }
   .mini-bar .bar.b-gray   { background: #8a9b95; }
+  /* kpi-head (Realizado + Meta lado a lado) — estilo Demonstrativo Supervendas */
+  .kpi-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .kpi-real { min-width: 0; }
+  .kpi-meta { text-align: right; flex-shrink: 0; border-left: 1px dashed #d8e0dc; padding-left: 8px; }
+  .kpi-meta-lbl { font-size: 9px; color: #9aa5a0; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+  .kpi-meta-val { font-size: 13px; font-weight: 700; line-height: 1.15; color: #777; margin-top: 2px; }
+  .kpi-meta-pct { font-size: 11px; margin-top: 2px; color: #9aa5a0; }
+  /* mini-trend: barras + linha de tendência (laranja) no mesmo SVG */
+  .mini-trend { margin-top: auto; }
+  .mt-labels, .mt-months { display: grid; gap: 6px; }
+  .mt-col { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .mt-col .pct { font-size: 9px; color: #777; font-weight: 700; }
+  .mt-col .pct.v-green  { color: #1f9d6a; }
+  .mt-col .pct.v-mint   { color: var(--accent); }
+  .mt-col .pct.v-blue   { color: var(--accent); }
+  .mt-col .pct.v-red    { color: #e23434; }
+  .mt-col .pct.v-orange { color: #d99a2b; }
+  .mt-col .pct.v-purple { color: #5b21b6; }
+  .mt-col .yoy { font-size: 8px; font-weight: 700; }
+  .mt-col .yoy.yoy-up   { color: #1f9d6a; }
+  .mt-col .yoy.yoy-down { color: #e23434; }
+  .mt-months .month { font-size: 9px; color: #444; font-weight: 600; text-align: center; }
+  .mt-svg { width: 100%; height: 46px; display: block; margin: 3px 0; overflow: visible; }
+  .mt-bar { opacity: .85; }
+  .mt-bar.b-green  { fill: #1f9d6a; }
+  .mt-bar.b-mint, .mt-bar.b-blue { fill: var(--accent); }
+  .mt-bar.b-red    { fill: #e23434; }
+  .mt-bar.b-orange { fill: #d99a2b; }
+  .mt-bar.b-purple { fill: #5b21b6; }
+  .mt-bar.b-gray   { fill: #8a9b95; }
+  .mt-line { fill: none; stroke: #f5a623; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+  .mt-pt { fill: #f5a623; }
+  .mini-trend[data-nm="9"]  .mt-labels .pct, .mini-trend[data-nm="9"]  .mt-months .month { font-size: 8px; }
+  .mini-trend[data-nm="10"] .mt-labels .pct, .mini-trend[data-nm="10"] .mt-months .month { font-size: 8px; }
+  .mini-trend[data-nm="11"] .mt-labels .pct, .mini-trend[data-nm="11"] .mt-months .month { font-size: 7px; }
+  .mini-trend[data-nm="12"] .mt-labels .pct, .mini-trend[data-nm="12"] .mt-months .month { font-size: 7px; }
 
   .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .chart-card {
@@ -559,6 +619,40 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.06); height: 380px;
   }
   canvas { max-width: 100%; }
+  /* ── Dashboard DRE: Composição de Despesas + Despesas por Agrupamento (donut +
+       tabela) — clone do Demonstrativo Supervendas (cores azuis) ── */
+  .dredem-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .dredem-charts .chart-card {
+    background: #fff; border-radius: 6px; padding: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06); height: auto;
+  }
+  .dredem-charts .chart-card h3 { margin: 0 0 8px; font-size: 13px; color: #222; font-weight: 700; }
+  .dredem-charts .chart-canvas-wrap { position: relative; height: 322px; }
+  .donut-row { display: flex; gap: 14px; align-items: stretch; }
+  .donut-row .donut-canvas { flex: 0 0 240px; height: 322px; }
+  .donut-legend { flex: 1; min-width: 0; max-height: 322px; overflow: auto; }
+  .donut-legend table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .donut-legend thead th {
+    position: sticky; top: 0; background: var(--brand); color: #fff;
+    padding: 5px 6px; text-align: right; font-weight: 700; white-space: nowrap;
+  }
+  .donut-legend thead th:first-child { text-align: left; }
+  .donut-legend tbody td { padding: 3px 6px; border-bottom: 1px solid #eef0ed; white-space: nowrap; color: #555; }
+  .donut-legend tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .donut-legend tbody td.nome { color: #222; }
+  .donut-legend tbody tr:hover td { background: #f4f8f4; }
+  .donut-legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 4px; margin-right: 7px; vertical-align: middle; }
+  body.dark .dredem-charts .chart-card { background: #161b24; }
+  body.dark .dredem-charts .chart-card h3 { color: #e6e8eb; }
+  body.dark .donut-legend tbody td { color: #9aa5b4; border-bottom-color: #232938; }
+  body.dark .donut-legend tbody td.nome { color: #c5cad4; }
+  body.dark .donut-legend tbody tr:hover td { background: #1f2533; }
+  @media (max-width: 1000px) {
+    .dredem-charts { grid-template-columns: 1fr; }
+    .donut-row { flex-direction: column; }
+    .donut-row .donut-canvas { flex: none; width: 100%; }
+    .donut-legend { max-height: none; }
+  }
 
   .loading { text-align: center; padding: 60px; font-size: 14px; color: #888; }
 
@@ -767,6 +861,42 @@
   /* PowerBI removido do controllsv (era do segmento Supermercados) */
   #sectionPB,
   [data-view="dre-pb"], [data-view="dre-pb-excel"], [data-view="comparativo-dre"] { display: none !important; }
+
+  /* === Abas in-report do Demonstrativo de Resultado (substitui a sub-lista da lateral) === */
+  .report-tabs {
+    display: none; gap: 4px; padding: 6px; margin: 0 14px 12px;
+    background: var(--panel, #fff); border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .report-tabs::-webkit-scrollbar { display: none; }
+  body[data-view="home"]       #dreTabs,
+  body[data-view="dre"]        #dreTabs,
+  body[data-view="dre-postos"] #dreTabs,
+  body[data-view="ah"]         #dreTabs,
+  body[data-view="lojasrs"]    #dreTabs,
+  body[data-view="lojaspct"]   #dreTabs,
+  body[data-view="analise2"]   #dreTabs { display: flex; }
+  .report-tabs button {
+    flex: 0 0 auto; padding: 8px 14px;
+    font-size: 12px; font-weight: 700; font-family: inherit;
+    background: transparent; border: none; border-radius: 8px;
+    color: var(--ink-2, #6c757d); cursor: pointer; white-space: nowrap;
+    transition: background .12s, color .12s;
+  }
+  .report-tabs button:hover { background: rgba(0,0,0,.05); }
+  .report-tabs button.active { background: var(--brand); color: #fff; }
+  /* Sidebar: "Demonstrativo De Resultado" destacado em qualquer view da DRE */
+  body[data-view="home"]       #sectionDR > .side-subsection-title,
+  body[data-view="dre"]        #sectionDR > .side-subsection-title,
+  body[data-view="dre-postos"] #sectionDR > .side-subsection-title,
+  body[data-view="ah"]         #sectionDR > .side-subsection-title,
+  body[data-view="lojasrs"]    #sectionDR > .side-subsection-title,
+  body[data-view="lojaspct"]   #sectionDR > .side-subsection-title,
+  body[data-view="analise2"]   #sectionDR > .side-subsection-title {
+    background: #fbfaf2; color: var(--brand); font-weight: 700;
+    border-left: 3px solid var(--accent); padding-left: 21px;
+  }
   .drepostos-postos {
     display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 14px 2px;
     align-items: center;
@@ -977,14 +1107,23 @@
   body.dark .cmp-cell-bad  { color: #ef5350; background: rgba(239, 83, 80, 0.08); }
   body.dark .cmp-progress-bar { background: #232938; }
 
-  .dre-main { display: grid; grid-template-columns: 1fr 360px; gap: 18px; align-items: start; }
+  /* Layout: Resultados (esq) + Gráfico (dir) na 1ª linha; Indicadores na 2ª linha
+     (col esquerda). O gráfico estica à altura da tabela de Resultados. */
+  .dre-main {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    grid-template-areas:
+      "results chart"
+      "indicators .";
+    gap: 16px 18px; align-items: start;
+  }
+  .dre-results-card { grid-area: results; }
+  .dre-chart-card { grid-area: chart; align-self: stretch; }
+  .dre-ind-card { grid-area: indicators; }
   .dre-table-card, .dre-chart-card {
     background: #fff; border-radius: 4px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.06); padding: 8px;
   }
-  /* Coluna esquerda do grid: empilha os 2 relatórios (Resultados + Indicadores)
-     com um espaço entre eles. min-width:0 impede o grid de expandir pelo conteúdo. */
-  .dre-table-col { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
   /* Cada relatório rola DENTRO do seu card (scrollbar logo abaixo do conteúdo). */
   .dre-table-card {
     overflow: auto; min-width: 0;
@@ -994,10 +1133,10 @@
   .dre-chart-card {
     padding: 16px;
     display: flex; flex-direction: column;
-    height: calc(100vh - 240px);
-    min-height: 420px;
-    position: sticky; top: 12px;
+    min-height: 360px;
+    background: #eef1f5; border-radius: 10px; box-shadow: none;
   }
+  body.dark .dre-chart-card { background: #161b24; }
   .dre-chart-card .dre-chart-title {
     font-size: 14px; font-weight: 700; color: #444; margin-bottom: 8px;
   }
@@ -1027,17 +1166,16 @@
   }
   .dre-table thead tr.sub-row th:first-child {
     position: sticky; left: 0; z-index: 5;
-    border-right: 3px solid var(--brand-dk, #16304f);
+    box-shadow: 2px 0 4px -2px rgba(0,0,0,0.18);
   }
-  .dre-table thead tr.month-row th:first-child { border-right: 3px solid var(--brand-dk, #16304f); }
   /* Coluna acumulado (Total = R$ + AV%) fixa à direita. min-width fixo na AV%
      garante que o right:56px do R$ alinhe certo. */
-  .dre-table th.drep-totcol-av, .dre-table td.drep-totcol-av { min-width: 56px; width: 56px; }
+  .dre-table th.drep-totcol-av, .dre-table td.drep-totcol-av { min-width: 56px; width: 56px; max-width: 56px; }
   .dre-table thead th.drep-totcol-rs { position: sticky; right: 56px; z-index: 4;
-    border-left: 3px solid var(--brand-dk, #16304f); }
+    box-shadow: -2px 0 4px -2px rgba(0,0,0,0.18); }
   .dre-table thead th.drep-totcol-av { position: sticky; right: 0; z-index: 4; }
   .dre-table thead tr.month-row th.drep-totcol-rs {
-    right: 0; z-index: 4; border-left: 3px solid var(--brand-dk, #16304f);
+    right: 0; z-index: 4; box-shadow: -2px 0 4px -2px rgba(0,0,0,0.18);
   }
   .dre-table tbody td {
     padding: 5px 8px; border-bottom: 1px solid #eef0ed;
@@ -1046,7 +1184,7 @@
   .dre-table tbody td.label { text-align: left; font-weight: 600; cursor: pointer;
     min-width: 220px; white-space: nowrap;
     position: sticky; left: 0; z-index: 2; background: #fff;
-    border-right: 3px solid var(--brand-dk, #16304f); }
+    box-shadow: 2px 0 4px -2px rgba(0,0,0,0.18); }
   .dre-table thead tr.sub-row th:first-child { min-width: 220px; }
   .dre-table tbody td.label:hover { color: var(--brand); text-decoration: underline; }
   .dre-table tbody tr.alt { background: #f4f8f4; }
@@ -1056,7 +1194,7 @@
   .dre-table tbody td.total { background: var(--brand); color: #fff; font-weight: 700; }
   /* Colunas de acumulado (R$/AV% do Total) fixas à direita ao rolar horizontal */
   .dre-table tbody td.drep-totcol-rs { position: sticky; right: 56px; z-index: 1; background: #fff;
-    border-left: 3px solid var(--brand-dk, #16304f); }
+    box-shadow: -2px 0 4px -2px rgba(0,0,0,0.18); }
   .dre-table tbody td.drep-totcol-av { position: sticky; right: 0; z-index: 1; background: #fff; }
   .dre-table tbody tr.alt td.drep-totcol-rs, .dre-table tbody tr.alt td.drep-totcol-av { background: #f4f8f4; }
   /* Células sticky (label/total) herdam o fundo da linha por nível/destaque */
@@ -1070,7 +1208,7 @@
   /* Coluna Total dos Indicadores (célula única colspan=2) fixa à direita */
   .dre-table th.drep-totcol-ind, .dre-table td.drep-totcol-ind {
     position: sticky; right: 0; z-index: 1; background: #fff;
-    border-left: 3px solid var(--brand-dk, #16304f);
+    box-shadow: -2px 0 4px -2px rgba(0,0,0,0.18);
   }
   .dre-table thead th.drep-totcol-ind { z-index: 4; }
   .dre-table tbody tr.lvl-2 td.drep-totcol-ind { background: #f6faf6; }
@@ -5553,25 +5691,12 @@
             <button data-view="comparativo-dre" class="side-item">Comparativo DRE</button>
           </div>
         </div>
-        <!-- Sub-aba: Demonstrativo De Resultado -->
-        <div class="side-subsection has-children" id="sectionDR">
-          <button class="side-subsection-title side-expander" data-section-toggle="dr"
-                  aria-expanded="false" aria-controls="drSubList">
+        <!-- Demonstrativo De Resultado — item único; sub-views viram ABAS dentro
+             do relatório (#dreTabs). Clique abre o Dashboard DRE. -->
+        <div class="side-subsection" id="sectionDR">
+          <button class="side-subsection-title" data-view="home">
             <span>Demonstrativo De Resultado</span>
-            <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
           </button>
-          <div class="side-sub-sub-list" id="drSubList">
-            <button data-view="home"      class="side-item">Dashboard DRE</button>
-            <button data-view="dre"       class="side-item">Análise Vertical</button>
-            <button data-view="dre-postos" class="side-item" data-seg-only="postos">Mapa de Resultados</button>
-            <button data-view="ah"        class="side-item">Análise Horizontal</button>
-            <button data-view="lojasrs"   class="side-item">Lojas em R$</button>
-            <button data-view="lojaspct"  class="side-item">Lojas em %</button>
-            <button data-view="analise2"  class="side-item">Análise 2.0</button>
-          </div>
         </div>
         <!-- Sub-aba: Fluxo de Caixa -->
         <div class="side-subsection has-children" id="sectionFC">
@@ -5860,6 +5985,17 @@
       <button data-view="titulos-aberto-lojas">Títulos · Lojas</button>
     </nav>
 
+    <!-- Abas in-report do Demonstrativo de Resultado (desktop + mobile) -->
+    <nav class="report-tabs" id="dreTabs" aria-label="Abas do Demonstrativo de Resultado">
+      <button data-view="home">Dashboard DRE</button>
+      <button data-view="dre">Análise Vertical</button>
+      <button data-view="dre-postos" data-seg-only="postos">Mapa de Resultados</button>
+      <button data-view="ah">Análise Horizontal</button>
+      <button data-view="lojasrs">Lojas em R$</button>
+      <button data-view="lojaspct">Lojas em %</button>
+      <button data-view="analise2">Análise 2.0</button>
+    </nav>
+
     <!-- Sub-nav da Importação -->
     <nav class="sub-nav" id="importacaoSubNav" aria-label="Sub-navegação Importação">
       <button data-view="importacao-sql">Importação SQL</button>
@@ -5871,12 +6007,26 @@
 
     <!-- HOME view -->
     <section id="view-home" class="view">
+      <div class="dre-home-filtros" id="dreHomeFiltros">
+        <label>Ano <select id="homeFAno"></select></label>
+        <label>Mês <select id="homeFMes"></select></label>
+        <label>Empresa <select id="homeFLoja"></select></label>
+      </div>
       <div class="kpi-grid" id="kpiGrid">
         <div class="loading">carregando dados.json…</div>
       </div>
-      <div class="charts">
-        <div class="chart-card"><canvas id="barChart"></canvas></div>
-        <div class="chart-card"><canvas id="donutChart"></canvas></div>
+      <div class="dredem-charts">
+        <div class="chart-card">
+          <h3>Composição de Despesas (% sobre Venda Bruta)</h3>
+          <div class="chart-canvas-wrap"><canvas id="barChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Despesas por Agrupamento</h3>
+          <div class="donut-row">
+            <div class="chart-canvas-wrap donut-canvas"><canvas id="donutChart"></canvas></div>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -6318,18 +6468,16 @@
         </div>
         <div class="drepostos-postos" id="drePostosPostos"></div>
         <div class="dre-main">
-          <div class="dre-table-col">
-            <div class="dre-table-card">
-              <table class="dre-table" id="drePostosTable"></table>
-            </div>
-            <div class="dre-table-card dre-ind-card" id="drePostosIndCard">
-              <table class="dre-table" id="drePostosIndTable"></table>
-            </div>
+          <div class="dre-table-card dre-results-card">
+            <table class="dre-table" id="drePostosTable"></table>
           </div>
           <div class="dre-chart-card">
             <div class="dre-chart-title">% por Posto</div>
             <div class="chart-row-info" id="drePostosChartInfo">Clique numa linha</div>
             <div class="dre-chart-canvas-wrap"><canvas id="drePostosChart"></canvas></div>
+          </div>
+          <div class="dre-table-card dre-ind-card" id="drePostosIndCard">
+            <table class="dre-table" id="drePostosIndTable"></table>
           </div>
         </div>
       </div>
@@ -8240,7 +8388,7 @@ const KPI_CONFIG = [   // legado pra compat — o renderKPIs agora usa getKpiLis
 // KPIs base (Receita Total, etc) ficam brancos via valColor="" no caller.
 // Pros não-base, cada cor tem sua classe — incluindo "green" (antes ficava
 // branco; agora vira verde brilhante igual à Análise Vertical).
-const VAR_BY_COLOR = { red:"v-red", mint:"v-green", orange:"v-orange", purple:"v-purple", gray:"v-gray", green:"v-green" };
+const VAR_BY_COLOR = { red:"v-red", mint:"v-mint", orange:"v-orange", purple:"v-purple", gray:"v-gray", green:"v-green" };
 
 // Ordem dos GRUPOS na tabela DRE (igual ao painel original)
 const DRE_ROWS_SUPERMERCADOS = [
@@ -8583,7 +8731,94 @@ function labelReceita() {
 }
 function calcReceita(ano, mes, loja) { return sumGrupo([grupoReceita()], ano, mes, loja); }
 
+// Mini-gráfico de tendência (barras + linha por cima, no mesmo SVG) — usado nos
+// cartões com comparação YoY. Cartão base usa o VALOR; os demais usam o AV%.
+function buildMiniTrend(bars, cfg, valColor, barCls, nMeses) {
+  const COLW = 40, H = 48, BASE = 44, BARMAX = 38;
+  const W = bars.length * COLW;
+  const metric = b => cfg.isBase ? b.valor : b.pct;
+  const mAbs = Math.max(...bars.map(b => Math.abs(metric(b))), 1e-9);
+  const pts = bars.map((b, i) => {
+    const h = Math.max(6, (Math.abs(metric(b)) / mAbs) * BARMAX);
+    return { x: i * COLW + COLW / 2, top: +(BASE - h).toFixed(1), h: +h.toFixed(1) };
+  });
+  const rects = pts.map((p, i) =>
+    `<rect class="mt-bar ${barCls}" x="${i * COLW + 9}" y="${p.top}" width="${COLW - 18}" height="${p.h}" rx="1.5"/>`).join("");
+  const poly = pts.map(p => `${p.x},${p.top}`).join(" ");
+  const circles = pts.map(p => `<circle class="mt-pt" cx="${p.x}" cy="${p.top}" r="2.4"/>`).join("");
+  const gap = nMeses >= 12 ? "gap:1px;" : nMeses >= 10 ? "gap:2px;" : nMeses >= 8 ? "gap:3px;" : nMeses > 4 ? "gap:4px;" : "";
+  const cols = `grid-template-columns:repeat(${nMeses},1fr);${gap}`;
+  const labels = bars.map(b => {
+    const pctTxt = cfg.isBase ? fmtBRL(b.valor).replace("R$ ", "") : fmtPct(b.pct);
+    const yoyTxt = b.yoy == null ? ""
+      : `<div class="yoy ${b.yoy >= 0 ? 'yoy-up' : 'yoy-down'}">${b.yoy >= 0 ? '▲' : '▼'}${fmtPctSimple(Math.abs(b.yoy))}</div>`;
+    return `<div class="mt-col"><div class="pct ${valColor}">${pctTxt}</div>${yoyTxt}</div>`;
+  }).join("");
+  const months = bars.map(b => `<div class="month">${b.mes}</div>`).join("");
+  return `<div class="mini-trend" data-nm="${nMeses}">
+    <div class="mt-labels" style="${cols}">${labels}</div>
+    <svg class="mt-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${rects}<polyline class="mt-line" vector-effect="non-scaling-stroke" points="${poly}"/>${circles}</svg>
+    <div class="mt-months" style="${cols}">${months}</div>
+  </div>`;
+}
+
+// Barra de filtros visível no topo do Dashboard DRE (Ano/Mês/Empresa).
+// Sincroniza com os filtros globais (fAno / selectedMeses / selectedLojas) e o drawer.
+function _syncHomeFiltros() {
+  const selAno = document.getElementById("homeFAno");
+  const selMes = document.getElementById("homeFMes");
+  const selLoja = document.getElementById("homeFLoja");
+  if (!selAno || !selMes || !selLoja || !DADOS) return;
+  const anos = DADOS.dimensoes.anos || [];
+  if (selAno.dataset.k !== anos.join(",")) {
+    selAno.dataset.k = anos.join(",");
+    selAno.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join("");
+  }
+  const fAno = document.getElementById("fAno");
+  if (fAno) selAno.value = fAno.value;
+
+  const meses = DADOS.dimensoes.meses || [];
+  const mesesK = meses.map(m => m.num).join(",");
+  if (selMes.dataset.k !== mesesK) {
+    selMes.dataset.k = mesesK;
+    selMes.innerHTML = `<option value="">Todos os meses</option>`
+      + meses.map(m => `<option value="${m.num}">${m.nome}</option>`).join("");
+  }
+  selMes.value = (selectedMeses === "Todos" || selectedMeses.size !== 1) ? "" : String([...selectedMeses][0]);
+
+  // Usa os MESMOS códigos de loja do DADOS.fatos.porLinha (senão o filtro não casa
+  // e tudo zera). Label formatado "P01".."P11" a partir do código "001".."011".
+  const lojas = DADOS.dimensoes.lojas || [];
+  const lojaLabel = (l) => /^\d+$/.test(String(l)) ? ("P" + String(l).slice(-2)) : String(l);
+  const lojasK = lojas.join(",");
+  if (selLoja.dataset.k !== lojasK) {
+    selLoja.dataset.k = lojasK;
+    selLoja.innerHTML = `<option value="">Todas as empresas</option>`
+      + lojas.map(l => `<option value="${l}">${lojaLabel(l)}</option>`).join("");
+  }
+  selLoja.value = (selectedLojas === "Todos" || selectedLojas.size !== 1) ? "" : String([...selectedLojas][0]);
+
+  if (!selAno.dataset.bound) {
+    selAno.dataset.bound = "1";
+    selAno.addEventListener("change", () => {
+      const f = document.getElementById("fAno");
+      if (f) { f.value = selAno.value; f.dispatchEvent(new Event("change")); }
+    });
+    selMes.addEventListener("change", () => {
+      selectedMeses = selMes.value ? new Set([Number(selMes.value)]) : "Todos";
+      if (typeof setupMesMultiselect === "function") setupMesMultiselect();
+      renderAll();
+    });
+    selLoja.addEventListener("change", () => {
+      selectedLojas = selLoja.value ? new Set([selLoja.value]) : "Todos";
+      if (typeof setupLojaMultiselect === "function") setupLojaMultiselect();
+      renderAll();
+    });
+  }
+}
+
 function renderKPIs() {
+  _syncHomeFiltros();
   const { ano, mes, loja } = getFilters();
   // Todos os meses com dados no ano selecionado (sem teto fixo de 3).
   // Limita a 12 pra não estourar a largura do card num histórico longo.
@@ -8597,24 +8832,22 @@ function renderKPIs() {
   grid.innerHTML = "";
   getKpiList().forEach(cfg => {
     // cfg: { nome, titulo, color, sign, ordem, isBase, grupos }
-    // Aliases pra compat com código abaixo: title/id
     cfg.title = cfg.titulo;
     cfg.id    = cfg.nome;
     const valor = calcKPI(cfg.id, ano, mes, loja);
     const pct = receita ? (valor / receita) * 100 : 0;
+    // YoY (linha de tendência) só no cartão base (Faturamento).
+    const mostraYoY = cfg.isBase;
 
     const miniBars = mesesAtivos.map((m, i) => {
       const vMes = calcKPI(cfg.id, ano, m.num, loja);
       const recMes = calcReceita(ano, m.num, loja);
       const pctMes = recMes ? (vMes / recMes) * 100 : 0;
       const isLast = (i === mesesAtivos.length - 1);
-      // Déficit/superávit vs mesmo mês do ano anterior (YoY):
-      //   (mês ano atual / mês ano anterior − 1) × 100
-      // null se não houver base do ano anterior carregada.
       const vPrev = calcKPI(cfg.id, ano - 1, m.num, loja);
       const temBasePrev = DADOS.fatos.porGrupo.some(r => r.ANO === ano - 1 && r.MÊS === m.num);
-      const yoy = (temBasePrev && vPrev !== 0) ? ((vMes / vPrev) - 1) * 100 : null;
-      return { mes: m.nome, pct: pctMes, valor: vMes, isLast, yoy };
+      const yoy = (mostraYoY && temBasePrev && vPrev !== 0) ? ((vMes / vPrev) - 1) * 100 : null;
+      return { mes: (m.nome || "").slice(0, 3).toUpperCase(), pct: pctMes, valor: vMes, isLast, yoy };
     });
     const maxAbs = Math.max(...miniBars.map(b => Math.abs(b.pct)), 0.001);
     const cls = cfg.color;
@@ -8625,21 +8858,26 @@ function renderKPIs() {
       : "-" + fmtBRL(Math.abs(valor));
     const pctTxt = cfg.isBase ? "100%" : fmtPct(pct);
 
+    // Meta: placeholder "—" por enquanto (fonte de metas dos postos pendente).
+    const metaHtml = `<div class="kpi-meta"><div class="kpi-meta-lbl">Meta</div><div class="kpi-meta-val">—</div></div>`;
+
     const card = document.createElement("div");
     card.className = `kpi c-${cls}`;
     card.innerHTML = `
       <div class="kpi-title">${cfg.title}</div>
-      <div class="kpi-value ${valColor}">${valorTxt}</div>
-      <div class="kpi-pct ${valColor}">${pctTxt}</div>
-      <div class="mini-bars" style="grid-template-columns: repeat(${nMeses}, 1fr); ${nMeses > 4 ? 'gap:3px;' : ''}">
+      <div class="kpi-head">
+        <div class="kpi-real">
+          <div class="kpi-value ${valColor}">${valorTxt}</div>
+          <div class="kpi-pct ${valColor}">${pctTxt}</div>
+        </div>
+        ${metaHtml}
+      </div>
+      ${mostraYoY ? buildMiniTrend(miniBars, cfg, valColor, lastBarColor, nMeses) : `
+      <div class="mini-bars" data-nm="${nMeses}" style="grid-template-columns: repeat(${nMeses}, 1fr); ${nMeses > 4 ? 'gap:3px;' : ''}">
         ${miniBars.map(b => {
           const h = Math.max(14, Math.min(42, (Math.abs(b.pct) / maxAbs) * 42));
-          const pctMesTxt = cfg.isBase
-            ? fmtBRL(b.valor).replace("R$ ", "")
-            : fmtPct(b.pct);
-          // YoY: ▲ verde (superávit) / ▼ vermelho (déficit). "—" se sem base.
-          const yoyTxt = b.yoy == null
-            ? ""
+          const pctMesTxt = cfg.isBase ? fmtBRL(b.valor).replace("R$ ", "") : fmtPct(b.pct);
+          const yoyTxt = b.yoy == null ? ""
             : `<div class="yoy ${b.yoy >= 0 ? 'yoy-up' : 'yoy-down'}">${b.yoy >= 0 ? '▲' : '▼'}${fmtPctSimple(Math.abs(b.yoy))}</div>`;
           return `
             <div class="mini-bar">
@@ -8649,9 +8887,91 @@ function renderKPIs() {
               <div class="month">${b.mes}</div>
             </div>`;
         }).join("")}
-      </div>`;
+      </div>`}`;
     grid.appendChild(card);
   });
+
+  // ── Cards de Indicadores Operacionais (postos): Volume Vendido, Nº de
+  //    Abastecimentos, Ticket Médio (R$) = Vendas Combustíveis ÷ Nº Abastecimentos.
+  const _indic = DADOS.fatosIndic || [];
+  if (_indic.length) {
+    const sumTot = (campo) => _indic.reduce((s, r) =>
+      (r.ANO === ano && inFilter(r.MÊS, mes) && inFilter(r.LOJA, loja)) ? s + (r[campo] || 0) : s, 0);
+    const sumMes = (campo, mnum) => _indic.reduce((s, r) =>
+      (r.ANO === ano && r.MÊS === mnum && inFilter(r.LOJA, loja)) ? s + (r[campo] || 0) : s, 0);
+    const fmtNum = (v) => Math.round(v).toLocaleString("pt-BR");
+    const ticketTot = sumTot("ABAST") ? sumTot("VENDACOMB") / sumTot("ABAST") : 0;
+    const volTot = sumTot("VOL");
+    const lbporLitroTot = volTot ? calcKPI("LUCRO_BRUTO", ano, mes, loja) / volTot : 0;
+    // META dos indicadores (metas_postos_{ano}.json), respeitando o filtro:
+    // Volume/Abast = SOMA; Ticket = Σ(meta_ticket × meta_abast) / Σ(meta_abast).
+    const _mp = DADOS.metasPostos || {};
+    const metaSoma = (campo) => {
+      let s = 0, tem = false;
+      for (const cod in _mp) { if (!inFilter(cod, loja)) continue;
+        for (const mn in _mp[cod]) { if (!inFilter(Number(mn), mes)) continue;
+          const v = _mp[cod][mn][campo]; if (v != null) { s += v; tem = true; } } }
+      return tem ? s : null;
+    };
+    const metaTicket = () => {
+      let fat = 0, ab = 0;
+      for (const cod in _mp) { if (!inFilter(cod, loja)) continue;
+        for (const mn in _mp[cod]) { if (!inFilter(Number(mn), mes)) continue;
+          const t = _mp[cod][mn].ticket, a = _mp[cod][mn].abast;
+          if (t != null && a != null) { fat += t * a; ab += a; } } }
+      return ab ? fat / ab : null;
+    };
+    // Meta de Perdas e Sobras (variação%): meta vem como ratio (var/volume) por
+    // posto/mês → média ponderada pelo VOLUME meta, em %.
+    const metaPerdas = () => {
+      let num = 0, den = 0;
+      for (const cod in _mp) { if (!inFilter(cod, loja)) continue;
+        for (const mn in _mp[cod]) { if (!inFilter(Number(mn), mes)) continue;
+          const pr = _mp[cod][mn].perdas, vo = _mp[cod][mn].volume;
+          if (pr != null && vo != null) { num += pr * vo; den += vo; } } }
+      // "Meta Perdas e Sobras" já vem em PONTOS PERCENTUAIS (-0,06 = -0,06%, NÃO
+      // ratio → não multiplicar por 100). Média ponderada pelo VOLUME meta.
+      return den ? (num / den) : null;
+    };
+    // Variação de Estoque (%) = Σ variação(litros) ÷ Σ volume × 100 (sinal preservado).
+    const varEstTot = sumTot("VARVOL") ? (sumTot("VAREST") / sumTot("VARVOL")) * 100 : 0;
+    // Rótulo curto da mini-barra: milhares → "319k"; pequenos → valor.
+    const fmtMil = (v) => (Math.abs(v) >= 1000) ? Math.round(v / 1000).toLocaleString("pt-BR") + "k" : Math.round(v).toLocaleString("pt-BR");
+    const fmtDec = (v) => v.toFixed(2).replace(".", ",");
+    const fmtPctVar = (v) => (v > 0 ? "+" : "") + v.toFixed(2).replace(".", ",") + "%";
+    const defs = [
+      { title: "VOLUME VENDIDO (LITROS)", cor: "green",  tot: volTot,          mesVal: m => sumMes("VOL", m),   fmt: fmtNum, fmtBar: fmtMil, meta: metaSoma("volume") },
+      { title: "Nº DE ABASTECIMENTOS",    cor: "orange", tot: sumTot("ABAST"), mesVal: m => sumMes("ABAST", m), fmt: fmtNum, fmtBar: fmtMil, meta: metaSoma("abast") },
+      { title: "TICKET MÉDIO (R$)",       cor: "mint",   tot: ticketTot,
+        mesVal: m => { const a = sumMes("ABAST", m); return a ? sumMes("VENDACOMB", m) / a : 0; }, fmt: fmtBRL, fmtBar: fmtDec, meta: metaTicket() },
+      { title: "LUCRO BRUTO POR LITRO (R$)", cor: "purple", tot: lbporLitroTot,
+        mesVal: m => { const vol = sumMes("VOL", m); return vol ? calcKPI("LUCRO_BRUTO", ano, new Set([m]), loja) / vol : 0; }, fmt: fmtBRL, fmtBar: fmtDec, meta: null },
+      { title: "VARIAÇÃO DE ESTOQUE (%)", cor: "orange", tot: varEstTot,
+        mesVal: m => { const vv = sumMes("VARVOL", m); return vv ? (sumMes("VAREST", m) / vv) * 100 : 0; }, fmt: fmtPctVar, fmtBar: fmtPctVar, meta: metaPerdas() },
+    ];
+    for (const d of defs) {
+      const barsVal = mesesAtivos.map(m => d.mesVal(m.num));
+      // Só mostra o card se houver dado realizado.
+      if (!d.tot && !barsVal.some(v => v)) continue;
+      const maxB = Math.max(...barsVal.map(Math.abs), 0.001);
+      const vc = VAR_BY_COLOR[d.cor] || "v-mint";
+      const metaHtml = (d.meta != null)
+        ? `<div class="kpi-meta"><div class="kpi-meta-lbl">Meta</div><div class="kpi-meta-val">${d.fmt(d.meta)}</div></div>`
+        : `<div class="kpi-meta"><div class="kpi-meta-lbl">Meta</div><div class="kpi-meta-val">—</div></div>`;
+      const card = document.createElement("div");
+      card.className = `kpi c-${d.cor}`;
+      card.innerHTML = `
+        <div class="kpi-title">${d.title}</div>
+        <div class="kpi-head"><div class="kpi-real"><div class="kpi-value ${vc}">${d.fmt(d.tot)}</div></div>${metaHtml}</div>
+        <div class="mini-bars" data-nm="${nMeses}" style="grid-template-columns: repeat(${nMeses}, 1fr); ${nMeses > 4 ? 'gap:3px;' : ''}">
+          ${mesesAtivos.map((m, i) => {
+            const h = Math.max(14, Math.min(42, (Math.abs(barsVal[i]) / maxB) * 42));
+            return `<div class="mini-bar"><div class="pct ${vc}">${d.fmtBar(barsVal[i])}</div><div class="bar b-${d.cor}" style="height:${h}px;"></div><div class="month">${(m.nome || "").slice(0, 3).toUpperCase()}</div></div>`;
+          }).join("")}
+        </div>`;
+      grid.appendChild(card);
+    }
+  }
 }
 
 function renderHomeCharts() {
@@ -8691,7 +9011,7 @@ function renderHomeCharts() {
   const isMobileBar = window.innerWidth < 900;
   charts.bar = new Chart(document.getElementById("barChart"), {
     type: "bar",
-    data: { labels: gruposBar, datasets: [{ data: dataBar, backgroundColor: "#0d3b2a", borderRadius: 2 }] },
+    data: { labels: gruposBar, datasets: [{ data: dataBar, backgroundColor: (seg === "postos" ? "#1f5fa8" : "#0d3b2a"), borderRadius: 2 }] },
     options: {
       indexAxis: "y", responsive: true, maintainAspectRatio: false,
       // No mobile, reserva mais espaço à direita pra caber o rótulo do valor (ex.: "-16,63%")
@@ -8771,8 +9091,12 @@ function renderHomeCharts() {
   const totalDespesa = sorted.reduce((s, [, v]) => s + Math.abs(v), 0);
   const dataPctReceita = sorted.map(([, v]) => receita ? (v / receita) * 100 : 0);
   const dataPctDespesa = sorted.map(([, v]) => totalDespesa ? (Math.abs(v) / totalDespesa) * 100 : 0);
-  const palette = ["#0d3b2a","#e23434","#2c3e8c","#3d6db5","#4a90c2","#5fbcd1","#f6c1c8",
-                   "#f08a99","#a83232","#7a1f1f","#9b8fbf","#5a6c8c","#7fb59a","#a9d6c4"];
+  // Paleta azul-dominante (postos) — clone do donut Supervendas, em azul.
+  const palette = (seg === "postos")
+    ? ["#0a2540","#1f5fa8","#2563eb","#3b82f6","#5fa8d3","#7fc1e3","#9ec9e8",
+       "#e23434","#a83232","#f08a99","#5a6c8c","#7f93b5","#9bb0cf","#c4d3e8"]
+    : ["#0d3b2a","#e23434","#2c3e8c","#3d6db5","#4a90c2","#5fbcd1","#f6c1c8",
+       "#f08a99","#a83232","#7a1f1f","#9b8fbf","#5a6c8c","#7fb59a","#a9d6c4"];
   // Layout adaptativo: no celular a legenda vai pra baixo (libera largura)
   // e fatias < 5% não recebem rótulo dentro (no desktop, < 3%).
   const isMobileChart = window.innerWidth < 900;
@@ -8786,14 +9110,7 @@ function renderHomeCharts() {
       responsive: true, maintainAspectRatio: false, cutout: "55%",
       layout: { padding: 6 },
       plugins: {
-        legend: {
-          position: isMobileChart ? "bottom" : "right",
-          labels: {
-            boxWidth: 10,
-            font: { size: isMobileChart ? 10 : 11 },
-            padding: isMobileChart ? 6 : 8,
-          },
-        },
+        legend: { display: false },   // legenda própria em tabela HTML (#donutLegend)
         tooltip: { callbacks: { label: ctx => {
           const i = ctx.dataIndex;
           const val = sorted[i][1];
@@ -8833,6 +9150,20 @@ function renderHomeCharts() {
       }
     }]
   });
+
+  // Legenda própria em TABELA (Agrupamento / R$ / % Venda / % Desp.) — clone Supervendas.
+  const leg = document.getElementById("donutLegend");
+  if (leg) {
+    leg.innerHTML = `<table><thead><tr><th>Agrupamento</th><th>R$</th><th>% Venda</th><th>% Desp.</th></tr></thead><tbody>`
+      + sorted.map(([nome, val], i) =>
+          `<tr>`
+          + `<td class="nome"><span class="dot" style="background:${palette[i % palette.length]}"></span>${escapeHtml(nome)}</td>`
+          + `<td class="num">${fmtBRL(Math.abs(val))}</td>`
+          + `<td class="num">${fmtPctSimple(Math.abs(dataPctReceita[i]))}</td>`
+          + `<td class="num">${fmtPctSimple(dataPctDespesa[i])}</td>`
+          + `</tr>`).join("")
+      + `</tbody></table>`;
+  }
 }
 
 /* ============================================================
@@ -15157,7 +15488,11 @@ async function bootstrap() {
   const fAno = document.getElementById("fAno");
   fAno.innerHTML = "";
   DADOS.dimensoes.anos.forEach(a => fAno.add(new Option(a, a)));
-  fAno.value = DADOS.dimensoes.anos[DADOS.dimensoes.anos.length - 1];
+  // Sincroniza o filtro com o ANO realmente carregado no DADOS (postos: _ano),
+  // senão o select aponta um ano sem dados e tudo zera.
+  fAno.value = (DADOS._ano != null && DADOS.dimensoes.anos.includes(DADOS._ano))
+    ? DADOS._ano
+    : DADOS.dimensoes.anos[DADOS.dimensoes.anos.length - 1];
   fAno.addEventListener("change", async () => {
     // Segmento Postos: cada ano vem de um JSON próprio (/dados_dre_postos/{ano}.json)
     // — recarrega antes de renderizar.
@@ -21636,13 +21971,34 @@ const _KPI_DEFAULTS_POSTOS = [
   { nome: "CUSTO",              titulo: "CUSTO TOTAL",            color: "red",    sign: "-", ordem: 20, isBase: false, grupos: ["Custo"] },
   { nome: "LUCRO_BRUTO",        titulo: "LUCRO BRUTO",            color: "mint",   sign: "+", ordem: 30, isBase: false, grupos: ["Resultado"], _agrupFiltro: "Lucro Bruto" },
   { nome: "DESPESAS",           titulo: "DESPESAS",               color: "orange", sign: "-", ordem: 40, isBase: false, grupos: ["Despesa Operacional"] },
-  { nome: "RECEITAS",           titulo: "RECEITAS",               color: "green",  sign: "+", ordem: 50, isBase: false, grupos: ["Receitas"] },
   { nome: "LUCRO_LIQUIDO",      titulo: "LUCRO LÍQUIDO",          color: "purple", sign: "+", ordem: 60, isBase: false, grupos: ["Resultado"], _agrupFiltro: "Lucro Líquido" },
 ];
 
 // Constrói um DADOS-like a partir do /dados_dre_postos/{ano}.json.
 // Reusa o mesmo formato do dados.json do Supermercados: porLinha com
 // {ANO, MÊS, LOJA, GRUPO, AGRUPAMENTO, LINHAS, VALORES}.
+// Anos com dados disponíveis nos postos (sonda os JSONs — o Firebase devolve
+// 200 mesmo pra arquivo inexistente, então valida o conteúdo). Cache global.
+let _POSTOS_ANOS_CACHE = null;
+async function _postosAnosDisponiveis() {
+  if (_POSTOS_ANOS_CACHE) return _POSTOS_ANOS_CACHE;
+  const y = new Date().getFullYear();
+  const oks = await Promise.all([y + 1, y, y - 1, y - 2].map(async a => {
+    for (const suf of ["_competencia", ""]) {
+      try {
+        const r = await fetch(`/dados_dre_postos_adaptive/${a}${suf}.json`, { cache: "no-cache" });
+        if (!r.ok) continue;
+        const d = await r.json();
+        if (d && Array.isArray(d.postos) && d.postos.length) return a;
+      } catch (_) {}
+    }
+    return null;
+  }));
+  _POSTOS_ANOS_CACHE = oks.filter(a => a != null).sort((x, z) => x - z);
+  if (!_POSTOS_ANOS_CACHE.length) _POSTOS_ANOS_CACHE = [y];
+  return _POSTOS_ANOS_CACHE;
+}
+
 async function _carregarDadosPostos(ano) {
   if (_DADOS_POSTOS_BY_ANO[ano]) return _DADOS_POSTOS_BY_ANO[ano];
   if (_DADOS_POSTOS_LOADING_BY_ANO[ano]) return _DADOS_POSTOS_LOADING_BY_ANO[ano];
@@ -21652,14 +22008,18 @@ async function _carregarDadosPostos(ano) {
     // Fallback p/ regime de caixa se o arquivo de competência não existir.
     // Constrói o DADOS (porGrupo/porLinha) a partir das LINHAS DE TOPO da DRE,
     // pra alimentar o Dashboard DRE (KPIs + gráficos) dos postos.
+    const anosDisp = await _postosAnosDisponiveis();
+    // FONTE: Consulta SQL exportada na pasta Automate ({ano}.json) — tem o mês
+    // corrente (decisão do usuário 2026-05-28: "se basear na consulta, não no Mapa
+    // Anual"). Fallback p/ {ano}_competencia.json só se a consulta não existir.
     let adaptive = null;
     try {
-      const ra = await fetch(`/dados_dre_postos_adaptive/${ano}_competencia.json`, { cache: "no-cache" });
+      const ra = await fetch(`/dados_dre_postos_adaptive/${ano}.json`, { cache: "no-cache" });
       if (ra.ok) adaptive = await ra.json();
     } catch (_) {}
     if (!adaptive) {
       try {
-        const ra = await fetch(`/dados_dre_postos_adaptive/${ano}.json`, { cache: "no-cache" });
+        const ra = await fetch(`/dados_dre_postos_adaptive/${ano}_competencia.json`, { cache: "no-cache" });
         if (ra.ok) adaptive = await ra.json();
       } catch (_) {}
     }
@@ -21680,19 +22040,94 @@ async function _carregarDadosPostos(ano) {
       const mesesSet = new Set();
       const grupoSet = new Set(), agrupSet = new Set();
       const porLinha = [];
+      const porIndic = [];   // {ANO,MÊS,LOJA, VOL, ABAST, VENDACOMB, VAREST, VARVOL} p/ cards de indicadores
+      // Variação de Estoque (Perdas e Sobras) por posto/mês — perdas_postos_{ano}.json
+      // (litros via SQL). VAREST = variação (sobra−perda); VARVOL = volume medido
+      // (denominador do card de Variação de Estoque %). Decisão do usuário: tudo via SQL.
+      let _perdasPostos = {};
+      try {
+        const rp = await fetch(`/dados_dre_postos_adaptive/perdas_postos_${ano}.json`, { cache: "no-cache" });
+        if (rp.ok) { const pj = await rp.json(); _perdasPostos = pj.postos || {}; }
+      } catch (_) {}
+      const _isComb = (lab) => /^(DIESEL|GASOLINA|ETANOL|GNV|ARLA)/i.test(String(lab || ""));
+      // "OUTRAS RECEITAS" é excluída da DRE (decisão do usuário 2026-05-28) — não é
+      // receita real. Sai do grupo Receitas e é descontada do Lucro Líquido/Saldo Final.
+      const _excluiRec = (lab) => /^OUTRAS RECEITAS\b/i.test(String(lab || ""));
       for (const p of adaptive.postos) {
         const dreArr = (adaptive.dados[p.nome] || {}).dre || [];
+        let curTop = null;
+        const vendaCombMes = Array(12).fill(0);
+        // 1ª passada: acumula OUTRAS RECEITAS (pra descontar do LL/Saldo, que vêm depois)
+        const outrasRecMes = Array(12).fill(0);
+        let _ct = null;
         for (const ln of dreArr) {
-          if (ln.nivel !== 0) continue;            // só linhas de topo (sem dupla contagem)
-          const m = MAP0[ln.label]; if (!m) continue;
-          grupoSet.add(m[0]); agrupSet.add(m[1]);
-          for (let i = 0; i < 12; i++) {
-            const v = ln.meses[i];
-            if (v == null || v === 0) continue;
-            mesesSet.add(i + 1);
-            porLinha.push({ ANO: ano, MÊS: i + 1, LOJA: p.codigo,
-              GRUPO: m[0], AGRUPAMENTO: m[1], LINHAS: ln.label, VALORES: Number(v) });
+          if (ln.nivel === 0) _ct = ln.label;
+          else if (_ct === "(+) Receitas" && ln.nivel === 1 && _excluiRec(ln.label)) {
+            for (let i = 0; i < 12; i++) { const v = ln.meses[i]; if (v) outrasRecMes[i] += Number(v); }
           }
+        }
+        for (const ln of dreArr) {
+          if (ln.nivel === 0) {
+            curTop = ln.label;
+            // "(-) Despesas": NÃO cria a linha de topo — quebra pelos títulos
+            // (nível 2) agrupados por _dfcpAgrupOf (Pessoal/Aluguéis/Serviços…),
+            // pra o donut e a composição terem os agrupamentos detalhados.
+            if (ln.label === "(-) Despesas") continue;
+            // "(+) Receitas": quebra pelos filhos (exclui OUTRAS RECEITAS).
+            if (ln.label === "(+) Receitas") continue;
+            const m = MAP0[ln.label]; if (!m) continue;
+            grupoSet.add(m[0]); agrupSet.add(m[1]);
+            const _ajustaLL = (ln.label === "(=) Lucro Líquido" || ln.label === "(=) Saldo Final");
+            for (let i = 0; i < 12; i++) {
+              let v = ln.meses[i];
+              if (v == null) continue;
+              if (_ajustaLL) v = v - outrasRecMes[i];   // tira OUTRAS RECEITAS do resultado
+              if (v === 0) continue;
+              mesesSet.add(i + 1);
+              porLinha.push({ ANO: ano, MÊS: i + 1, LOJA: p.codigo,
+                GRUPO: m[0], AGRUPAMENTO: m[1], LINHAS: ln.label, VALORES: Number(v) });
+            }
+          } else if (curTop === "(-) Despesas" && ln.nivel === 2) {
+            const agr = (typeof _dfcpAgrupOf === "function") ? _dfcpAgrupOf(ln.label) : "Gerais";
+            grupoSet.add("Despesa Operacional"); agrupSet.add(agr);
+            for (let i = 0; i < 12; i++) {
+              const v = ln.meses[i];
+              if (v == null || v === 0) continue;
+              mesesSet.add(i + 1);
+              // Despesa entra NEGATIVA (igual ao Supermercados: despesas/CMV < 0),
+              // pra a composição e o donut filtrarem/ordenarem certo.
+              porLinha.push({ ANO: ano, MÊS: i + 1, LOJA: p.codigo,
+                GRUPO: "Despesa Operacional", AGRUPAMENTO: agr, LINHAS: ln.label, VALORES: -Math.abs(Number(v)) });
+            }
+          } else if (curTop === "(+) Receitas" && ln.nivel === 1) {
+            if (_excluiRec(ln.label)) continue;   // OUTRAS RECEITAS fora
+            grupoSet.add("Receitas"); agrupSet.add("Receitas");
+            for (let i = 0; i < 12; i++) {
+              const v = ln.meses[i];
+              if (v == null || v === 0) continue;
+              mesesSet.add(i + 1);
+              porLinha.push({ ANO: ano, MÊS: i + 1, LOJA: p.codigo,
+                GRUPO: "Receitas", AGRUPAMENTO: "Receitas", LINHAS: ln.label, VALORES: Number(v) });
+            }
+          } else if (curTop === "Total das Vendas" && ln.nivel === 1 && _isComb(ln.label)) {
+            // Vendas de COMBUSTÍVEL por mês (exclui "Outros Produtos") p/ Ticket Médio.
+            for (let i = 0; i < 12; i++) { const v = ln.meses[i]; if (v) vendaCombMes[i] += Number(v); }
+          }
+        }
+        // Indicadores operacionais (Volume Vendido, Nº Abastecimentos) do Mapa Anual.
+        const inds = (adaptive.dados[p.nome] || {}).indicadores || [];
+        const indVol = inds.find(r => r.label === "Volume Vendido (Litros)");
+        const indAb  = inds.find(r => r.label === "Número Total de Abastecimentos");
+        const pmPosto = _perdasPostos[p.codigo] || {};
+        for (let i = 0; i < 12; i++) {
+          const vol = (indVol && indVol.meses) ? (indVol.meses[i] || 0) : 0;
+          const ab  = (indAb && indAb.meses) ? (indAb.meses[i] || 0) : 0;
+          const vc  = vendaCombMes[i];
+          const pe  = pmPosto[String(i + 1)] || null;
+          const vEst = pe ? (pe.var || 0) : 0;
+          const vEstVol = pe ? (pe.vol || 0) : 0;
+          if (vol || ab || vc || vEst || vEstVol)
+            porIndic.push({ ANO: ano, MÊS: i + 1, LOJA: p.codigo, VOL: vol, ABAST: ab, VENDACOMB: vc, VAREST: vEst, VARVOL: vEstVol });
         }
       }
       const aggA = new Map(), aggG = new Map();
@@ -21712,11 +22147,19 @@ async function _carregarDadosPostos(ano) {
       });
       const NM = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      // Metas dos indicadores (METAS POSTO {ano}.xlsx → metas_postos_{ano}.json):
+      // { "001": { "5": {volume, abast, ticket, perdas, margem} } } por posto/mês.
+      let metasPostos = {};
+      try {
+        const rm = await fetch(`/dados_dre_postos_adaptive/metas_postos_${ano}.json`, { cache: "no-cache" });
+        if (rm.ok) { const mj = await rm.json(); metasPostos = mj.metas || {}; }
+      } catch (_) {}
       const result = {
+        _ano: ano,
         geradoEm: adaptive.geradoEm || null,
         fontes: { dre: { origem: "/dados_dre_postos_adaptive/" + ano + ".json" } },
         dimensoes: {
-          anos: [ano],
+          anos: anosDisp.includes(ano) ? anosDisp : anosDisp.concat(ano).sort((x, z) => x - z),
           meses: [...mesesSet].sort((a, b) => a - b).map(m => ({ num: m, nome: NM[m] })),
           lojas,
           grupos: [...grupoSet],
@@ -21724,6 +22167,8 @@ async function _carregarDadosPostos(ano) {
           empresaParaLoja: {},
         },
         fatos: { porGrupo, porAgrupamento, porLinha },
+        fatosIndic: porIndic,
+        metasPostos,
         mapeamentoKPI: Object.fromEntries(_KPI_DEFAULTS_POSTOS.map(k => [k.nome, k.grupos])),
         kpiItems: _KPI_DEFAULTS_POSTOS.map(k => ({ ...k })),
       };
@@ -22066,7 +22511,11 @@ function _drepMerge(data, selCodigos) {
   //   • títulos de transferência intercompany mal-classificados (favorecido/obs cita
   //     PEGUI/TARES/RETA/FLUXO/LP) — proporção lida do drilldown (_drepDespCache).
   // O valor sai de "(-) Despesas" e volta em "(=) Lucro Líquido".
-  const _drepDespC = (typeof _drepDespCache !== "undefined") ? _drepDespCache[data.ano] : null;
+  // Chave regime-aware (igual ao drilldown): caixa_{ano} ou comp_{ano}. Usar
+  // data.ano direto não casava → as transferências mal-classificadas (ex.: título
+  // de 69k "REF A TRANSFERÊNCIA RETA" em DESPESAS BANCARIA) não eram descontadas.
+  const _despCacheKey = _drepRegime === "competencia" ? `comp_${data.ano}` : `caixa_${data.ano}`;
+  const _drepDespC = (typeof _drepDespCache !== "undefined") ? _drepDespCache[_despCacheKey] : null;
   // Transferência mal-classificada = obs cita TRANSFER + favorecido é OUTRA empresa.
   // Evita pegar aluguéis intercompany (REF A ALUGUEL → outra empresa) que são despesa real.
   const _isTransfT = (t) => /TRANSFER/i.test(String(t.o || ""))
@@ -22628,7 +23077,18 @@ function _drepRenderTable(data) {
 
   // ── Indicadores Operacionais = relatório SEPARADO (tabela própria, scroll
   //    independente, com um espaço acima). Volume/Ticket/etc. não são DRE.
-  const indRows = Object.values(aggInd);
+  // Reordena: os combustíveis (nível 1) ficam logo abaixo do "Volume Vendido"
+  // (alguns postos têm DIESEL S500/S10 que, sem isso, cairiam soltos no fim).
+  const _indAll = Object.values(aggInd);
+  const _indL1 = _indAll.filter(r => (r.nivel || 0) >= 1);
+  const indRows = [];
+  let _volInserido = false;
+  for (const r of _indAll) {
+    if ((r.nivel || 0) >= 1) continue;   // combustíveis entram logo após o Volume
+    indRows.push(r);
+    if (/volume vendido/i.test(r.label)) { indRows.push(..._indL1); _volInserido = true; }
+  }
+  if (!_volInserido) indRows.push(..._indL1);
   const indTbl = document.getElementById("drePostosIndTable");
   const indCard = document.getElementById("drePostosIndCard");
   if (indTbl) {
@@ -22786,14 +23246,49 @@ function _drepRenderCards(data) {
 }
 
 // valor de uma linha (por rótulo) de UM posto, no período
-function _drepPostoLineVal(data, nome, label, pIdx) {
-  const dre = (data.dados[nome] || {}).dre || [];
-  const ln = dre.find(l => l.label === label);
-  if (!ln) return 0;
-  return pIdx === "total" ? (ln.total || 0) : (ln.meses[pIdx] || 0);
+// Valor de um nó (linha) do _drepMerge no período pIdx ("total" ou índice do mês).
+function _drepNodeVal(node, pIdx) {
+  if (!node) return 0;
+  return pIdx === "total" ? (node._hasT ? node.total : 0) : (node._has[pIdx] ? node.meses[pIdx] : 0);
+}
+// Valor COM SINAL de exibição (igual à tabela): débitos sob "(-)" saem negativos,
+// créditos "(+)"/"Receita" positivos, resultados "(=)" usam o valor natural.
+// Necessário no gráfico — os nós de despesa guardam valor POSITIVO; o sinal vem
+// da hierarquia (propagado pelo pai), então _drepNodeVal sozinho não basta.
+function _drepSignedVal(tops, label, pIdx) {
+  const isDebit  = (l) => /^\(-\)/.test(String(l || ""));
+  const isCredit = (l) => /^\(\+\)/.test(String(l || "")) || l === "Receita";
+  let out = null;
+  const walk = (node, signParent) => {
+    let sign = signParent != null ? signParent : 1;
+    if (isDebit(node.label)) sign = -1;
+    else if (isCredit(node.label)) sign = 1;
+    if (node.label === label) {
+      const useSign = /^\(=\)/.test(node.label) ? 1 : sign;
+      const raw = _drepNodeVal(node, pIdx);
+      out = (raw == null) ? null : useSign * raw;
+      return true;
+    }
+    for (const c of (node.children || [])) { if (walk(c, sign)) return true; }
+    return false;
+  };
+  for (const t of (tops || [])) { if (walk(t, 1)) break; }
+  return out;
+}
+// Busca um nó por label em TODA a árvore (tops + children) — pro gráfico
+// funcionar também em sub-linhas (DIESEL COMUM, agrupamentos de despesa, etc.).
+function _drepFindNode(nodes, label) {
+  for (const n of (nodes || [])) {
+    if (n.label === label) return n;
+    const f = _drepFindNode(n.children, label);
+    if (f) return f;
+  }
+  return null;
 }
 
-// gráfico "% por Posto" da linha selecionada (AV% sobre o Total das Vendas do posto)
+// gráfico "% por Posto" da linha selecionada (AV% sobre o Total das Vendas do posto).
+// Roda o _drepMerge POR POSTO pra capturar também as linhas DERIVADAS (EBITDA,
+// LAIR, Margem Operacional, LL s/ Aluguel, Despesas Operacionais/Financeiras…).
 function _drepRenderChart(data) {
   const canvas = document.getElementById("drePostosChart");
   const info = document.getElementById("drePostosChartInfo");
@@ -22803,9 +23298,10 @@ function _drepRenderChart(data) {
   const pIdx = _drepPeriodo === "todos" ? "total" : parseInt(_drepPeriodo, 10);
   const nomes = data.postos.filter(p => _drepSel.has(p.codigo));
   const items = nomes.map(p => {
-    const v = _drepPostoLineVal(data, p.nome, line, pIdx);
-    const vend = _drepPostoLineVal(data, p.nome, "Total das Vendas", pIdx);
-    return { loja: p.codigo, pct: vend ? (v / vend * 100) : 0 };
+    const topsP = _drepMerge(data, new Set([p.codigo]));
+    const v = _drepSignedVal(topsP, line, pIdx);   // valor COM sinal (despesa = negativo)
+    const vend = _drepNodeVal(_drepFindNode(topsP, "Total das Vendas"), pIdx);
+    return { loja: p.codigo, pct: (vend && v != null) ? (v / vend * 100) : 0 };
   }).filter(x => x.pct !== 0).sort((a, b) => a.pct - b.pct);
 
   if (_drepChartObj) _drepChartObj.destroy();
@@ -22818,26 +23314,47 @@ function _drepRenderChart(data) {
     },
     options: {
       indexAxis: "y", responsive: true, maintainAspectRatio: false,
-      layout: { padding: { left: 4, right: 56 } },
+      layout: { padding: { left: 8, right: 56 } },
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: { label: ctx => fmtPctSimple(ctx.parsed.x) } },
       },
-      scales: { x: { display: false, grace: "8%" },
+      scales: { x: { display: false, grace: "30%" },
         y: { grid: { display: false }, ticks: { font: { weight: "700", size: 11 }, padding: 0 } } },
       animation: { duration: 300 },
     },
     plugins: [{
       id: "drepValueLabel",
       afterDatasetsDraw(chart) {
-        const { ctx } = chart; ctx.save();
+        const { ctx, chartArea } = chart; ctx.save();
         ctx.font = "bold 10px Segoe UI"; ctx.textBaseline = "middle";
         const dark = document.body.classList.contains("dark");
         chart.data.datasets[0].data.forEach((val, i) => {
           const bar = chart.getDatasetMeta(0).data[i];
-          ctx.fillStyle = val < 0 ? (dark ? "#ff6b6b" : "#c33") : (dark ? "#5fc88d" : "#1f9d6a");
-          ctx.textAlign = val < 0 ? "right" : "left";
-          ctx.fillText(fmtPctSimple(val), bar.x + (val < 0 ? -4 : 4), bar.y);
+          const txt = fmtPctSimple(val);
+          const w = ctx.measureText(txt).width;
+          if (val < 0) {
+            // Rótulo à esquerda da ponta; se invadir a área dos rótulos do eixo,
+            // desenha DENTRO da barra (branco) pra não estourar.
+            if (bar.x - 4 - w < chartArea.left) {
+              ctx.textAlign = "left"; ctx.fillStyle = "#fff";
+              ctx.fillText(txt, bar.x + 4, bar.y);
+            } else {
+              ctx.textAlign = "right";
+              ctx.fillStyle = dark ? "#ff6b6b" : "#c33";
+              ctx.fillText(txt, bar.x - 4, bar.y);
+            }
+          } else {
+            // Rótulo à direita; se passar da borda, joga pra dentro (branco).
+            if (bar.x + 4 + w > chartArea.right) {
+              ctx.textAlign = "right"; ctx.fillStyle = "#fff";
+              ctx.fillText(txt, bar.x - 4, bar.y);
+            } else {
+              ctx.textAlign = "left";
+              ctx.fillStyle = dark ? "#5fc88d" : "#1f9d6a";
+              ctx.fillText(txt, bar.x + 4, bar.y);
+            }
+          }
         });
         ctx.restore();
       },
@@ -24868,12 +25385,13 @@ async function applySegmento(seg, opts = {}) {
   // original carregado do Firestore.
   let dadosTrocado = false;
   if (seg === "postos") {
-    const anoAlvo = (() => {
+    const anoAlvo = await (async () => {
       const sel = document.getElementById("fAno");
       if (sel && sel.value) return parseInt(sel.value, 10);
-      // Antes do filtro existir (bootstrap): tenta o último ano disponível em DADOS
-      const anos = DADOS?.dimensoes?.anos || [];
-      return anos[anos.length - 1] || new Date().getFullYear();
+      // Antes do filtro existir (bootstrap): usa o ano mais recente COM dados de
+      // postos (não o último ano do Supermercados, que pode divergir).
+      const disp = await _postosAnosDisponiveis();
+      return disp[disp.length - 1] || new Date().getFullYear();
     })();
     try {
       const novo = await _carregarDadosPostos(anoAlvo);
