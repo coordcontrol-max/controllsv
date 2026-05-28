@@ -198,6 +198,11 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
     echo "[WARN] etl_energia.py falhou — sobe o energia.json anterior."
   fi
 
+  echo "----- [6c2/8] etl_metas_operacao_lojas.py (meta venda/loja → Metas Manuais operação) -----"
+  if ! python3 etl_metas_operacao_lojas.py --write; then
+    echo "[WARN] etl_metas_operacao_lojas.py falhou — metas de venda mantêm os valores anteriores."
+  fi
+
   echo "----- [6d/8] gera_bp.py (Balanço Patrimonial — recalcula só o mês corrente) -----"
   if ! python3 gera_bp.py; then
     echo "[WARN] gera_bp.py falhou — dados_bp mantém os valores anteriores."
