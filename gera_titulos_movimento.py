@@ -128,6 +128,8 @@ def gerar(ano: int):
         "ano": ano,
         "grupos_ordenados": dim["grupos_ordenados"],
         "agrupamentos_ordenados": dim["agrupamentos_ordenados"],
+        "linhas_ordenadas": dim["linhas_ordenadas"],
+        "agrupamento_para_grupo": dim["agrupamento_para_grupo"],
         "meses": meses,
         "geradoEm": firestore.SERVER_TIMESTAMP,
     }
