@@ -540,15 +540,17 @@
   .mini-bar { display: flex; flex-direction: column; align-items: center; font-size: 9px; color: #555; min-width: 0; }
   .mini-bar .pct { font-size: 9px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .mini-bar .bar { width: 100%; background: #d9d9d9; border-radius: 2px; margin-bottom: 3px; }
-  .mini-bar .month { font-size: 10px; color: #444; }
+  .mini-bar .month { font-size: 10px; color: #000; font-weight: 700; }
   .mini-bar .yoy { font-size: 8px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; }
   .mini-bar .yoy-up   { color: #1f9d6a; }
   .mini-bar .yoy-down { color: #e23434; }
-  /* Quando há muitos meses, reduz a fonte pra caber */
-  .mini-bars:has(> .mini-bar:nth-child(5)) .pct,
-  .mini-bars:has(> .mini-bar:nth-child(5)) .month { font-size: 8px; }
-  .mini-bars:has(> .mini-bar:nth-child(7)) .pct,
-  .mini-bars:has(> .mini-bar:nth-child(7)) .month { font-size: 7px; }
+  /* Rótulos das mini-barras seguem os MESMOS breakpoints do mini-trend
+     (FATURAMENTO): 9px até 8 meses, encolhe só em 9+ meses. Antes encolhia já
+     com 5 barras (nth-child), ficando menor que o FATURAMENTO. */
+  .mini-bars[data-nm="9"]  .pct, .mini-bars[data-nm="9"]  .month,
+  .mini-bars[data-nm="10"] .pct, .mini-bars[data-nm="10"] .month { font-size: 8px; }
+  .mini-bars[data-nm="11"] .pct, .mini-bars[data-nm="11"] .month,
+  .mini-bars[data-nm="12"] .pct, .mini-bars[data-nm="12"] .month { font-size: 7px; }
 
   .c-green  { border-top-color: #1f9d6a; }
   .c-red    { border-top-color: #e23434; }
@@ -597,7 +599,7 @@
   .mt-col .yoy { font-size: 8px; font-weight: 700; }
   .mt-col .yoy.yoy-up   { color: #1f9d6a; }
   .mt-col .yoy.yoy-down { color: #e23434; }
-  .mt-months .month { font-size: 9px; color: #444; font-weight: 600; text-align: center; }
+  .mt-months .month { font-size: 9px; color: #000; font-weight: 700; text-align: center; }
   .mt-svg { width: 100%; height: 46px; display: block; margin: 3px 0; overflow: visible; }
   .mt-bar { opacity: .85; }
   .mt-bar.b-green  { fill: #1f9d6a; }
@@ -847,6 +849,9 @@
   /* Item de menu só visível no segmento Postos */
   body:not([data-segmento="postos"]) [data-seg-only="postos"] { display: none !important; }
   body:not([data-segmento="intercompany"]) [data-seg-only="intercompany"] { display: none !important; }
+  /* Item de menu OCULTO num segmento específico (ex.: Análise Vertical não faz
+     sentido nos Postos — lá o DRE é o Mapa de Resultados). */
+  body[data-segmento="postos"] [data-seg-hide="postos"] { display: none !important; }
   /* Relatório de Transferências/Conciliação (Intercompany) */
   #transfTabs .transf-tab.active { background:#3d2c5a; color:#fff; border-color:#3d2c5a; }
   .transf-seg { font-size:10px; padding:1px 6px; border-radius:999px; background:#eef2f7; color:#456; margin-left:4px; }
@@ -2178,6 +2183,7 @@
     font-weight: 600; color: var(--brand);
   }
   .dfc-ms-panel input[type="checkbox"] { margin: 0; cursor: pointer; }
+  .home-ms { position: relative; display: inline-block; vertical-align: middle; }
   body.dark .dfc-ms-btn { background: #11141c; color: #c5cad4; border-color: #2c3346; }
   body.dark .dfc-ms-btn:hover, body.dark .dfc-ms-btn:focus { border-color: var(--accent); background: #1f2533; }
   body.dark .dfc-ms-panel { background: #1a2026; border-color: #2c3346; }
@@ -3729,7 +3735,7 @@
   body.dark .kpi-value { color: #f5f7f4 !important; }
   body.dark .kpi-pct   { color: #c5cad4 !important; }
   body.dark .mini-bar { color: #8b95a7; }
-  body.dark .mini-bar .month { color: #c5cad4; }
+  body.dark .mini-bar .month, body.dark .mt-months .month { color: #e6e9ef; font-weight: 700; }
   body.dark .mini-bar .pct   { color: #c5cad4; }
   body.dark .mini-bar .bar { background: #2c3346; }
   /* Pct colorido (tem que vencer body.dark .mini-bar .pct acima) */
@@ -5969,7 +5975,7 @@
       <button data-view="dre-pb-excel">DRE PowerBI (Excel)</button>
       <button data-view="comparativo-dre">Comparativo DRE</button>
       <button data-view="home">Dashboard DRE</button>
-      <button data-view="dre">Análise Vertical</button>
+      <button data-view="dre" data-seg-hide="postos">Análise Vertical</button>
       <button data-view="dre-postos" data-seg-only="postos">Mapa de Resultados</button>
       <button data-view="ah">Análise Horizontal</button>
       <button data-view="lojasrs">Lojas em R$</button>
@@ -5988,7 +5994,7 @@
     <!-- Abas in-report do Demonstrativo de Resultado (desktop + mobile) -->
     <nav class="report-tabs" id="dreTabs" aria-label="Abas do Demonstrativo de Resultado">
       <button data-view="home">Dashboard DRE</button>
-      <button data-view="dre">Análise Vertical</button>
+      <button data-view="dre" data-seg-hide="postos">Análise Vertical</button>
       <button data-view="dre-postos" data-seg-only="postos">Mapa de Resultados</button>
       <button data-view="ah">Análise Horizontal</button>
       <button data-view="lojasrs">Lojas em R$</button>
@@ -6009,7 +6015,12 @@
     <section id="view-home" class="view">
       <div class="dre-home-filtros" id="dreHomeFiltros">
         <label>Ano <select id="homeFAno"></select></label>
-        <label>Mês <select id="homeFMes"></select></label>
+        <label class="home-ms-wrap">Mês
+          <span class="home-ms" id="homeFMesMS">
+            <button type="button" class="dfc-ms-btn" id="homeFMesBtn">Todos os meses</button>
+            <div class="dfc-ms-panel hidden" id="homeFMesPanel"></div>
+          </span>
+        </label>
         <label>Empresa <select id="homeFLoja"></select></label>
       </div>
       <div class="kpi-grid" id="kpiGrid">
@@ -6472,7 +6483,7 @@
             <table class="dre-table" id="drePostosTable"></table>
           </div>
           <div class="dre-chart-card">
-            <div class="dre-chart-title">% por Posto</div>
+            <div class="dre-chart-title" id="drePostosChartTitle">% por Posto</div>
             <div class="chart-row-info" id="drePostosChartInfo">Clique numa linha</div>
             <div class="dre-chart-canvas-wrap"><canvas id="drePostosChart"></canvas></div>
           </div>
@@ -8766,9 +8777,10 @@ function buildMiniTrend(bars, cfg, valColor, barCls, nMeses) {
 // Sincroniza com os filtros globais (fAno / selectedMeses / selectedLojas) e o drawer.
 function _syncHomeFiltros() {
   const selAno = document.getElementById("homeFAno");
-  const selMes = document.getElementById("homeFMes");
+  const mesBtn = document.getElementById("homeFMesBtn");
+  const mesPanel = document.getElementById("homeFMesPanel");
   const selLoja = document.getElementById("homeFLoja");
-  if (!selAno || !selMes || !selLoja || !DADOS) return;
+  if (!selAno || !mesBtn || !mesPanel || !selLoja || !DADOS) return;
   const anos = DADOS.dimensoes.anos || [];
   if (selAno.dataset.k !== anos.join(",")) {
     selAno.dataset.k = anos.join(",");
@@ -8777,14 +8789,25 @@ function _syncHomeFiltros() {
   const fAno = document.getElementById("fAno");
   if (fAno) selAno.value = fAno.value;
 
+  // Mês = multiselect (um OU mais meses). "Todos" = selectedMeses === "Todos".
   const meses = DADOS.dimensoes.meses || [];
   const mesesK = meses.map(m => m.num).join(",");
-  if (selMes.dataset.k !== mesesK) {
-    selMes.dataset.k = mesesK;
-    selMes.innerHTML = `<option value="">Todos os meses</option>`
-      + meses.map(m => `<option value="${m.num}">${m.nome}</option>`).join("");
+  if (mesPanel.dataset.k !== mesesK) {
+    mesPanel.dataset.k = mesesK;
+    mesPanel.innerHTML = `<label class="ms-all"><input type="checkbox" id="homeFMesAll"> Todos os meses</label>`
+      + meses.map(m => `<label><input type="checkbox" class="home-mes-cb" value="${m.num}"> ${m.nome}</label>`).join("");
   }
-  selMes.value = (selectedMeses === "Todos" || selectedMeses.size !== 1) ? "" : String([...selectedMeses][0]);
+  // Reflete selectedMeses nos checkboxes + rótulo do botão.
+  const sel = (selectedMeses === "Todos") ? null : selectedMeses;   // null = todos
+  const allCb = mesPanel.querySelector("#homeFMesAll");
+  if (allCb) allCb.checked = !sel || sel.size === 0;
+  mesPanel.querySelectorAll(".home-mes-cb").forEach(cb => {
+    cb.checked = !!sel && sel.has(Number(cb.value));
+  });
+  const nomeMes = (n) => (meses.find(m => m.num === n) || {}).nome || ("Mês " + n);
+  mesBtn.textContent = (!sel || sel.size === 0) ? "Todos os meses"
+    : sel.size === 1 ? nomeMes([...sel][0])
+    : (sel.size + " meses");
 
   // Usa os MESMOS códigos de loja do DADOS.fatos.porLinha (senão o filtro não casa
   // e tudo zera). Label formatado "P01".."P11" a partir do código "001".."011".
@@ -8804,10 +8827,31 @@ function _syncHomeFiltros() {
       const f = document.getElementById("fAno");
       if (f) { f.value = selAno.value; f.dispatchEvent(new Event("change")); }
     });
-    selMes.addEventListener("change", () => {
-      selectedMeses = selMes.value ? new Set([Number(selMes.value)]) : "Todos";
+    // Mês multiselect: abre/fecha painel
+    mesBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      mesPanel.classList.toggle("hidden");
+    });
+    // recalcula selectedMeses a partir dos checkboxes
+    const aplicaMeses = () => {
+      const marcados = [...mesPanel.querySelectorAll(".home-mes-cb")].filter(c => c.checked).map(c => Number(c.value));
+      selectedMeses = marcados.length ? new Set(marcados) : "Todos";
       if (typeof setupMesMultiselect === "function") setupMesMultiselect();
-      renderAll();
+      renderAll();   // re-renderiza (e _syncHomeFiltros reflete o estado)
+    };
+    mesPanel.addEventListener("change", (e) => {
+      const t = e.target;
+      if (t.id === "homeFMesAll") {
+        if (t.checked) { selectedMeses = "Todos"; if (typeof setupMesMultiselect === "function") setupMesMultiselect(); renderAll(); }
+        else { renderAll(); }   // desmarcar "Todos" sem escolher mês = mantém Todos (reflete de volta)
+        return;
+      }
+      if (t.classList.contains("home-mes-cb")) aplicaMeses();
+    });
+    // fecha ao clicar fora
+    document.addEventListener("click", (e) => {
+      const ms = document.getElementById("homeFMesMS");
+      if (ms && !ms.contains(e.target)) mesPanel.classList.add("hidden");
     });
     selLoja.addEventListener("change", () => {
       selectedLojas = selLoja.value ? new Set([selLoja.value]) : "Todos";
@@ -14572,8 +14616,14 @@ function mesAnterior(ano, mes) {
   return mes === 1 ? { ano: ano - 1, mes: 12 } : { ano, mes: mes - 1 };
 }
 
+let _ahpCollapsed = new Set();   // Análise Horizontal Postos — linhas recolhidas
+let _ahpInit = false;
+
 function renderAHTable() {
   if (!DADOS) return;
+  // Postos: Análise Horizontal baseada no MAPA DE RESULTADOS (cascata _drepMerge),
+  // meses em colunas + Δ vs mês anterior. Fonte = mesma do Mapa (não DADOS.fatos).
+  if ((document.body.dataset.segmento || "") === "postos") { _renderAHPostos(); return; }
 
   const { ano, mes, loja } = getFilters();
   const t = document.getElementById("ahTable");
@@ -14701,6 +14751,115 @@ function renderAHTable() {
       if (ahExpanded.has(key)) ahExpanded.delete(key);
       else                     ahExpanded.add(key);
       renderAHTable();
+    });
+  });
+}
+
+// Análise Horizontal dos POSTOS — baseada no Mapa de Resultados (cascata
+// _drepMerge): cada linha do Mapa com R$ por mês + Δ R$ e Δ% vs o mês anterior.
+// Respeita o filtro global de Ano e de Posto (loja). Reusa o sinal de exibição
+// do Mapa (débitos "(-)" negativos; resultados "(=)" valor natural).
+async function _renderAHPostos() {
+  const t = document.getElementById("ahTable");
+  if (!t) return;
+  const ano = parseInt(document.getElementById("fAno")?.value, 10) || DADOS._ano;
+  let data = (typeof _drepCached === "function") ? _drepCached(ano) : null;
+  if (!data && typeof _drepLoadAno === "function") {
+    t.innerHTML = `<thead><tr><th>RESULTADOS</th></tr></thead><tbody><tr><td style="padding:24px;color:#8b95a7;text-align:center;">Carregando Mapa de Resultados…</td></tr></tbody>`;
+    data = await _drepLoadAno(ano);
+    if (typeof _drepLoadPerdas === "function") { try { await _drepLoadPerdas(ano); } catch (_) {} }
+  }
+  if (!data || !data.postos || !data.postos.length) {
+    t.innerHTML = `<thead><tr><th>RESULTADOS</th></tr></thead><tbody><tr><td style="padding:24px;color:#8b95a7;text-align:center;">Sem dados do Mapa de Resultados para ${ano}.</td></tr></tbody>`;
+    return;
+  }
+  // Postos selecionados (filtro global de loja; "Todos" = todos)
+  const codigos = (selectedLojas && selectedLojas !== "Todos")
+    ? new Set([...selectedLojas]) : new Set(data.postos.map(p => p.codigo));
+  const tops = _drepMerge(data, codigos);
+  // Ano anterior — pra o Δ de Janeiro comparar com Dezembro do ano passado.
+  let topsPrev = null;
+  try {
+    let prev = (typeof _drepCached === "function") ? _drepCached(ano - 1) : null;
+    if (!prev && typeof _drepLoadAno === "function") prev = await _drepLoadAno(ano - 1);
+    if (prev && prev.postos && prev.postos.length) topsPrev = _drepMerge(prev, codigos);
+  } catch (_) {}
+
+  // Meses com venda (colunas)
+  const vendas = tops.find(n => n.label === "Total das Vendas");
+  const cols = [];
+  for (let i = 0; i < 12; i++) if (vendas && Math.abs(vendas.meses[i]) > 0.005) cols.push(i);
+  if (!cols.length) for (let i = 0; i < 12; i++) if (tops.some(n => n._has[i])) cols.push(i);
+  if (!cols.length) {
+    t.innerHTML = `<thead><tr><th>RESULTADOS</th></tr></thead><tbody><tr><td style="padding:24px;color:#8b95a7;text-align:center;">Nenhum mês com dado.</td></tr></tbody>`;
+    return;
+  }
+
+  if (!_ahpInit) { _ahpCollapsed = new Set(_drepCollapsibleKeys(tops)); _ahpInit = true; }
+
+  const _MES = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const _yy = (a) => String(a).slice(2);
+  // Rótulo do mês de calendário ANTERIOR ao índice i (0-11). Jan (i=0) → Dez/ano-1.
+  const prevLabel = (i) => i > 0 ? `${_MES[i]}/${_yy(ano)}` : `${_MES[12]}/${_yy(ano - 1)}`;
+  const fRs = (v) => v == null ? "—" : (v < 0 ? "-" : "") + Math.abs(Math.round(v)).toLocaleString("pt-BR");
+  const fPct = (v) => v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(1).replace(".", ",") + "%";
+  const klass = (n) => n == null ? "ah-zero" : n > 0 ? "ah-pos" : n < 0 ? "ah-neg" : "ah-zero";
+  // sinal de exibição (igual ao Mapa): "(=)" usa valor natural; senão herda do pai.
+  const signedAt = (node, useSign, i) => (node._has[i] ? useSign * node.meses[i] : null);
+
+  let html = `<thead><tr class="month-row"><th></th>`
+    + cols.map(i => `<th colspan="3" class="ah-block-sep">${_MES[i + 1]}/${String(ano).slice(2)}</th>`).join("")
+    + `</tr><tr class="sub-row"><th>RESULTADOS</th>`
+    + cols.map((i, j) => `<th class="ah-block-sep">R$</th>`
+        + `<th class="ah-delta-col">Δ R$<br><small style="font-weight:400;color:#8b95a7">vs ${prevLabel(i)}</small></th>`
+        + `<th class="ah-delta-col">Δ %</th>`).join("")
+    + `</tr></thead><tbody>`;
+
+  const walk = (node, signParent, lvl) => {
+    let sign = signParent != null ? signParent : 1;
+    if (/^\(-\)/.test(node.label)) sign = -1;
+    else if (/^\(\+\)/.test(node.label) || node.label === "Receita") sign = 1;
+    const useSign = /^\(=\)/.test(node.label) ? 1 : sign;
+    const key = _drepKey(node);
+    const hasKids = node.children && node.children.length > 0;
+    const collapsed = _ahpCollapsed.has(key);
+    const band = _DREP_BAND.has(node.label);
+    let cls = `lvl-${lvl}`;
+    if (band) cls += " drep-band"; else if (_DREP_LIGHT.has(node.label)) cls += " drep-dest";
+    const tog = hasKids
+      ? `<span class="toggle" data-ahpkey="${_drepEsc(key)}">${collapsed ? "+" : "−"}</span>`
+      : `<span class="toggle-empty"></span>`;
+    let cells = "";
+    cols.forEach((i, j) => {
+      const vA = signedAt(node, useSign, i);
+      // Mês de calendário anterior: i-1 no mesmo ano; Janeiro → Dezembro do ano
+      // passado (busca o nó equivalente por rótulo em topsPrev).
+      let vB;
+      if (i > 0) {
+        vB = signedAt(node, useSign, i - 1);
+      } else {
+        const np = topsPrev ? _drepFindNode(topsPrev, node.label) : null;
+        vB = (np && np._has[11]) ? useSign * np.meses[11] : null;
+      }
+      const d = (vA != null && vB != null) ? vA - vB : null;
+      const p = (d != null && vB !== 0 && vB != null) ? (d / Math.abs(vB)) * 100 : null;
+      cells += `<td class="ah-block-sep">${fRs(vA)}</td>`
+            +  `<td class="${klass(d)}">${d == null ? "—" : fRs(d)}</td>`
+            +  `<td class="${klass(p)}">${fPct(p)}</td>`;
+    });
+    html += `<tr class="${cls}"><td class="label">${tog}${_drepEsc(node.label)}</td>${cells}</tr>`;
+    if (hasKids && !collapsed) node.children.forEach(c => walk(c, sign, lvl + 1));
+  };
+  tops.forEach(n => walk(n, 1, 1));
+  html += `</tbody>`;
+  t.innerHTML = html;
+
+  t.querySelectorAll(".toggle[data-ahpkey]").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const k = el.dataset.ahpkey;
+      if (_ahpCollapsed.has(k)) _ahpCollapsed.delete(k); else _ahpCollapsed.add(k);
+      _renderAHPostos();
     });
   });
 }
@@ -15541,27 +15700,48 @@ async function bootstrap() {
 ============================================================ */
 window._allowedViews = null;   // Set<string> ou null = full access
 
+// ACESSO INDIVIDUAL por CÓDIGO (por PESSOA, não por role): usuários que só podem
+// ver um conjunto fixo de relatórios, independente do role/matriz. Trava também
+// no segmento Postos (esconde o seletor de segmento). Ex.: Paulo → só o
+// Demonstrativo de Resultado dos Postos (Dashboard DRE + Mapa + Análise Horizontal).
+const ACESSO_RESTRITO_VIEWS = {
+  "pauloamfds@gmail.com": new Set(["home", "dre-postos", "ah"]),
+};
+
 async function applyUserPermissions() {
   if (!window._fbDb || !window._fbAuth?.currentUser) return;
   const email = (window._fbAuth.currentUser.email || "").toLowerCase();
   if (!email) return;
   try {
-    // 1) Lê role do usuário
-    const usnap = await getDoc(doc(window._fbDb, "users", email));
-    const role = (usnap.exists() ? usnap.data().role : null) || "gerente";
-    window._userRole = role;
+    let allowed;
+    // 0) Override de ACESSO INDIVIDUAL por código (vence role/matriz).
+    const restrito = ACESSO_RESTRITO_VIEWS[email];
+    if (restrito) {
+      window._userRole = "restrito";
+      allowed = restrito;
+      // Trava no segmento Postos e esconde o seletor de segmento.
+      try { document.getElementById("segmentPicker")?.classList.add("perm-hidden"); } catch (_) {}
+      if (document.body.dataset.segmento !== "postos") {
+        try { await applySegmento("postos"); } catch (_) {}
+      }
+    } else {
+      // 1) Lê role do usuário
+      const usnap = await getDoc(doc(window._fbDb, "users", email));
+      const role = (usnap.exists() ? usnap.data().role : null) || "gerente";
+      window._userRole = role;
 
-    // Administrador / Diretoria → acesso total (sai cedo, nada a esconder)
-    if (ROLES_FULL_ACCESS.has(role)) { window._allowedViews = null; return; }
+      // Administrador / Diretoria → acesso total (sai cedo, nada a esconder)
+      if (ROLES_FULL_ACCESS.has(role)) { window._allowedViews = null; return; }
 
-    // 2) Lê matriz de permissões
-    const psnap = await getDoc(doc(window._fbDb, "meta", "permissoes"));
-    const matriz = psnap.exists() ? (psnap.data().permissoes || {}) : {};
-    const dos = matriz[role] || {};
-    // junta todos os relKeys liberados pra esse role (sem se importar com setor)
-    const allowed = new Set();
-    for (const setor of Object.keys(dos)) {
-      for (const rel of (dos[setor] || [])) allowed.add(rel);
+      // 2) Lê matriz de permissões
+      const psnap = await getDoc(doc(window._fbDb, "meta", "permissoes"));
+      const matriz = psnap.exists() ? (psnap.data().permissoes || {}) : {};
+      const dos = matriz[role] || {};
+      // junta todos os relKeys liberados pra esse role (sem se importar com setor)
+      allowed = new Set();
+      for (const setor of Object.keys(dos)) {
+        for (const rel of (dos[setor] || [])) allowed.add(rel);
+      }
     }
     window._allowedViews = allowed;
 
@@ -22053,6 +22233,12 @@ async function _carregarDadosPostos(ano) {
       // "OUTRAS RECEITAS" é excluída da DRE (decisão do usuário 2026-05-28) — não é
       // receita real. Sai do grupo Receitas e é descontada do Lucro Líquido/Saldo Final.
       const _excluiRec = (lab) => /^OUTRAS RECEITAS\b/i.test(String(lab || ""));
+      // Linhas que NÃO são despesa/receita real (igual ao Mapa de Resultados /
+      // _drepMerge): TRANSFERENCIA BANCARIA = financiamento (inflava "Financeiras"
+      // com ~R$12M); APLICATIVO CIBUS-RESGATE = transferência. Saem do donut/
+      // composição pra a Financeiras do Dashboard bater com o Mapa.
+      const _LINHAS_REMOVER = new Set(["TRANSFERENCIA BANCARIA", "APLICATIVO CIBUS-RESGATE"]);
+      const _excluiDesp = (lab) => _LINHAS_REMOVER.has(String(lab || "").trim());
       for (const p of adaptive.postos) {
         const dreArr = (adaptive.dados[p.nome] || {}).dre || [];
         let curTop = null;
@@ -22088,6 +22274,7 @@ async function _carregarDadosPostos(ano) {
                 GRUPO: m[0], AGRUPAMENTO: m[1], LINHAS: ln.label, VALORES: Number(v) });
             }
           } else if (curTop === "(-) Despesas" && ln.nivel === 2) {
+            if (_excluiDesp(ln.label)) continue;   // transferências fora das despesas
             const agr = (typeof _dfcpAgrupOf === "function") ? _dfcpAgrupOf(ln.label) : "Gerais";
             grupoSet.add("Despesa Operacional"); agrupSet.add(agr);
             for (let i = 0; i < 12; i++) {
@@ -22100,7 +22287,7 @@ async function _carregarDadosPostos(ano) {
                 GRUPO: "Despesa Operacional", AGRUPAMENTO: agr, LINHAS: ln.label, VALORES: -Math.abs(Number(v)) });
             }
           } else if (curTop === "(+) Receitas" && ln.nivel === 1) {
-            if (_excluiRec(ln.label)) continue;   // OUTRAS RECEITAS fora
+            if (_excluiRec(ln.label) || _excluiDesp(ln.label)) continue;   // OUTRAS RECEITAS / transferências fora
             grupoSet.add("Receitas"); agrupSet.add("Receitas");
             for (let i = 0; i < 12; i++) {
               const v = ln.meses[i];
@@ -22314,6 +22501,9 @@ const _DREP_DESTAQUE = new Set([
 ]);
 const _drepCache = {};        // "${regime}_${ano}" -> data | null (Mapa)
 const _drepDespCache = {};    // ano -> data | null (Despesas Gerais p/ drilldown — só caixa)
+const _drepPerdasCache = {};  // ano -> {postos:{cod:{mes:{vol,var,prod:{...}}}}} | null (Variação/Volume por combustível)
+let _drepIndCollapsed = new Set();   // chaves de indicadores recolhidos (drill por combustível)
+let _drepIndCollapseInit = false;    // 1ª vez: recolhe os indicadores com drill
 let _drepAno = null;
 let _drepRegime = "caixa";   // Padrão: regime de caixa ao abrir o Mapa de Resultados.
 const _drepCacheKey = (ano) => `${_drepRegime}_${ano}`;
@@ -22326,6 +22516,7 @@ let _drepBound = false;
 let _drepReady = false;
 let _drepLastTops = null;
 let _drepChartLine = "(=) Lucro Líquido";   // linha alimentando o gráfico "% por Posto"
+let _drepChartInd = null;   // chave de indicador alimentando o gráfico (null = linha do DRE)
 let _drepChartObj = null;
 
 function _drepEsc(s) {
@@ -22390,6 +22581,18 @@ async function _drepLoadDesp(ano) {
   if (_drepRegime === "competencia") data = await tentar("_competencia");
   if (!data) data = await tentar("");   // fallback pro caixa
   _drepDespCache[key] = data;
+  return data;
+}
+// Perdas/Sobras por posto/mês/combustível (perdas_postos_{ano}.json) — alimenta
+// o Volume Vendido por combustível e a Variação de Estoque na tabela de indicadores.
+async function _drepLoadPerdas(ano) {
+  if (_drepPerdasCache[ano] !== undefined) return _drepPerdasCache[ano];
+  let data = null;
+  try {
+    const r = await fetch(`/dados_dre_postos_adaptive/perdas_postos_${ano}.json`, { cache: "no-cache" });
+    if (r.ok) data = await r.json();
+  } catch (_) {}
+  _drepPerdasCache[ano] = data;
   return data;
 }
 function _drepPostoCurto(nome) {
@@ -22940,6 +23143,73 @@ function _drepRenderPeriodo(data) {
 const _DREP_BAND  = new Set(["(=) Lucro Bruto", "(=) Margem Operacional"]);
 const _DREP_LIGHT = new Set(["Total das Vendas", "(=) Lucro Líquido", "(=) Saldo Final"]);
 
+// Indicadores operacionais (réplica do Mapa Anual) p/ os postos `codigos`:
+// Volume, Nº Abast., Ticket (R$/Litros) e métricas "por Litro" (Faturamento/
+// Custo/Lucro Bruto/Despesa/Lucro Líquido) + Variação de Estoque. Calculados do
+// DRE (SQL) ÷ Volume/Abast. Volume e Variação drilam por combustível (perdas.sql).
+// Reutilizado pela tabela (seleção toda) e pelo gráfico (1 posto por vez).
+// kind: "count" (litros/qtd) | "ratio" (R$ ou R$/L — sem soma, é média).
+function _drepIndicadores(data, codigos) {
+  const tops = _drepMerge(data, codigos);
+  const aggInd = {};
+  for (const p of (data.postos || [])) {
+    if (!codigos.has(p.codigo)) continue;
+    for (const r of (data.dados[p.nome]?.indicadores || [])) {
+      const a = aggInd[r.label] || (aggInd[r.label] = { meses: Array(12).fill(0), total: 0, _has: Array(12).fill(false), _hasT: false });
+      for (let i = 0; i < 12; i++) { const v = (r.meses || [])[i]; if (v != null && !isNaN(v)) { a.meses[i] += Number(v); a._has[i] = true; } }
+      if (r.total != null && !isNaN(r.total)) { a.total += Number(r.total); a._hasT = true; }
+    }
+  }
+  const _pv = (node, p) => { if (!node) return null; return p === "total" ? (node._hasT ? node.total : null) : (node._has[p] ? node.meses[p] : null); };
+  const _pv0 = (node, p) => { const v = _pv(node, p); return v == null ? 0 : v; };
+  const nVend = _drepFindNode(tops, "Total das Vendas"), nCusto = _drepFindNode(tops, "(-) Custo Total"),
+        nLB = _drepFindNode(tops, "(=) Lucro Bruto"), nDOp = _drepFindNode(tops, "(-) Despesas Operacionais"),
+        nDFin = _drepFindNode(tops, "(-) Despesas Financeiras"), nLL = _drepFindNode(tops, "(=) Lucro Líquido");
+  const nVol = aggInd["Volume Vendido (Litros)"], nAb = aggInd["Número Total de Abastecimentos"];
+  const vol = (p) => _pv0(nVol, p), ab = (p) => _pv0(nAb, p);
+  const div = (num, den) => den ? num / den : null;
+  // Quebra por combustível (perdas_postos)
+  const perdas = _drepPerdasCache[data.ano];
+  const combVol = {}, combVar = {};
+  if (perdas && perdas.postos) {
+    for (const p of (data.postos || [])) {
+      if (!codigos.has(p.codigo)) continue;
+      const pm = perdas.postos[p.codigo] || {};
+      for (let i = 0; i < 12; i++) {
+        const rec = pm[String(i + 1)];
+        if (!rec || !rec.prod) continue;
+        for (const prod in rec.prod) {
+          const cv = combVol[prod] || (combVol[prod] = { meses: Array(12).fill(0), total: 0 });
+          const cr = combVar[prod] || (combVar[prod] = { meses: Array(12).fill(0), total: 0 });
+          cv.meses[i] += rec.prod[prod].vol; cv.total += rec.prod[prod].vol;
+          cr.meses[i] += rec.prod[prod].var; cr.total += rec.prod[prod].var;
+        }
+      }
+    }
+  }
+  const combNames = Object.keys(combVol).sort();
+  const fInt = (v) => v == null ? "—" : Math.round(v).toLocaleString("pt-BR");
+  const fRs2 = (v) => v == null ? "—" : "R$ " + v.toFixed(2).replace(".", ",");
+  const fRs3 = (v) => v == null ? "—" : "R$ " + v.toFixed(3).replace(".", ",");
+  const fL2  = (v) => v == null ? "—" : v.toFixed(2).replace(".", ",") + " L";
+  const childrenFrom = (map, fmt) => combNames
+    .filter(prod => map[prod] && (Math.abs(map[prod].total) > 0.005 || map[prod].meses.some(v => Math.abs(v) > 0.005)))
+    .map(prod => ({ label: prod, fmt, val: (p) => (p === "total" ? map[prod].total : map[prod].meses[p]) }));
+  const varEst = (p) => { let s = 0, tem = false; for (const prod in combVar) { const m = combVar[prod]; s += (p === "total" ? m.total : m.meses[p]); tem = true; } return tem ? s : null; };
+  return [
+    { key: "ind:vol",    label: "Volume Vendido (Litros)",        kind: "count", fmt: fInt, val: (p) => (nVol ? vol(p) : null), children: childrenFrom(combVol, fInt) },
+    { key: "ind:abast",  label: "Número Total de Abastecimentos", kind: "count", fmt: fInt, val: (p) => (nAb ? ab(p) : null) },
+    { key: "ind:tktrs",  label: "Ticket Médio (R$)",              kind: "ratio", fmt: fRs2, val: (p) => div(_pv0(nVend, p), ab(p)) },
+    { key: "ind:tktl",   label: "Ticket Médio (Litros)",          kind: "ratio", fmt: fL2,  val: (p) => div(vol(p), ab(p)) },
+    { key: "ind:fatl",   label: "Faturamento por Litro",          kind: "ratio", fmt: fRs3, val: (p) => div(_pv0(nVend, p), vol(p)) },
+    { key: "ind:custl",  label: "Custo por Litro",                kind: "ratio", fmt: fRs3, val: (p) => div(_pv0(nCusto, p), vol(p)) },
+    { key: "ind:lbl",    label: "Lucro Bruto por Litro",          kind: "ratio", fmt: fRs3, val: (p) => div(_pv0(nLB, p), vol(p)) },
+    { key: "ind:despl",  label: "Despesa por Litro",              kind: "ratio", fmt: fRs3, val: (p) => div(_pv0(nDOp, p) + _pv0(nDFin, p), vol(p)) },
+    { key: "ind:lll",    label: "Lucro Líquido por Litro",        kind: "ratio", fmt: fRs3, val: (p) => div(_pv0(nLL, p), vol(p)) },
+    { key: "ind:varest", label: "Variação de Estoque (Litros)",   kind: "count", fmt: fInt, val: (p) => varEst(p), children: childrenFrom(combVar, fInt) },
+  ];
+}
+
 function _drepRenderTable(data) {
   const statusEl = document.getElementById("drePostosStatus");
   const tbl = document.getElementById("drePostosTable");
@@ -23054,69 +23324,62 @@ function _drepRenderTable(data) {
   };
   tops.forEach(t => walk(t, false, 1));
 
-  // Indicadores operacionais do Mapa Anual (Volume Vendido, Ticket Médio etc.)
-  // agregados (soma) por posto selecionado. Sem AV% (não faz sentido vs vendas).
-  const aggInd = {};   // label -> {label, nivel, meses[12], total, _has[12], _hasT}
-  for (const p of (data.postos || [])) {
-    if (!_drepSel.has(p.codigo)) continue;
-    for (const r of (data.dados[p.nome]?.indicadores || [])) {
-      const k = r.label;
-      if (!aggInd[k]) aggInd[k] = { label: r.label, nivel: r.nivel || 0,
-        meses: Array(12).fill(0), total: 0, _has: Array(12).fill(false), _hasT: false };
-      const a = aggInd[k];
-      for (let i = 0; i < 12; i++) {
-        const v = (r.meses || [])[i];
-        if (v != null && !isNaN(v)) { a.meses[i] += Number(v); a._has[i] = true; }
-      }
-      const t = r.total;
-      if (t != null && !isNaN(t)) { a.total += Number(t); a._hasT = true; }
-    }
-  }
   html += "</tbody>";
   tbl.innerHTML = html;
 
-  // ── Indicadores Operacionais = relatório SEPARADO (tabela própria, scroll
-  //    independente, com um espaço acima). Volume/Ticket/etc. não são DRE.
-  // Reordena: os combustíveis (nível 1) ficam logo abaixo do "Volume Vendido"
-  // (alguns postos têm DIESEL S500/S10 que, sem isso, cairiam soltos no fim).
-  const _indAll = Object.values(aggInd);
-  const _indL1 = _indAll.filter(r => (r.nivel || 0) >= 1);
-  const indRows = [];
-  let _volInserido = false;
-  for (const r of _indAll) {
-    if ((r.nivel || 0) >= 1) continue;   // combustíveis entram logo após o Volume
-    indRows.push(r);
-    if (/volume vendido/i.test(r.label)) { indRows.push(..._indL1); _volInserido = true; }
+  // ── INDICADORES OPERACIONAIS (réplica do Mapa Anual) — ver _drepIndicadores.
+  const indDefs = _drepIndicadores(data, _drepSel);
+  // 1ª vez: recolhe os indicadores com drill por combustível (mostra só o pai).
+  if (!_drepIndCollapseInit) {
+    for (const d of indDefs) if (d.children && d.children.length) _drepIndCollapsed.add(d.key);
+    _drepIndCollapseInit = true;
   }
-  if (!_volInserido) indRows.push(..._indL1);
+
   const indTbl = document.getElementById("drePostosIndTable");
   const indCard = document.getElementById("drePostosIndCard");
   if (indTbl) {
-    if (indRows.length) {
-      let ih = `<thead><tr class="month-row"><th></th>`
-        + cols.map(mi => `<th colspan="2">${_DREP_MESES[mi]}</th>`).join("")
-        + `<th colspan="2" class="drep-totcol-ind">Total</th></tr>`
-        + `<tr class="sub-row"><th class="label">INDICADORES OPERACIONAIS</th>`
-        + cols.map(() => `<th colspan="2"></th>`).join("")
-        + `<th colspan="2" class="drep-totcol-ind"></th></tr></thead><tbody>`;
-      for (const r of indRows) {
-        const lvl = r.nivel === 0 ? 1 : (r.nivel === 1 ? 2 : 3);
-        ih += `<tr class="lvl-${lvl}"><td class="label">${_drepEsc(r.label)}</td>`;
-        for (const mi of cols) {
-          const v = r._has[mi] ? r.meses[mi] : null;
-          ih += `<td class="drep-val" colspan="2" style="text-align:right;">${v == null ? "—" : _drepFmt(v)}</td>`;
-        }
-        const t = r._hasT ? r.total : null;
-        ih += `<td class="drep-val drep-totcol-ind" colspan="2" style="text-align:right;">${t == null ? "—" : _drepFmt(t)}</td>`;
-        ih += `</tr>`;
-      }
-      ih += "</tbody>";
-      indTbl.innerHTML = ih;
-      if (indCard) indCard.style.display = "";
-    } else {
-      indTbl.innerHTML = "";
-      if (indCard) indCard.style.display = "none";
+    let ih = `<thead><tr class="month-row"><th></th>`
+      + cols.map(mi => `<th colspan="2">${_DREP_MESES[mi]}</th>`).join("")
+      + `<th colspan="2" class="drep-totcol-ind">Total</th></tr>`
+      + `<tr class="sub-row"><th class="label">INDICADORES OPERACIONAIS</th>`
+      + cols.map(() => `<th colspan="2"></th>`).join("")
+      + `<th colspan="2" class="drep-totcol-ind"></th></tr></thead><tbody>`;
+    const indRow = (label, fmt, valFn, lvl, key, hasKids, collapsed, chartKey) => {
+      const tog = hasKids
+        ? `<span class="toggle" data-indkey="${_drepEsc(key)}">${collapsed ? "+" : "−"}</span>`
+        : `<span class="toggle-empty"></span>`;
+      const sel = chartKey && chartKey === _drepChartInd ? " drep-selrow" : "";
+      const rot = chartKey ? ` data-indrotulo="${_drepEsc(chartKey)}"` : "";
+      let r = `<tr class="lvl-${lvl}${sel}"${rot}><td class="label">${tog}${_drepEsc(label)}</td>`;
+      for (const mi of cols) r += `<td class="drep-val" colspan="2" style="text-align:right;">${fmt(valFn(mi))}</td>`;
+      r += `<td class="drep-val drep-totcol-ind" colspan="2" style="text-align:right;">${fmt(valFn("total"))}</td>`;
+      return r + `</tr>`;
+    };
+    for (const d of indDefs) {
+      const hasKids = !!(d.children && d.children.length);
+      const collapsed = _drepIndCollapsed.has(d.key);
+      ih += indRow(d.label, d.fmt, d.val, 1, d.key, hasKids, collapsed, d.key);
+      if (hasKids && !collapsed) for (const c of d.children) ih += indRow(c.label, c.fmt, c.val, 2, null, false, false, d.key + "|" + c.label);
     }
+    ih += "</tbody>";
+    indTbl.innerHTML = ih;
+    if (indCard) indCard.style.display = "";
+    indTbl.querySelectorAll(".toggle[data-indkey]").forEach(el => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const k = el.dataset.indkey;
+        if (_drepIndCollapsed.has(k)) _drepIndCollapsed.delete(k); else _drepIndCollapsed.add(k);
+        _drepRenderTable(data);
+      });
+    });
+    // clique no RÓTULO do indicador → alimenta o gráfico "por Posto"
+    indTbl.querySelectorAll("tr[data-indrotulo] td.label").forEach(lab => {
+      lab.addEventListener("click", (e) => {
+        if (e.target.closest(".toggle")) return;   // [+]/[−] tem handler próprio
+        _drepChartInd = lab.closest("tr").dataset.indrotulo;
+        _drepRenderTable(data);
+      });
+    });
   }
 
   const periodoLbl = _drepPeriodo === "todos"
@@ -23153,6 +23416,7 @@ function _drepRenderTable(data) {
     lab.addEventListener("click", (e) => {
       if (e.target.closest(".toggle")) return;   // [+]/[−] tem handler próprio
       _drepChartLine = lab.closest("tr").dataset.rotulo;
+      _drepChartInd = null;   // volta pro modo "linha do DRE"
       _drepRenderTable(data);
     });
   });
@@ -23292,17 +23556,46 @@ function _drepFindNode(nodes, label) {
 function _drepRenderChart(data) {
   const canvas = document.getElementById("drePostosChart");
   const info = document.getElementById("drePostosChartInfo");
+  const titleEl = document.getElementById("drePostosChartTitle");
   if (!canvas || typeof Chart === "undefined") return;
-  const line = _drepChartLine || "(=) Lucro Líquido";
-  if (info) info.textContent = line;
   const pIdx = _drepPeriodo === "todos" ? "total" : parseInt(_drepPeriodo, 10);
   const nomes = data.postos.filter(p => _drepSel.has(p.codigo));
-  const items = nomes.map(p => {
-    const topsP = _drepMerge(data, new Set([p.codigo]));
-    const v = _drepSignedVal(topsP, line, pIdx);   // valor COM sinal (despesa = negativo)
-    const vend = _drepNodeVal(_drepFindNode(topsP, "Total das Vendas"), pIdx);
-    return { loja: p.codigo, pct: (vend && v != null) ? (v / vend * 100) : 0 };
-  }).filter(x => x.pct !== 0).sort((a, b) => a.pct - b.pct);
+  let items, valFmt;
+  if (_drepChartInd) {
+    // MODO INDICADOR: valor (absoluto) por posto — usa o formatador do indicador.
+    const sep = _drepChartInd.indexOf("|");
+    const pkey = sep >= 0 ? _drepChartInd.slice(0, sep) : _drepChartInd;
+    const child = sep >= 0 ? _drepChartInd.slice(sep + 1) : null;
+    let chosenLabel = _drepChartInd, fmt = (v) => v == null ? "—" : String(v);
+    items = nomes.map(p => {
+      const defs = _drepIndicadores(data, new Set([p.codigo]));
+      const def = defs.find(d => d.key === pkey);
+      let v = null;
+      if (def) {
+        fmt = def.fmt;
+        if (child) {
+          const c = (def.children || []).find(ch => ch.label === child);
+          chosenLabel = def.label + " · " + child;
+          v = c ? c.val(pIdx) : null;
+        } else { chosenLabel = def.label; v = def.val(pIdx); }
+      }
+      return { loja: p.codigo, pct: (v == null ? 0 : v) };
+    }).filter(x => x.pct !== 0).sort((a, b) => a.pct - b.pct);
+    valFmt = fmt;
+    if (info) info.textContent = chosenLabel;
+    if (titleEl) titleEl.textContent = "por Posto";
+  } else {
+    const line = _drepChartLine || "(=) Lucro Líquido";
+    if (info) info.textContent = line;
+    if (titleEl) titleEl.textContent = "% por Posto";
+    items = nomes.map(p => {
+      const topsP = _drepMerge(data, new Set([p.codigo]));
+      const v = _drepSignedVal(topsP, line, pIdx);   // valor COM sinal (despesa = negativo)
+      const vend = _drepNodeVal(_drepFindNode(topsP, "Total das Vendas"), pIdx);
+      return { loja: p.codigo, pct: (vend && v != null) ? (v / vend * 100) : 0 };
+    }).filter(x => x.pct !== 0).sort((a, b) => a.pct - b.pct);
+    valFmt = fmtPctSimple;
+  }
 
   if (_drepChartObj) _drepChartObj.destroy();
   _drepChartObj = new Chart(canvas, {
@@ -23317,7 +23610,7 @@ function _drepRenderChart(data) {
       layout: { padding: { left: 8, right: 56 } },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => fmtPctSimple(ctx.parsed.x) } },
+        tooltip: { callbacks: { label: ctx => valFmt(ctx.parsed.x) } },
       },
       scales: { x: { display: false, grace: "30%" },
         y: { grid: { display: false }, ticks: { font: { weight: "700", size: 11 }, padding: 0 } } },
@@ -23331,7 +23624,7 @@ function _drepRenderChart(data) {
         const dark = document.body.classList.contains("dark");
         chart.data.datasets[0].data.forEach((val, i) => {
           const bar = chart.getDatasetMeta(0).data[i];
-          const txt = fmtPctSimple(val);
+          const txt = valFmt(val);
           const w = ctx.measureText(txt).width;
           if (val < 0) {
             // Rótulo à esquerda da ponta; se invadir a área dos rótulos do eixo,
@@ -23526,6 +23819,7 @@ async function renderDREPostos() {
   }
   if (_drepSel === null) _drepSel = new Set(data.postos.map(p => p.codigo));
   await _drepLoadDesp(_drepAno);   // detalhamento (drilldown); ok se faltar
+  await _drepLoadPerdas(_drepAno); // perdas por combustível p/ indicadores; ok se faltar
   _drepRenderPills(data);
   _drepRenderPostoSel(data);
   _drepRenderPeriodo(data);

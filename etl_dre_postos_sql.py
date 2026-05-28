@@ -98,7 +98,7 @@ def parse(path, filter_ano=None):
     hdr = [str(sh.cell_value(0, i)).strip() for i in range(sh.ncols)]
     col = {name: hdr.index(name) for name in
            ["tipo", "posto", "posto_nome", "ano", "mes", "grupo", "conta",
-            "dt", "doc", "fornecedor", "obs", "litros", "valor", "custo"] if name in hdr}
+            "dt", "doc", "fornecedor", "obs", "litros", "valor", "custo", "abastec"] if name in hdr}
 
     ano_ref = None
     postos = {}   # codigo -> nome
@@ -107,6 +107,8 @@ def parse(path, filter_ano=None):
     vendas = {}        # cod -> meses (valor)
     vendas_custo = {}  # cod -> meses (custo)
     vendas_fuel = {}   # cod -> conta -> meses
+    vendas_litros = {} # cod -> meses (litros de COMBUSTÍVEL — Volume Vendido)
+    vendas_abast = {}  # cod -> meses (nº de abastecimentos de COMBUSTÍVEL)
     desp = {}          # cod -> grupo -> conta -> meses
     inv = {}           # cod -> conta -> meses
     ret = {}           # cod -> conta -> meses
@@ -143,6 +145,14 @@ def parse(path, filter_ano=None):
             custo = _num(sh.cell_value(r, col["custo"])) or 0.0
             vendas_custo.setdefault(cod, z12())[mi] += custo
             vendas_fuel.setdefault(cod, {}).setdefault(conta, z12())[mi] += valor
+            # Volume Vendido (Litros) e Nº de Abastecimentos — só COMBUSTÍVEL
+            if not conta.upper().startswith("OUTROS"):
+                litros = _num(sh.cell_value(r, col["litros"])) if "litros" in col else None
+                if litros:
+                    vendas_litros.setdefault(cod, z12())[mi] += litros
+                abast = _num(sh.cell_value(r, col["abastec"])) if "abastec" in col else None
+                if abast:
+                    vendas_abast.setdefault(cod, z12())[mi] += abast
         elif tipo == "DESPESA":
             desp.setdefault(cod, {}).setdefault(grupo, {}).setdefault(conta, z12())[mi] += valor
             # drilldown (linhas detalhadas têm data)
@@ -256,7 +266,18 @@ def parse(path, filter_ano=None):
         # Saldo Final
         dre.append(linha("(=) Saldo Final", 0, sf))
 
-        dados[nome] = {"dre": dre, "indicadores": []}
+        # Indicadores operacionais derivados da CONSULTA (não do Mapa Anual):
+        # Volume Vendido (Litros) = litros de combustível por mês.
+        indicadores = []
+        vl = vendas_litros.get(cod)
+        if vl and any(vl):
+            indicadores.append({"label": "Volume Vendido (Litros)", "nivel": 0,
+                                "meses": [round(x, 3) for x in vl], "total": round(sum(vl), 3)})
+        ab = vendas_abast.get(cod)
+        if ab and any(ab):
+            indicadores.append({"label": "Número Total de Abastecimentos", "nivel": 0,
+                                "meses": [round(x) for x in ab], "total": round(sum(ab))})
+        dados[nome] = {"dre": dre, "indicadores": indicadores}
 
     lista = [{"codigo": c, "nome": n} for c, n in postos.items()]
     lista.sort(key=lambda p: p["codigo"])

@@ -65,17 +65,36 @@ TITULOS_CONTRATO AS (
     AND FT.DTAEMISSAO >= TO_DATE(:d3,'DD/MM/YYYY')
     AND FT.DTAEMISSAO < TO_DATE(:d4,'DD/MM/YYYY')+1
   GROUP BY FT.SEQPESSOA
+),
+-- Recebido: baixas de títulos CONTRT pelas operações de recebimento
+--   5  = Recebimento em Conta Corrente
+--   8  = Juros Recebidos
+--   28 = Compensado com Tít. a Pagar  (é como o fornecedor "paga" o retorno)
+-- Atribuído pelo mês corrente (DTAOPERACAO em M, janela d1→d2), batendo com o
+-- relatório "Contas a Receber - Recebido" do Consinco por período de operação.
+RECEBIDO_CONTRATO AS (
+  SELECT FT.SEQPESSOA, ROUND(SUM(NVL(O.VLROPERACAO,0)),2) AS VLRRECEBIDO
+  FROM CONSINCO.FI_TITOPERACAO O
+  JOIN CONSINCO.FI_TITULO FT ON FT.SEQTITULO = O.SEQTITULO
+  WHERE FT.CODESPECIE='CONTRT'
+    AND O.CODOPERACAO IN (5,8,28)
+    AND NVL(O.OPCANCELADA,'N') <> 'S'
+    AND O.DTAOPERACAO >= TO_DATE(:d1,'DD/MM/YYYY')
+    AND O.DTAOPERACAO < TO_DATE(:d2,'DD/MM/YYYY')+1
+  GROUP BY FT.SEQPESSOA
 )
 SELECT C.SEQPESSOA, NVL(B.NOMERAZAO, P.NOMERAZAO) AS NOMERAZAO,
   C.SEQCONTRATO, C.SEQREDE, C.DESCRICAO, C.PERCDESCONTO,
   NVL(B.VLRTOTALNF,0) AS VLRTOTALNF,
   ROUND(NVL(B.VLRTOTALNF,0)*(NVL(C.PERCDESCONTO,0)/100),2) AS VLRESPERADO,
   NVL(T.VLRAPURADO,0) AS VLRAPURADO,
-  ROUND((NVL(B.VLRTOTALNF,0)*(NVL(C.PERCDESCONTO,0)/100))-NVL(T.VLRAPURADO,0),2) AS DIFERENCA
+  ROUND((NVL(B.VLRTOTALNF,0)*(NVL(C.PERCDESCONTO,0)/100))-NVL(T.VLRAPURADO,0),2) AS DIFERENCA,
+  NVL(R.VLRRECEBIDO,0) AS VLRRECEBIDO
 FROM CONTRATOS_ATIVOS C
 JOIN GE_PESSOA P ON P.SEQPESSOA = C.SEQPESSOA
 LEFT JOIN BASE_NF B ON B.SEQPESSOA = C.SEQPESSOA
 LEFT JOIN TITULOS_CONTRATO T ON T.SEQPESSOA = C.SEQPESSOA
+LEFT JOIN RECEBIDO_CONTRATO R ON R.SEQPESSOA = C.SEQPESSOA
 ORDER BY ABS(ROUND((NVL(B.VLRTOTALNF,0)*(NVL(C.PERCDESCONTO,0)/100))-NVL(T.VLRAPURADO,0),2)) DESC
 """
 
@@ -104,11 +123,11 @@ for mes in meses_alvo:
     print(f"[{ano}-{mes:02d}] NF {d1}→{d2} · apuração {d3}→{d4} …", end=" ", flush=True)
     cur.execute(SQL, d1=d1, d2=d2, d3=d3, d4=d4)
     items = []
-    tot_nf = tot_esp = tot_apur = tot_dif = 0.0
+    tot_nf = tot_esp = tot_apur = tot_dif = tot_receb = 0.0
     for r in cur.fetchall():
-        seqp, nome, seqcontr, seqrede, desc, perc, vlrnf, vlresp, vlrapur, dif = r
+        seqp, nome, seqcontr, seqrede, desc, perc, vlrnf, vlresp, vlrapur, dif, vlrreceb = r
         vlrnf = float(vlrnf or 0); vlresp = float(vlresp or 0)
-        vlrapur = float(vlrapur or 0); dif = float(dif or 0)
+        vlrapur = float(vlrapur or 0); dif = float(dif or 0); vlrreceb = float(vlrreceb or 0)
         items.append({
             "seqpessoa": int(seqp) if seqp is not None else None,
             "nome": (nome or "").strip(),
@@ -120,8 +139,9 @@ for mes in meses_alvo:
             "vlresperado": round(vlresp, 2),
             "vlrapurado": round(vlrapur, 2),
             "diferenca": round(dif, 2),
+            "vlrrecebido": round(vlrreceb, 2),
         })
-        tot_nf += vlrnf; tot_esp += vlresp; tot_apur += vlrapur; tot_dif += dif
+        tot_nf += vlrnf; tot_esp += vlresp; tot_apur += vlrapur; tot_dif += dif; tot_receb += vlrreceb
     resultado["meses"][f"{ano}-{mes:02d}"] = {
         "items": items,
         "totais": {
@@ -129,6 +149,7 @@ for mes in meses_alvo:
             "vlresperado": round(tot_esp, 2),
             "vlrapurado": round(tot_apur, 2),
             "diferenca": round(tot_dif, 2),
+            "vlrrecebido": round(tot_receb, 2),
             "qtd": len(items),
         },
     }

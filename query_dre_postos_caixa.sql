@@ -47,7 +47,8 @@ SELECT
     -- produção). Títulos com rateio 1:N em parcela_despesa_receita podem
     -- duplicar (efeito conhecido do legado — afeta < 1% dos títulos).
     tf.valor_liquidado                             AS valor,
-    NULL::numeric                                  AS custo
+    NULL::numeric                                  AS custo,
+    NULL::bigint                                   AS abastec
 FROM vwfw_titulo_financeiro tf
     JOIN parcela_despesa_receita p
                                    ON p.id_titulo_financeiro = tf.id_titulo_financeiro
@@ -79,7 +80,8 @@ SELECT
     tf.observacao                                  AS obs,
     NULL::numeric                                  AS litros,
     tf.valor_liquidado                             AS valor,
-    NULL::numeric                                  AS custo
+    NULL::numeric                                  AS custo,
+    NULL::bigint                                   AS abastec
 FROM vwfw_titulo_financeiro tf
     JOIN parcela_despesa_receita p
                                    ON p.id_titulo_financeiro = tf.id_titulo_financeiro
@@ -112,7 +114,8 @@ SELECT
     NULL::text                                     AS obs,
     SUM(v.quantidade_item_venda)                   AS litros,
     SUM(v.total_item)                              AS valor,
-    SUM(v.custo)                                   AS custo
+    SUM(v.custo)                                   AS custo,
+    COUNT(*)                                       AS abastec
 FROM vw_venda v
 WHERE v.data_movimento >= DATE '2025-01-01' AND v.data_movimento < DATE '2027-01-01'
 GROUP BY 1, 2, 3, 4, 5, 6, 7
@@ -135,7 +138,8 @@ SELECT
     NULL::text                                     AS obs,
     NULL::numeric                                  AS litros,
     SUM(tf.valor_taxa_administracao)               AS valor,
-    NULL::numeric                                  AS custo
+    NULL::numeric                                  AS custo,
+    NULL::bigint                                   AS abastec
 FROM vwfw_titulo_financeiro tf
     JOIN sis_empresa emp ON emp.id_empresa = tf.id_empresa
 WHERE tf.pagar_receber = 2
@@ -163,7 +167,8 @@ SELECT
     NULL::text                                     AS obs,
     NULL::numeric                                  AS litros,
     SUM(tf.tarifa_transacao)                       AS valor,
-    NULL::numeric                                  AS custo
+    NULL::numeric                                  AS custo,
+    NULL::bigint                                   AS abastec
 FROM vwfw_titulo_financeiro tf
     JOIN sis_empresa emp ON emp.id_empresa = tf.id_empresa
 WHERE tf.pagar_receber = 2
