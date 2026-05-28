@@ -54,6 +54,15 @@ SQL_LIQUIDADO = """
 def gerar(ano: int):
     dim = engine_fluxo._carregar_dimensoes_fluxo(db)
     l2g = dim["linha_para_grupo"]
+    # subAgrupamento por linha (ex.: "Recbto de Contratos") — pra tabela hierárquica DFC
+    linha_sub = {}
+    snap = db.collection("meta").document("linhasFluxo").get()
+    if snap.exists:
+        for it in (snap.to_dict() or {}).get("items", []):
+            n = it.get("nome", "")
+            s = (it.get("subAgrupamento") or "").strip()
+            if n and s:
+                linha_sub[n] = s
     ini, fim = date(ano, 1, 1), date(ano + 1, 1, 1)
 
     con = agente.conectar_oracle()
@@ -130,6 +139,7 @@ def gerar(ano: int):
         "agrupamentos_ordenados": dim["agrupamentos_ordenados"],
         "linhas_ordenadas": dim["linhas_ordenadas"],
         "agrupamento_para_grupo": dim["agrupamento_para_grupo"],
+        "linha_sub": linha_sub,
         "meses": meses,
         "geradoEm": firestore.SERVER_TIMESTAMP,
     }
