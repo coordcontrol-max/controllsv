@@ -97,13 +97,21 @@ def gravar(dados):
     r = cur.fetchone()
     allm = (r[0] if r and r[0] else {}) or {}
     hoje = datetime.date.today().isoformat()
+    pulados = []
     for ym, metas in dados.items():
         mes = allm.setdefault(ym, {})
+        # Respeita edição manual: se alguém ajustou a meta deste mês na tela
+        # (Metas Manuais → Operação), não sobrescreve.
+        if mes.get("operacao", {}).get("_fonte") == "manual":
+            pulados.append(ym)
+            continue
         mes["operacao"] = {
             "lojas": {str(c): {"meta_venda": v} for c, v in sorted(metas.items())},
             "_fonte": "aprovacao_metas",
             "_atualizado": hoje,
         }
+    if pulados:
+        print(f"  (pulados — meta manual: {', '.join(pulados)})")
     cur.execute(
         """INSERT INTO app_data (key, data, updated_by, updated_at)
            VALUES ('metas_manuais', %s::jsonb, NULL, NOW())
