@@ -982,11 +982,21 @@
     background: #fff; border-radius: 4px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.06); padding: 8px;
   }
+  /* Coluna esquerda do grid: empilha os 2 relatórios (Resultados + Indicadores)
+     com um espaço entre eles. min-width:0 impede o grid de expandir pelo conteúdo. */
+  .dre-table-col { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+  /* Cada relatório rola DENTRO do seu card (scrollbar logo abaixo do conteúdo). */
+  .dre-table-card {
+    overflow: auto; min-width: 0;
+    max-height: calc(100vh - 240px);
+  }
+  .dre-ind-card { max-height: none; }
   .dre-chart-card {
     padding: 16px;
     display: flex; flex-direction: column;
     height: calc(100vh - 240px);
     min-height: 420px;
+    position: sticky; top: 12px;
   }
   .dre-chart-card .dre-chart-title {
     font-size: 14px; font-weight: 700; color: #444; margin-bottom: 8px;
@@ -998,27 +1008,73 @@
     position: absolute; inset: 0;
     width: 100% !important; height: 100% !important;
   }
-  .dre-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .dre-table { width: max-content; border-collapse: separate; border-spacing: 0; font-size: 11px; }
+  /* Cabeçalho fixo no topo (2 linhas: meses + R$/AV%) ao rolar vertical */
   .dre-table thead tr.month-row th {
     background: #fff; font-weight: 700; padding: 4px 6px;
     border-bottom: 1px solid #ddd; text-align: center;
+    position: sticky; top: 0; z-index: 3;
   }
   .dre-table thead tr.sub-row th {
     background: var(--brand); color: #fff; font-weight: 700;
     padding: 6px 8px; font-size: 11px;
+    position: sticky; top: 25px; z-index: 3;
   }
   .dre-table thead tr.sub-row th:first-child { text-align: left; }
+  /* Primeira coluna (rótulos) fixa à esquerda ao rolar horizontal */
+  .dre-table thead th.label, .dre-table thead tr.month-row th:first-child {
+    position: sticky; left: 0; z-index: 5;
+  }
+  .dre-table thead tr.sub-row th:first-child {
+    position: sticky; left: 0; z-index: 5;
+    border-right: 3px solid var(--brand-dk, #16304f);
+  }
+  .dre-table thead tr.month-row th:first-child { border-right: 3px solid var(--brand-dk, #16304f); }
+  /* Coluna acumulado (Total = R$ + AV%) fixa à direita. min-width fixo na AV%
+     garante que o right:56px do R$ alinhe certo. */
+  .dre-table th.drep-totcol-av, .dre-table td.drep-totcol-av { min-width: 56px; width: 56px; }
+  .dre-table thead th.drep-totcol-rs { position: sticky; right: 56px; z-index: 4;
+    border-left: 3px solid var(--brand-dk, #16304f); }
+  .dre-table thead th.drep-totcol-av { position: sticky; right: 0; z-index: 4; }
+  .dre-table thead tr.month-row th.drep-totcol-rs {
+    right: 0; z-index: 4; border-left: 3px solid var(--brand-dk, #16304f);
+  }
   .dre-table tbody td {
     padding: 5px 8px; border-bottom: 1px solid #eef0ed;
     text-align: right; font-variant-numeric: tabular-nums;
   }
   .dre-table tbody td.label { text-align: left; font-weight: 600; cursor: pointer;
-    min-width: 220px; white-space: nowrap; }
+    min-width: 220px; white-space: nowrap;
+    position: sticky; left: 0; z-index: 2; background: #fff;
+    border-right: 3px solid var(--brand-dk, #16304f); }
   .dre-table thead tr.sub-row th:first-child { min-width: 220px; }
   .dre-table tbody td.label:hover { color: var(--brand); text-decoration: underline; }
   .dre-table tbody tr.alt { background: #f4f8f4; }
+  .dre-table tbody tr.alt td.label { background: #f4f8f4; }
   .dre-table tbody tr.selected { background: #e8f0e8; }
+  .dre-table tbody tr.selected td.label { background: #e8f0e8; }
   .dre-table tbody td.total { background: var(--brand); color: #fff; font-weight: 700; }
+  /* Colunas de acumulado (R$/AV% do Total) fixas à direita ao rolar horizontal */
+  .dre-table tbody td.drep-totcol-rs { position: sticky; right: 56px; z-index: 1; background: #fff;
+    border-left: 3px solid var(--brand-dk, #16304f); }
+  .dre-table tbody td.drep-totcol-av { position: sticky; right: 0; z-index: 1; background: #fff; }
+  .dre-table tbody tr.alt td.drep-totcol-rs, .dre-table tbody tr.alt td.drep-totcol-av { background: #f4f8f4; }
+  /* Células sticky (label/total) herdam o fundo da linha por nível/destaque */
+  .dre-table tbody tr.lvl-2 td.label, .dre-table tbody tr.lvl-2 td.drep-totcol-rs, .dre-table tbody tr.lvl-2 td.drep-totcol-av { background: #f6faf6; }
+  .dre-table tbody tr.lvl-3 td.label, .dre-table tbody tr.lvl-3 td.drep-totcol-rs, .dre-table tbody tr.lvl-3 td.drep-totcol-av { background: #fbfdfb; }
+  .dre-table tbody tr.lvl-4 td.label, .dre-table tbody tr.lvl-4 td.drep-totcol-rs, .dre-table tbody tr.lvl-4 td.drep-totcol-av { background: #fdfefd; }
+  .dre-table tbody tr.drep-dest td.label, .dre-table tbody tr.drep-dest td.drep-totcol-rs, .dre-table tbody tr.drep-dest td.drep-totcol-av { background: var(--brand-soft); }
+  .dre-table tbody tr.drep-band td.label, .dre-table tbody tr.drep-band td.drep-totcol-rs, .dre-table tbody tr.drep-band td.drep-totcol-av { background: var(--brand); }
+  /* Totalizador negativo (fundo vermelho-claro) prevalece nas células sticky */
+  .dre-table tbody td.drep-cellneg-bg.drep-totcol-rs, .dre-table tbody td.drep-cellneg-bg.drep-totcol-av { background: #f3cfca; }
+  /* Coluna Total dos Indicadores (célula única colspan=2) fixa à direita */
+  .dre-table th.drep-totcol-ind, .dre-table td.drep-totcol-ind {
+    position: sticky; right: 0; z-index: 1; background: #fff;
+    border-left: 3px solid var(--brand-dk, #16304f);
+  }
+  .dre-table thead th.drep-totcol-ind { z-index: 4; }
+  .dre-table tbody tr.lvl-2 td.drep-totcol-ind { background: #f6faf6; }
+  .dre-table tbody tr.lvl-3 td.drep-totcol-ind { background: #fbfdfb; }
   .dre-table .neg { color: #c33; }
   /* === Lojas R$ view === */
   .lojasrs-container {
@@ -3556,6 +3612,19 @@
   body.dark .dre-table thead th.month { background: #161922; color: #fff; }
   body.dark .dre-table tbody td { border-bottom-color: #232938; }
   body.dark .dre-table tbody td.label { color: #c5cad4; }
+  /* Células sticky no dark: fundo escuro opaco (senão vazam ao rolar) */
+  body.dark .dre-table tbody td.label,
+  body.dark .dre-table tbody td.drep-totcol-rs,
+  body.dark .dre-table tbody td.drep-totcol-av { background: #161b24; }
+  body.dark .dre-table tbody tr.alt td.label,
+  body.dark .dre-table tbody tr.alt td.drep-totcol-rs,
+  body.dark .dre-table tbody tr.alt td.drep-totcol-av { background: #1f2533; }
+  body.dark .dre-table tbody tr.lvl-2 td.label,
+  body.dark .dre-table tbody tr.lvl-2 td.drep-totcol-rs,
+  body.dark .dre-table tbody tr.lvl-2 td.drep-totcol-av { background: #1c2226; }
+  body.dark .dre-table tbody tr.lvl-3 td.label,
+  body.dark .dre-table tbody tr.lvl-3 td.drep-totcol-rs,
+  body.dark .dre-table tbody tr.lvl-3 td.drep-totcol-av { background: #1a2024; }
   body.dark .dre-table tbody td.label:hover { color: var(--accent); }
   body.dark .dre-table tbody tr.alt { background: #1f2533; }
   body.dark .dre-table tbody tr.selected { background: #2a3633; }
@@ -6249,8 +6318,13 @@
         </div>
         <div class="drepostos-postos" id="drePostosPostos"></div>
         <div class="dre-main">
-          <div class="dre-table-card">
-            <table class="dre-table" id="drePostosTable"></table>
+          <div class="dre-table-col">
+            <div class="dre-table-card">
+              <table class="dre-table" id="drePostosTable"></table>
+            </div>
+            <div class="dre-table-card dre-ind-card" id="drePostosIndCard">
+              <table class="dre-table" id="drePostosIndTable"></table>
+            </div>
           </div>
           <div class="dre-chart-card">
             <div class="dre-chart-title">% por Posto</div>
@@ -21796,7 +21870,7 @@ const _DREP_DESTAQUE = new Set([
 const _drepCache = {};        // "${regime}_${ano}" -> data | null (Mapa)
 const _drepDespCache = {};    // ano -> data | null (Despesas Gerais p/ drilldown — só caixa)
 let _drepAno = null;
-let _drepRegime = "competencia";   // DRE Postos opera só em competência (2026-05-27).
+let _drepRegime = "caixa";   // Padrão: regime de caixa ao abrir o Mapa de Resultados.
 const _drepCacheKey = (ano) => `${_drepRegime}_${ano}`;
 const _drepCached = (ano) => _drepCache[_drepCacheKey(ano)];
 let _drepSel = null;          // Set<codigo> | null (null = ainda não inicializado)
@@ -21998,6 +22072,12 @@ function _drepMerge(data, selCodigos) {
   const _isTransfT = (t) => /TRANSFER/i.test(String(t.o || ""))
     && (typeof _ehTransfOutra === "function")
     && _ehTransfOutra((t.f || "") + " " + (t.o || ""));
+  // Linhas "INVESTIMENTO COMPRA DE ..." (materiais/móveis/imóveis/equipamentos)
+  // saem das Despesas e viram "(-) Investimentos" abaixo do Lucro Líquido. Como
+  // saem das despesas operacionais, EBITDA/LAIR/IRPJ/LL sobem. (INVESTIMENTO
+  // MARKETING continua em Despesas — é OPEX apesar do nome.)
+  const _isInvest = (lab) => /^INVESTIMENTO COMPRA\b/i.test(String(lab || ""));
+  const _investKids = [];
   if (desp) {
     const adj = { meses: Array(12).fill(0), total: 0 };
     // 1) Soma "transferências mal-classificadas" por linha (do drilldown)
@@ -22031,6 +22111,13 @@ function _drepMerge(data, selCodigos) {
           if (ln._hasT) { agrup.total -= ln.total; adj.total += ln.total; }
           continue;   // descarta a linha
         }
+        if (_isInvest(ln.label)) {
+          // tira das despesas (sobe LL via adj) e guarda pra remontar em (-) Investimentos
+          for (let i = 0; i < 12; i++) { if (ln._has[i]) { agrup.meses[i] -= ln.meses[i]; adj.meses[i] += ln.meses[i]; } }
+          if (ln._hasT) { agrup.total -= ln.total; adj.total += ln.total; }
+          _investKids.push(ln);
+          continue;
+        }
         const tp = transfPorLinha[ln.label];
         if (tp) {
           for (let i = 0; i < 12; i++) { ln.meses[i] -= tp.meses[i]; agrup.meses[i] -= tp.meses[i]; adj.meses[i] += tp.meses[i]; }
@@ -22051,7 +22138,7 @@ function _drepMerge(data, selCodigos) {
       ll.total += adj.total;
     }
   }
-  // Linhas adicionais: (=) EBITDA, (=) LAIR e (=) Lucro Ajustado.
+  // Linhas adicionais: (=) EBITDA, (=) LAIR e (=) LL c/ Investimentos.
   // EBITDA   = Lucro Bruto − Despesas Operacionais (todas exceto Vendas/Financeiras).
   // LAIR     = EBITDA + Receitas − Despesas Financeiras (Vendas + Financeiras agrupamentos).
   // Ajustado = Lucro Líquido + Aluguéis (volta o aluguel pago — análise "se imóvel próprio").
@@ -22060,7 +22147,6 @@ function _drepMerge(data, selCodigos) {
   const _rec  = tops.find(t => t.label === "(+) Receitas");
   const _ll   = tops.find(t => t.label === "(=) Lucro Líquido");
   if (_lb && _desp) {
-    const isFin = (lab) => _DFCP_DESP_FIN.has(lab);
     const sumAgrups = (filter) => {
       const out = { meses: Array(12).fill(0), total: 0, _has: Array(12).fill(false), _hasT: false };
       for (const ag of (_desp.children || [])) {
@@ -22070,17 +22156,20 @@ function _drepMerge(data, selCodigos) {
       }
       return out;
     };
-    const dOp  = sumAgrups(lab => !isFin(lab));
-    const dFin = sumAgrups(lab =>  isFin(lab));
-    // EBITDA = LB − DespOp  (DespOp e LB estão como POSITIVOS; LB é resultado, DespOp é despesa)
+    const dOp  = sumAgrups(lab =>  _DFCP_DESP_OP.has(lab));
+    const dFin = sumAgrups(lab => !_DFCP_DESP_OP.has(lab));
+    // EBITDA = Margem Operacional (Lucro Bruto + Variação de Estoque) − Desp. Operacionais.
+    const _veEbitda = tops.find(t => t.label === "Variação de Estoque");
+    const _moMes = (i) => (_lb._has[i] ? _lb.meses[i] : 0) + (_veEbitda && _veEbitda._has[i] ? _veEbitda.meses[i] : 0);
+    const _moTot = (_lb._hasT ? _lb.total : 0) + (_veEbitda && _veEbitda._hasT ? _veEbitda.total : 0);
     const ebitda = novo("(=) EBITDA", 0);
     for (let i = 0; i < 12; i++) {
-      if (_lb._has[i] || dOp._has[i]) {
-        ebitda.meses[i] = (_lb.meses[i] || 0) - (dOp.meses[i] || 0);
+      if (_lb._has[i] || dOp._has[i] || (_veEbitda && _veEbitda._has[i])) {
+        ebitda.meses[i] = _moMes(i) - (dOp.meses[i] || 0);
         ebitda._has[i] = true;
       }
     }
-    if (_lb._hasT || dOp._hasT) { ebitda.total = (_lb.total || 0) - dOp.total; ebitda._hasT = true; }
+    if (_lb._hasT || dOp._hasT) { ebitda.total = _moTot - dOp.total; ebitda._hasT = true; }
     // insere antes de (+) Receitas (ou logo após (-) Despesas)
     const idxRec = _rec ? tops.indexOf(_rec) : -1;
     const idxDesp = tops.indexOf(_desp);
@@ -22102,24 +22191,8 @@ function _drepMerge(data, selCodigos) {
     const idxLL = _ll ? tops.indexOf(_ll) : -1;
     if (idxLL >= 0) tops.splice(idxLL, 0, lair); else tops.push(lair);
   }
-  // Lucro Ajustado = Lucro Líquido + Aluguéis (soma o aluguel pago de volta)
-  if (_ll && _desp) {
-    const _alug = (_desp.children || []).find(a => a.label === "Aluguéis");
-    if (_alug) {
-      const adj = novo("(=) Lucro Ajustado", 0);
-      for (let i = 0; i < 12; i++) {
-        if (_ll._has[i] || _alug._has[i]) {
-          adj.meses[i] = (_ll.meses[i] || 0) + (_alug.meses[i] || 0);
-          adj._has[i] = true;
-        }
-      }
-      if (_ll._hasT || _alug._hasT) {
-        adj.total = (_ll.total || 0) + (_alug.total || 0); adj._hasT = true;
-      }
-      const idxLL2 = tops.indexOf(_ll);
-      tops.splice(idxLL2 + 1, 0, adj);
-    }
-  }
+  // (Lucro Ajustado = Lucro Líquido − Investimentos é montado mais abaixo, depois
+  // de "(-) Investimentos" — ver bloco de Investimentos.)
   // (+) Receitas → embutidas DENTRO de "Financeiras" (sub-grupo "Receita"), em
   // paralelo a um sub-grupo "Despesa" com as despesas financeiras. O TOTAL de
   // "(-) Despesas" e o total do agrupamento "Financeiras" continuam considerando
@@ -22138,7 +22211,7 @@ function _drepMerge(data, selCodigos) {
       } else keepRecKids.push(ch);
     }
     for (const node of [_ll, tops.find(t => t.label === "(=) LAIR"),
-                         tops.find(t => t.label === "(=) Lucro Ajustado")]) {
+                         tops.find(t => t.label === "(=) LL c/ Investimentos")]) {
       if (!node) continue;
       for (let i = 0; i < 12; i++) node.meses[i] -= recTransfMeses[i];
       node.total -= recTransfTot;
@@ -22160,7 +22233,7 @@ function _drepMerge(data, selCodigos) {
       }
     }
     for (const node of [_ll, tops.find(t => t.label === "(=) LAIR"),
-                         tops.find(t => t.label === "(=) Lucro Ajustado")]) {
+                         tops.find(t => t.label === "(=) LL c/ Investimentos")]) {
       if (!node) continue;
       for (let i = 0; i < 12; i++) node.meses[i] -= recDescMeses[i];
       node.total -= recDescTot;
@@ -22231,21 +22304,64 @@ function _drepMerge(data, selCodigos) {
     // Insere (-) IRPJ/CSLL entre LAIR e LL
     const idxLL = tops.indexOf(_llFinal);
     tops.splice(idxLL, 0, ir);
-    // Recalcula Lucro Ajustado = LL + Aluguéis
-    const _ajustadoFinal = tops.find(t => t.label === "(=) Lucro Ajustado");
-    const _alugFinal = (_desp?.children || []).find(a => a.label === "Aluguéis");
-    if (_ajustadoFinal && _alugFinal) {
+    // (=) LL s/ Aluguel = Lucro Líquido + Aluguéis (credita o aluguel pago de
+    // volta — resultado "como se o imóvel fosse próprio"), logo abaixo do LL.
+    const _alug = (_desp?.children || []).find(a => a.label === "Aluguéis");
+    if (_alug) {
+      const llSemAlug = novo("(=) LL s/ Aluguel", 0);
       for (let i = 0; i < 12; i++) {
-        if (_llFinal._has[i] || _alugFinal._has[i]) {
-          _ajustadoFinal.meses[i] = (_llFinal.meses[i] || 0) + (_alugFinal.meses[i] || 0);
-          _ajustadoFinal._has[i] = true;
+        if (_llFinal._has[i] || _alug._has[i]) {
+          llSemAlug.meses[i] = (_llFinal.meses[i] || 0) + (_alug._has[i] ? _alug.meses[i] : 0);
+          llSemAlug._has[i] = true;
         }
       }
-      if (_llFinal._hasT || _alugFinal._hasT) {
-        _ajustadoFinal.total = (_llFinal.total || 0) + (_alugFinal.total || 0);
-        _ajustadoFinal._hasT = true;
+      if (_llFinal._hasT || _alug._hasT) {
+        llSemAlug.total = (_llFinal.total || 0) + (_alug.total || 0);
+        llSemAlug._hasT = true;
+      }
+      tops.splice(tops.indexOf(_llFinal) + 1, 0, llSemAlug);
+    }
+  }
+  // (-) Investimentos: linhas INVESTIMENTO extraídas das Despesas (acima), montadas
+  // numa linha-resultado logo abaixo de "(=) Lucro Líquido". Mescla com a linha
+  // "(-) Investimentos" do ETL (códigos 4.%), se existir.
+  if (_investKids.length) {
+    let invNode = tops.find(t => t.label === "(-) Investimentos");
+    const jaExistia = !!invNode;
+    if (!invNode) invNode = novo("(-) Investimentos", 0);
+    for (const ln of _investKids) {
+      let cp = invNode.children.find(c => c.label === ln.label);
+      if (!cp) { cp = novo(ln.label, 1); invNode.children.push(cp); }
+      for (let i = 0; i < 12; i++) {
+        if (ln._has[i]) { cp.meses[i] += ln.meses[i]; cp._has[i] = true; invNode.meses[i] += ln.meses[i]; invNode._has[i] = true; }
+      }
+      if (ln._hasT) { cp.total += ln.total; cp._hasT = true; invNode.total += ln.total; invNode._hasT = true; }
+    }
+    if (jaExistia) tops.splice(tops.indexOf(invNode), 1);
+    // Insere após "(=) LL s/ Aluguel" (se existir) ou após "(=) Lucro Líquido".
+    const _ancoraInv = tops.find(t => t.label === "(=) LL s/ Aluguel")
+                    || tops.find(t => t.label === "(=) Lucro Líquido");
+    const _ancIdx = _ancoraInv ? tops.indexOf(_ancoraInv) : -1;
+    tops.splice(_ancIdx >= 0 ? _ancIdx + 1 : tops.length, 0, invNode);
+  }
+  // (=) LL c/ Investimentos = Lucro Líquido − Investimentos, logo abaixo de "(-) Investimentos".
+  const _llParaAj = tops.find(t => t.label === "(=) Lucro Líquido");
+  const _invParaAj = tops.find(t => t.label === "(-) Investimentos");
+  if (_llParaAj) {
+    const aj = novo("(=) LL c/ Investimentos", 0);
+    for (let i = 0; i < 12; i++) {
+      const ll = _llParaAj._has[i] ? _llParaAj.meses[i] : 0;
+      const iv = (_invParaAj && _invParaAj._has[i]) ? _invParaAj.meses[i] : 0;
+      if (_llParaAj._has[i] || (_invParaAj && _invParaAj._has[i])) {
+        aj.meses[i] = ll - iv; aj._has[i] = true;
       }
     }
+    if (_llParaAj._hasT || (_invParaAj && _invParaAj._hasT)) {
+      aj.total = (_llParaAj.total || 0) - (_invParaAj ? (_invParaAj.total || 0) : 0);
+      aj._hasT = true;
+    }
+    const _ancora = _invParaAj || _llParaAj;   // após Investimentos (ou após LL se não houver)
+    tops.splice(tops.indexOf(_ancora) + 1, 0, aj);
   }
   // Sobe "Variação de Estoque" pra logo após "(=) Lucro Bruto" e cria
   // "(=) Margem Operacional" = Lucro Bruto + Variação de Estoque. Se não tiver
@@ -22273,6 +22389,47 @@ function _drepMerge(data, selCodigos) {
     const after = _ve ? tops.indexOf(_ve) : tops.indexOf(_lbForMo);
     tops.splice(after + 1, 0, mo);
   }
+  // Renomeia "(-) Despesas" → "(-) Despesas Operacionais" e separa um subtotal
+  // "(-) Despesas Financeiras" (agrupamentos Vendas + Financeiras) logo abaixo.
+  // O subtotal financeiro é LÍQUIDO: desconta as Receitas embutidas (sub-grupo
+  // "Receita" dentro de Financeiras), pra fechar LAIR = EBITDA − Desp. Financeiras.
+  const _despBloco = tops.find(t => t.label === "(-) Despesas");
+  if (_despBloco) {
+    const finAgrups = (_despBloco.children || []).filter(a => !_DFCP_DESP_OP.has(a.label));
+    const opAgrups  = (_despBloco.children || []).filter(a =>  _DFCP_DESP_OP.has(a.label));
+    _despBloco.label = "(-) Despesas Operacionais";
+    if (finAgrups.length) {
+      // Torna cada agrupamento financeiro LÍQUIDO (desconta o sub-grupo "Receita")
+      for (const ag of finAgrups) {
+        const recSub = (ag.children || []).find(c => c.label === "Receita");
+        if (!recSub) continue;
+        for (let i = 0; i < 12; i++) if (recSub._has[i]) { ag.meses[i] -= recSub.meses[i]; ag._has[i] = true; }
+        if (recSub._hasT) { ag.total -= recSub.total; ag._hasT = true; }
+      }
+      _despBloco.children = opAgrups;
+      for (let i = 0; i < 12; i++) {
+        _despBloco.meses[i] = opAgrups.reduce((s, a) => s + (a._has[i] ? a.meses[i] : 0), 0);
+        _despBloco._has[i] = opAgrups.some(a => a._has[i]);
+      }
+      _despBloco.total = opAgrups.reduce((s, a) => s + (a._hasT ? a.total : 0), 0);
+      _despBloco._hasT = true;
+      const finNode = novo("(-) Despesas Financeiras", 0);
+      finNode.children = finAgrups;
+      for (let i = 0; i < 12; i++) {
+        finNode.meses[i] = finAgrups.reduce((s, a) => s + (a._has[i] ? a.meses[i] : 0), 0);
+        finNode._has[i] = finAgrups.some(a => a._has[i]);
+      }
+      finNode.total = finAgrups.reduce((s, a) => s + (a._hasT ? a.total : 0), 0);
+      finNode._hasT = true;
+      // Posiciona logo antes de "(=) LAIR" (entre EBITDA e LAIR). Fallback: após
+      // "(-) Despesas Operacionais".
+      const _lairIdx = tops.findIndex(t => t.label === "(=) LAIR");
+      tops.splice(_lairIdx >= 0 ? _lairIdx : tops.indexOf(_despBloco) + 1, 0, finNode);
+    }
+  }
+  // Remove "(=) Saldo Final" — a cascata termina em "(=) LL c/ Investimentos".
+  const _sfIdx = tops.findIndex(t => t.label === "(=) Saldo Final");
+  if (_sfIdx >= 0) tops.splice(_sfIdx, 1);
   return tops;
 }
 function _drepCollapsibleKeys(tops) {
@@ -22366,10 +22523,10 @@ function _drepRenderTable(data) {
 
   let html = `<thead><tr class="month-row"><th></th>`
     + cols.map(mi => `<th colspan="2">${_DREP_MESES[mi]}</th>`).join("")
-    + `<th colspan="2">Total</th></tr>`
-    + `<tr class="sub-row"><th>RESULTADOS</th>`
+    + `<th colspan="2" class="drep-totcol-rs">Total</th></tr>`
+    + `<tr class="sub-row"><th class="label">RESULTADOS</th>`
     + cols.map(() => `<th>R$</th><th>AV%</th>`).join("")
-    + `<th>R$</th><th>AV%</th></tr></thead><tbody>`;
+    + `<th class="drep-totcol-rs">R$</th><th class="drep-totcol-av">AV%</th></tr></thead><tbody>`;
 
   const pair = (val, den, band, mi, drill, nivel, isResultado) => {
     const av = (den && val != null) ? (val / den * 100) : null;
@@ -22384,8 +22541,10 @@ function _drepRenderTable(data) {
       : "";
     const dc = drill ? " drep-clickable" : "";
     const da = mi == null ? ' data-total="1"' : ` data-mes="${mi}"`;
-    return `<td class="drep-val${c}${dc}"${da}>${_drepFmt(val)}</td>`
-         + `<td class="${(c + dc).trim()}"${da}>${av == null ? "—" : _drepFmtPct(av)}</td>`;
+    const tRs = mi == null ? " drep-totcol-rs" : "";
+    const tAv = mi == null ? " drep-totcol-av" : "";
+    return `<td class="drep-val${c}${dc}${tRs}"${da}>${_drepFmt(val)}</td>`
+         + `<td class="${(c + dc + tAv).trim()}"${da}>${av == null ? "—" : _drepFmtPct(av)}</td>`;
   };
 
   window._drepDrill = {};   // id -> {label, leaves} pro modal de detalhamento
@@ -22407,7 +22566,7 @@ function _drepRenderTable(data) {
     const band = _DREP_BAND.has(node.label);
     if (band) cls += " drep-band";
     else if (_DREP_LIGHT.has(node.label)) cls += " drep-dest";
-    if (node.label === "(=) Lucro Líquido") cls += " drep-ll";
+    if (node.label === "(=) Lucro Líquido" || node.label === "(=) LL s/ Aluguel") cls += " drep-ll";
     if (node.label === _drepChartLine) cls += " drep-selrow";
     // despesa = nó dentro da subárvore de "(-) Despesas" → célula clicável.
     // Drilldown só quando a fonte de títulos bate com o regime atual (caixa OK;
@@ -22420,7 +22579,10 @@ function _drepRenderTable(data) {
     const _drillRegime = !_drillSrc ? null
       : (String(_drillSrc.fonte || "").toLowerCase().includes("compet") ? "competencia" : "caixa");
     const drillOk = _drillRegime === _drepRegime;
-    const isDesp = (underDesp || node.label === "(-) Despesas") && !inReceita && drillOk;
+    const _isDespRoot = node.label === "(-) Despesas"
+      || node.label === "(-) Despesas Operacionais"
+      || node.label === "(-) Despesas Financeiras";
+    const isDesp = (underDesp || _isDespRoot) && !inReceita && drillOk;
     let drillAttr = "";
     if (isDesp) {
       const id = "d" + (_did++);
@@ -22461,25 +22623,41 @@ function _drepRenderTable(data) {
       if (t != null && !isNaN(t)) { a.total += Number(t); a._hasT = true; }
     }
   }
-  const indRows = Object.values(aggInd);
-  if (indRows.length) {
-    const ncols = cols.length * 2 + 3;
-    html += `<tr class="drep-band"><td class="label" colspan="${ncols}">INDICADORES OPERACIONAIS</td></tr>`;
-    for (const r of indRows) {
-      const lvl = r.nivel === 0 ? 1 : (r.nivel === 1 ? 2 : 3);
-      html += `<tr class="lvl-${lvl}"><td class="label">${_drepEsc(r.label)}</td>`;
-      for (const mi of cols) {
-        const v = r._has[mi] ? r.meses[mi] : null;
-        html += `<td class="drep-val" colspan="2" style="text-align:right;">${v == null ? "—" : _drepFmt(v)}</td>`;
-      }
-      const t = r._hasT ? r.total : null;
-      html += `<td class="drep-val" colspan="2" style="text-align:right;">${t == null ? "—" : _drepFmt(t)}</td>`;
-      html += `</tr>`;
-    }
-  }
-
   html += "</tbody>";
   tbl.innerHTML = html;
+
+  // ── Indicadores Operacionais = relatório SEPARADO (tabela própria, scroll
+  //    independente, com um espaço acima). Volume/Ticket/etc. não são DRE.
+  const indRows = Object.values(aggInd);
+  const indTbl = document.getElementById("drePostosIndTable");
+  const indCard = document.getElementById("drePostosIndCard");
+  if (indTbl) {
+    if (indRows.length) {
+      let ih = `<thead><tr class="month-row"><th></th>`
+        + cols.map(mi => `<th colspan="2">${_DREP_MESES[mi]}</th>`).join("")
+        + `<th colspan="2" class="drep-totcol-ind">Total</th></tr>`
+        + `<tr class="sub-row"><th class="label">INDICADORES OPERACIONAIS</th>`
+        + cols.map(() => `<th colspan="2"></th>`).join("")
+        + `<th colspan="2" class="drep-totcol-ind"></th></tr></thead><tbody>`;
+      for (const r of indRows) {
+        const lvl = r.nivel === 0 ? 1 : (r.nivel === 1 ? 2 : 3);
+        ih += `<tr class="lvl-${lvl}"><td class="label">${_drepEsc(r.label)}</td>`;
+        for (const mi of cols) {
+          const v = r._has[mi] ? r.meses[mi] : null;
+          ih += `<td class="drep-val" colspan="2" style="text-align:right;">${v == null ? "—" : _drepFmt(v)}</td>`;
+        }
+        const t = r._hasT ? r.total : null;
+        ih += `<td class="drep-val drep-totcol-ind" colspan="2" style="text-align:right;">${t == null ? "—" : _drepFmt(t)}</td>`;
+        ih += `</tr>`;
+      }
+      ih += "</tbody>";
+      indTbl.innerHTML = ih;
+      if (indCard) indCard.style.display = "";
+    } else {
+      indTbl.innerHTML = "";
+      if (indCard) indCard.style.display = "none";
+    }
+  }
 
   const periodoLbl = _drepPeriodo === "todos"
     ? `${cols.length} ${cols.length === 1 ? "mês" : "meses"}`
@@ -22861,6 +23039,12 @@ const _DFCP_DESP_ORD = ["Pessoal", "Serviços Públicos", "Aluguéis", "Manuten�
 // Agrupamentos que pertencem a ATIVIDADES DE FINANCIAMENTO (não a Despesas
 // Operacionais): saem do bloco "Despesas" e entram no bloco de Financiamento.
 const _DFCP_DESP_FIN = new Set(["Vendas", "Financeiras", "Transferências entre Grupos"]);
+// Agrupamentos OPERACIONAIS — os únicos que o EBITDA debita (Lucro Bruto −
+// Despesas Operacionais). Tudo que não está aqui (Vendas/Financeiras) vai pro
+// subtotal "(-) Despesas Financeiras" e entra só no LAIR.
+const _DFCP_DESP_OP = new Set(["Pessoal", "Serviços Públicos", "Aluguéis",
+  "Manutenção", "Publicidade", "Informática", "Logística", "Serviços Terceirizados",
+  "Impostos e Taxas", "Jurídicas", "Gerais"]);
 const _DFCP_DESP_AGRUP = {
   // Pessoal
   "SALARIOS": "Pessoal", "FERIAS": "Pessoal", "FGTS": "Pessoal", "INSS": "Pessoal",

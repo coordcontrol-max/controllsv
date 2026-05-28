@@ -61,7 +61,6 @@ WHERE tf.pagar_receber = 1
   AND emp.registro_ativo = 'S'
   AND tf.data_liquidacao >= DATE '2025-01-01' AND tf.data_liquidacao < DATE '2027-01-01'
   AND tf.valor_liquidado IS NOT NULL
-  AND COALESCE(tf.titulo_situacao, '') <> 'Cancelado'
 
 UNION ALL
 
@@ -94,7 +93,6 @@ WHERE tf.pagar_receber = 2
   AND emp.registro_ativo = 'S'
   AND tf.data_liquidacao >= DATE '2025-01-01' AND tf.data_liquidacao < DATE '2027-01-01'
   AND tf.valor_liquidado IS NOT NULL
-  AND COALESCE(tf.titulo_situacao, '') <> 'Cancelado'
 
 UNION ALL
 

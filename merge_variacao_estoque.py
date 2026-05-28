@@ -24,7 +24,12 @@ def _achar_mapa():
     cand = []
     for pat in ("*Mapa Anual*.xlsx", "*Mapa Anual*.xls"):
         cand += glob.glob(os.path.join(mapa.DOWNLOADS, pat))
-    return max(cand, key=os.path.getmtime) if cand else None
+    cand = [c for c in cand if not os.path.basename(c).startswith("~$")]
+    if not cand:
+        return None
+    # Prioriza o maior arquivo (proxy de mais postos) — evita pegar um Mapa
+    # exportado com 1 posto só. Em empate, o mais recente.
+    return max(cand, key=lambda c: (os.path.getsize(c), os.path.getmtime(c)))
 
 
 def main():
@@ -33,32 +38,25 @@ def main():
         print("  · (sem Mapa Anual em", mapa.DOWNLOADS, "— pulando merge de Variação de Estoque)")
         return
     print("  Mapa Anual:", path)
-    # Reusa o parser do ETL Mapa Anual pra extrair as linhas.
-    # Gera um JSON temporário e depois extrai só Variação de Estoque.
-    tmp = os.path.join(OUT_DIR, "_tmp_mapa_anual.json")
-    try:
-        # O ETL grava em {ano}_competencia.json; chamamos o parse() interno.
-        ano, dre = mapa.parse(path)
-    except AttributeError:
-        # Fallback: chama o main e lê o arquivo gerado
-        sys.argv = ["etl_dre_postos_adaptive.py", path]
-        mapa.main()
-        ano = 2026
-        comp = os.path.join(OUT_DIR, f"{ano}_competencia.json")
-        if not os.path.isfile(comp):
-            print("  ✗ não consegui gerar JSON do Mapa Anual")
-            return
-        dre = json.load(open(comp, encoding="utf-8"))
-        try:
-            os.remove(comp)   # arquivo transiente — DRE vem da SQL agora
-        except OSError:
-            pass
-    dst_path = os.path.join(OUT_DIR, f"{ano}.json")
-    if not os.path.isfile(dst_path):
-        print(f"  ✗ {dst_path} não existe (rode etl_dre_postos_sql.py antes)")
-        return
-    dst = json.load(open(dst_path, encoding="utf-8"))
+    # parse() retorna um dict único {ano, dados, postos, ...}
+    dre = mapa.parse(path)
+    ano = dre.get("ano")
+    # Mergeia em TODOS os JSONs do ano (caixa {ano}.json + competência {ano}_competencia.json),
+    # já que Variação de Estoque é contábil e independe do regime.
+    alvos = [f"{ano}.json", f"{ano}_competencia.json"]
     postos_src = (dre or {}).get("dados", {})
+    n_total = 0
+    for alvo in alvos:
+        dst_path = os.path.join(OUT_DIR, alvo)
+        if not os.path.isfile(dst_path):
+            continue
+        n_total += _merge_into(dst_path, postos_src)
+    if n_total == 0:
+        print("  ✗ nenhum JSON de DRE encontrado pra mergear (rode etl_dre_postos_sql.py antes)")
+
+
+def _merge_into(dst_path, postos_src):
+    dst = json.load(open(dst_path, encoding="utf-8"))
     postos_dst = dst.get("dados", {})
     n = 0
     for nome, blk in postos_dst.items():
@@ -79,6 +77,7 @@ def main():
     with open(dst_path, "w", encoding="utf-8") as f:
         json.dump(dst, f, ensure_ascii=False, separators=(",", ":"))
     print(f"  ✓ Variação de Estoque mergeada em {n} postos · {dst_path}")
+    return n
 
 
 if __name__ == "__main__":

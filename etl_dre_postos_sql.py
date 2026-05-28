@@ -302,9 +302,8 @@ def _processa_ano(path, ano):
         return
     out1 = os.path.join(OUT_DIR, f"{ano}.json")
     out2 = os.path.join(OUT_DIR, f"despesas_{ano}.json")
-    # DRE Postos agora opera só em competência (decisão do usuário 2026-05-27).
-    dre["fonte"] = "Consulta SQL única (Adaptive) — regime de competência"
-    det["fonte"] = "Consulta SQL única (Adaptive) — títulos por competência"
+    dre["fonte"] = "Consulta SQL única (Adaptive) — regime de caixa"
+    det["fonte"] = "Consulta SQL única (Adaptive) — títulos por caixa"
     # Preserva 'indicadores' (Volume Vendido, Ticket Médio etc.) do Mapa Anual,
     # se ainda existir em arquivo legado *_competencia.json.
     legado = os.path.join(OUT_DIR, f"{ano}_competencia.json")
