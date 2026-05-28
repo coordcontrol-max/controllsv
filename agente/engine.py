@@ -419,14 +419,16 @@ def _agregar_em_doc_compacto(fatos: list[dict], dimensoes: dict, ano: int, mes: 
     # Linhas específicas rateadas por venda mesmo NÃO estando nos grupos acima
     # (decisão do usuário 2026-05): valores centralizados que devem aparecer em
     # TODAS as lojas pela participação na venda geral.
-    # NOTA: Assistencia Medica e Hospitalar, Uniformes e EPIs Operacao e
-    # Plano de Saude Operacao SAÍRAM do rateio (decisão do usuário 2026-05): são
-    # de "Despesas c/ Pessoal Operação" e devem manter os valores ORIGINAIS por loja.
+    # NOTA: "Uniformes e EPIs Operacao" e "Plano de Saude Operacao" VOLTARAM ao
+    # rateio por venda (decisão do usuário 2026-05-28 — antes mantinham valor
+    # original por loja). "Assistencia Medica e Hospitalar" continua FORA (valor
+    # original por loja), pois o usuário só pediu as duas acima.
     LINHAS_RATEIO_POR_VENDA = {
         "Cartaz Faixa e Outdoor", "Material de Expediente da Operaçao",
         "Lavanderia", "Plano de Saude Comercial", "Plano de Saude ADM",
         "Servicos Contratos Mensais PJ", "Servicos Contratos Mensais PJ Operacao",
         "Servicos Contratos Mensais PJ Comercial",
+        "Uniformes e EPIs Operacao", "Plano de Saude Operacao",
     }
     # FGTS/INSS NÃO entram no rateio geral por venda. Estas lojas formam
     # GRUPOS; dentro de cada grupo o FGTS/INSS é repartido entre as lojas pela
