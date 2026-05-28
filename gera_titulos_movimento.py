@@ -25,15 +25,21 @@ from classifier_fluxo import CODESPECIE_TO_LINHA_FLUXO, CODESPECIE_IGNORAR_FLUXO
 
 db = agente.db
 
+# Coorte de INCLUSÃO: dos títulos lançados (DTAINCLUSAO) no mês, quanto é o
+# nominal (incluido), quanto já foi pago (quitado) e quanto está em aberto (saldo).
+# incluido = quitado + aberto.
 SQL_INCLUIDO = """
   select t.codespecie, t.obrigdireito,
          extract(month from t.dtainclusao) mes,
-         sum(t.vlrnominal) vlr
+         sum(t.vlrnominal) incluido,
+         sum(t.vlrpago) quitado,
+         sum(t.vlrnominal - t.vlrpago) aberto
     from fi_titulo t
    where t.dtainclusao >= :ini and t.dtainclusao < :fim
      and t.situacao <> 'C'
    group by t.codespecie, t.obrigdireito, extract(month from t.dtainclusao)
 """
+# PAGO/RECEBIDO por mês de LIQUIDAÇÃO (DTAQUITACAO) — independe da inclusão.
 SQL_LIQUIDADO = """
   select t.codespecie, t.obrigdireito,
          extract(month from t.dtaquitacao) mes,
@@ -53,29 +59,49 @@ def gerar(ano: int):
     con = agente.conectar_oracle()
     cur = con.cursor()
 
-    # mov[mes][(grupo,agrup,linha)] = {"incluido": x, "liquidado": y}
-    mov = defaultdict(lambda: defaultdict(lambda: {"incluido": 0.0, "liquidado": 0.0}))
+    # mov[mes][(grupo,agrup,linha)] = {incluido, quitado, aberto, liquidado}
+    def _z():
+        return {"incluido": 0.0, "quitado": 0.0, "aberto": 0.0, "liquidado": 0.0}
+    mov = defaultdict(lambda: defaultdict(_z))
     nao_map = defaultdict(float)
 
-    def processa(sql, campo):
-        cur.execute(sql, ini=ini, fim=fim)
-        for codespecie, obrig, mes, vlr in cur.fetchall():
-            if not mes or vlr is None:
-                continue
-            if codespecie in CODESPECIE_IGNORAR_FLUXO:
-                continue
-            linha = CODESPECIE_TO_LINHA_FLUXO.get(codespecie)
-            if not linha:
-                nao_map[codespecie or "—"] += abs(float(vlr))
-                continue
-            grupo, agrup = l2g.get(linha, ("", ""))
-            sign = -1 if obrig == "O" else 1
-            mm = f"{int(mes):02d}"
-            mov[mm][(grupo, agrup, linha)][campo] += float(vlr) * sign
+    def _classifica(codespecie, obrig):
+        if codespecie in CODESPECIE_IGNORAR_FLUXO:
+            return None
+        linha = CODESPECIE_TO_LINHA_FLUXO.get(codespecie)
+        if not linha:
+            return None
+        grupo, agrup = l2g.get(linha, ("", ""))
+        sign = -1 if obrig == "O" else 1
+        return (grupo, agrup, linha), sign
 
     print(f">> Movimento de títulos {ano} (FI_TITULO)…")
-    processa(SQL_INCLUIDO, "incluido")
-    processa(SQL_LIQUIDADO, "liquidado")
+    # INCLUÍDO (coorte de inclusão: incluido = quitado + aberto)
+    cur.execute(SQL_INCLUIDO, ini=ini, fim=fim)
+    for codespecie, obrig, mes, inc, quit_, abe in cur.fetchall():
+        if not mes:
+            continue
+        cl = _classifica(codespecie, obrig)
+        if cl is None:
+            nao_map[codespecie or "—"] += abs(float(inc or 0))
+            continue
+        key, sign = cl
+        mm = f"{int(mes):02d}"
+        d = mov[mm][key]
+        d["incluido"] += float(inc or 0) * sign
+        d["quitado"] += float(quit_ or 0) * sign
+        d["aberto"] += float(abe or 0) * sign
+    # LIQUIDADO (por mês de quitação)
+    cur.execute(SQL_LIQUIDADO, ini=ini, fim=fim)
+    for codespecie, obrig, mes, vlr in cur.fetchall():
+        if not mes or vlr is None:
+            continue
+        cl = _classifica(codespecie, obrig)
+        if cl is None:
+            continue
+        key, sign = cl
+        mm = f"{int(mes):02d}"
+        mov[mm][key]["liquidado"] += float(vlr) * sign
     cur.close()
     con.close()
 
@@ -85,11 +111,14 @@ def gerar(ano: int):
         for (g, a, l), v in mov[mm].items():
             linhas.append({"grupo": g, "agrupamento": a, "linha": l,
                            "incluido": round(v["incluido"], 2),
+                           "quitado": round(v["quitado"], 2),
+                           "aberto": round(v["aberto"], 2),
                            "liquidado": round(v["liquidado"], 2)})
         meses[mm] = linhas
         ti = sum(x["incluido"] for x in linhas)
-        tl = sum(x["liquidado"] for x in linhas)
-        print(f"   mês {mm}: {len(linhas)} linhas · incluído {ti:,.0f} · liquidado {tl:,.0f}")
+        tq = sum(x["quitado"] for x in linhas)
+        ta = sum(x["aberto"] for x in linhas)
+        print(f"   mês {mm}: {len(linhas)} linhas · incluído {ti:,.0f} (quitado {tq:,.0f} + aberto {ta:,.0f})")
 
     if nao_map:
         top = sorted(nao_map.items(), key=lambda x: -x[1])[:8]
