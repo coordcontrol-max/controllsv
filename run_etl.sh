@@ -203,6 +203,11 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
     echo "[WARN] etl_metas_operacao_lojas.py falhou — metas de venda mantêm os valores anteriores."
   fi
 
+  echo "----- [6c3/8] etl_metas_prevencao_bonus.py (Bônus Prevenção → Metas Manuais prevenção) -----"
+  if ! python3 etl_metas_prevencao_bonus.py --write; then
+    echo "[WARN] etl_metas_prevencao_bonus.py falhou — metas de prevenção mantêm os valores anteriores."
+  fi
+
   echo "----- [6d/8] gera_bp.py (Balanço Patrimonial — recalcula só o mês corrente) -----"
   if ! python3 gera_bp.py; then
     echo "[WARN] gera_bp.py falhou — dados_bp mantém os valores anteriores."
