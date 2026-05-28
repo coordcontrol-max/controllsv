@@ -152,6 +152,17 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
     echo "[WARN] etl_dre_postos_competencia_sql.py falhou."
   fi
 
+  # Indicadores Postos (cards do Dashboard DRE): METAS (METAS POSTO {ano}.xlsx) e
+  # Perdas/Sobras = Variação de Estoque (export perdas.xls da Consulta SQL, litros).
+  # Geram metas_postos_{ano}.json e perdas_postos_{ano}.json. Pulam se faltar fonte.
+  echo "----- [4d-ind/7] etl_metas_postos.py + etl_perdas_postos.py (indicadores postos) -----"
+  if ! python3 etl_metas_postos.py; then
+    echo "[WARN] etl_metas_postos.py falhou — metas dos cards de postos mantêm valores anteriores."
+  fi
+  if ! python3 etl_perdas_postos.py; then
+    echo "[WARN] etl_perdas_postos.py falhou — Variação de Estoque mantém valores anteriores."
+  fi
+
   echo "----- [4e/7] etl_dfc_postos_sql.py (DFC Diário Postos — export DFC_Postos) -----"
   if ! python3 etl_dfc_postos_sql.py; then
     echo "[WARN] etl_dfc_postos_sql.py falhou."
@@ -181,6 +192,11 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
   if ! python3 gera_titulos_aberto.py; then
     echo "[WARN] gera_titulos_aberto.py falhou — JSONs antigos serão re-publicados."
     TA_OK=0
+  fi
+
+  echo "----- [5b/7] gera_titulos_movimento.py (Movimento de Títulos: incluído×liquidado por mês → Firestore) -----"
+  if ! python3 gera_titulos_movimento.py "$(date +%Y)"; then
+    echo "[WARN] gera_titulos_movimento.py falhou — titulosMovimento mantém o anterior."
   fi
 
   echo "----- [6/7] gera_supermercados_extras.py (taxas cartões + protege) -----"
