@@ -25,6 +25,10 @@ from classifier_fluxo import CODESPECIE_TO_LINHA_FLUXO, CODESPECIE_IGNORAR_FLUXO
 
 db = agente.db
 
+# Linhas que NÃO entram no Movimento de Títulos (pedido do usuário) — não são
+# movimento real de título a incluir/quitar.
+LINHAS_EXCLUIR_MOVIMENTO = {"Bonificacoes em Geral", "Duplicata a Receber"}
+
 # Coorte de INCLUSÃO: dos títulos lançados (DTAINCLUSAO) no mês, quanto é o
 # nominal (incluido), quanto já foi pago (quitado) e quanto está em aberto (saldo).
 # incluido = quitado + aberto.
@@ -78,7 +82,7 @@ def gerar(ano: int):
         if codespecie in CODESPECIE_IGNORAR_FLUXO:
             return None
         linha = CODESPECIE_TO_LINHA_FLUXO.get(codespecie)
-        if not linha:
+        if not linha or linha in LINHAS_EXCLUIR_MOVIMENTO:
             return None
         grupo, agrup = l2g.get(linha, ("", ""))
         sign = -1 if obrig == "O" else 1
