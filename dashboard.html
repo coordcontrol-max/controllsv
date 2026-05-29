@@ -914,6 +914,16 @@
     background: #fbfaf2; color: var(--brand); font-weight: 700;
     border-left: 3px solid var(--accent); padding-left: 21px;
   }
+  /* Postos: "Fluxo de Caixa" é item ÚNICO (navega pelas abas do topo). Esconde a
+     versão expansível (#sectionFC) e mostra a entrada única (#sectionFCPostos). */
+  body[data-segmento="postos"] #sectionFC { display: none; }
+  body[data-segmento="postos"][data-view="fluxocaixa-dashboard"] #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="postos"][data-view="dfc-mensal"]           #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="postos"][data-view="dfc-postos"]           #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="postos"][data-view="dfc-consolidado"]      #sectionFCPostos > .side-subsection-title {
+    background: #fbfaf2; color: var(--brand); font-weight: 700;
+    border-left: 3px solid var(--accent); padding-left: 21px;
+  }
   .drepostos-postos {
     display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 14px 2px;
     align-items: center;
@@ -5714,6 +5724,12 @@
         <div class="side-subsection" id="sectionDR">
           <button class="side-subsection-title" data-view="home">
             <span>Demonstrativo De Resultado</span>
+          </button>
+        </div>
+        <!-- Postos: Fluxo de Caixa como item ÚNICO (navega pelas abas do topo) -->
+        <div class="side-subsection" id="sectionFCPostos" data-seg-only="postos">
+          <button class="side-subsection-title" data-view="fluxocaixa-dashboard">
+            <span>Fluxo de Caixa</span>
           </button>
         </div>
         <!-- Sub-aba: Fluxo de Caixa -->
