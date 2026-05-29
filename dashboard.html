@@ -6238,6 +6238,9 @@
           <label id="dfcDashLojaLbl">Posto: <select id="dfcDashLoja"></select></label>
           <label>Ano: <select id="dfcDashAno"></select></label>
           <label>Mês: <select id="dfcDashMes"></select></label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:600;" title="Inclui a projeção dos títulos em aberto (meses/dias futuros). Vale para todos os relatórios DFC.">
+            <input type="checkbox" id="dfcProjetadoToggle" style="cursor:pointer;"> Incluir projetado (títulos em aberto)
+          </label>
         </div>
 
         <!-- KPI cards -->
@@ -10153,6 +10156,7 @@ async function renderDFCTable(tableId, columns, opts = {}) {
   const _isProjetado = (colIdx) => {
     if (opts.mode !== "diario") return false;
     if (opts.modoTitulosAberto) return true;
+    if (!_dfcIncluiProjetado()) return false;   // flag global: sem projetado
     if (!hojeDay) return false;           // mês não inclui hoje
     if (hojeIdx < 0) return false;        // dia atual oculto (ex.: filtro fim-de-semana)
     return colIdx >= hojeIdx;
@@ -10691,6 +10695,18 @@ function _mountDfcDashFiltros(seg, itens) {
 
 async function renderDFCResumo() {
   if (typeof Chart === "undefined") return;
+  // Flag global "Incluir projetado" (persiste; padrão OFF = só realizado).
+  const cbProj = document.getElementById("dfcProjetadoToggle");
+  if (cbProj) {
+    try { cbProj.checked = localStorage.getItem("dfcIncluiProjetado") === "1"; } catch (_) {}
+    if (!cbProj._wired) {
+      cbProj._wired = true;
+      cbProj.addEventListener("change", () => {
+        try { localStorage.setItem("dfcIncluiProjetado", cbProj.checked ? "1" : "0"); } catch (_) {}
+        renderDFCResumo();
+      });
+    }
+  }
   // Liga spinners em todos os cards antes de qualquer carregamento
   _dfcLoadOn();
   await ensureDFCCollections();
@@ -17065,6 +17081,39 @@ function _fluxoCacheKey(ano, mes, loja = "") {
 /** Carrega fluxoCaixa/{ano}-{mes} do Firestore (com cache).
  *  Quando segmento != supermercados, busca de /dados_fluxo_{seg}/{ano-mes}.json
  *  (gerados via etl_fluxo_segmentos.py a partir dos Excels do user). */
+// ── Flag global "Incluir projetado" (títulos em aberto) ───────────────────
+// Padrão: SEM projetado (só realizado). Persistida no localStorage; vale pra
+// TODOS os relatórios DFC (Dashboard, Mensal, Diário, Consolidado, Lojas).
+function _dfcIncluiProjetado() {
+  try { return localStorage.getItem("dfcIncluiProjetado") === "1"; } catch (_) { return false; }
+}
+// Remove a parte projetada de um doc fluxoCaixa quando a flag está OFF:
+//   mês futuro → null (coluna em branco); mês corrente → só dias < hoje;
+//   mês passado → integral. Mantém dim.dias (os índices 'd' continuam válidos).
+function _stripProjetado(doc, ano, mes) {
+  if (!doc) return doc;
+  const hoje = new Date();
+  const anoA = hoje.getFullYear(), mesA = hoje.getMonth() + 1, diaA = hoje.getDate();
+  if (ano > anoA || (ano === anoA && mes > mesA)) return null;            // futuro → branco
+  if (ano < anoA || (ano === anoA && mes < mesA)) return doc;             // passado → integral
+  const dias = (doc.dim && doc.dim.dias) || [];
+  if (!dias.length) return doc;                                          // sem detalhe diário
+  const ehReal = (dIdx) => { const dd = dias[dIdx]; return dd != null && parseInt(dd, 10) < diaA; };
+  const out = Object.assign({}, doc);
+  out.porLinha = (doc.porLinha || []).filter(r => ehReal(r.d));
+  out.porAgrupamento = (doc.porAgrupamento || []).filter(r => ehReal(r.d));
+  out.porGrupo = (doc.porGrupo || []).filter(r => ehReal(r.d));
+  out.saldoFinalDiario = (doc.saldoFinalDiario || []).filter(e => parseInt(e.d, 10) < diaA);
+  out.saldoFinalMes = out.saldoFinalDiario.length
+    ? out.saldoFinalDiario[out.saldoFinalDiario.length - 1].v
+    : Number(doc.saldoInicial || 0);
+  out._semProjetado = true;
+  return out;
+}
+function _dfcStripDoc(doc, ano, mes) {
+  return (doc && !_dfcIncluiProjetado()) ? _stripProjetado(doc, ano, mes) : doc;
+}
+
 async function loadFluxoMes(ano, mes, loja = "") {
   // loja = "" → doc agregado fluxoCaixa/{ano-mes}
   // loja = "L09"  → doc por loja-descrição fluxoCaixa/{ano-mes}__{descricao}
@@ -17073,7 +17122,7 @@ async function loadFluxoMes(ano, mes, loja = "") {
   const seg = document.body.dataset.segmento || "supermercados";
   const base = `${ano}-${String(mes).padStart(2,"0")}`;
   const chave = _fluxoCacheKey(ano, mes, loja);
-  if (_FLUXO_CACHE[chave] !== undefined) return _FLUXO_CACHE[chave];
+  if (_FLUXO_CACHE[chave] !== undefined) return _dfcStripDoc(_FLUXO_CACHE[chave], ano, mes);
   if (seg !== "supermercados") {
     // Arquivos estáticos servidos pelo Firebase Hosting
     const fname = loja ? `${base}__${loja}.json` : `${base}.json`;
@@ -17134,13 +17183,13 @@ async function loadFluxoMes(ano, mes, loja = "") {
       console.warn("loadFluxoMes(seg) falhou:", url, e);
       _FLUXO_CACHE[chave] = null;
     }
-    return _FLUXO_CACHE[chave];
+    return _dfcStripDoc(_FLUXO_CACHE[chave], ano, mes);
   }
   if (!window._fbDb) return null;
   try {
     const snap = await getDoc(doc(window._fbDb, "fluxoCaixa", chave));
     _FLUXO_CACHE[chave] = snap.exists() ? snap.data() : null;
-    return _FLUXO_CACHE[chave];
+    return _dfcStripDoc(_FLUXO_CACHE[chave], ano, mes);
   } catch (e) {
     console.warn("loadFluxoMes falhou", e);
     _FLUXO_CACHE[chave] = null;
