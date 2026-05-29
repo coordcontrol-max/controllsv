@@ -80,8 +80,17 @@ except Exception as e:
 
 ORACLE_DSN = f"{ORACLE_HOST}:{ORACLE_PORT}/{ORACLE_SERVICE}"
 
+ORACLE_SCHEMA = os.getenv("ORACLE_SCHEMA", "CONSINCO")
+
 def conectar_oracle() -> oracledb.Connection:
-    return oracledb.connect(user=ORACLE_USER, password=ORACLE_PASSWORD, dsn=ORACLE_DSN)
+    conn = oracledb.connect(user=ORACLE_USER, password=ORACLE_PASSWORD, dsn=ORACLE_DSN)
+    # c5leitura (read-only) tem grants em CONSINCO.*, mas as queries usam nome
+    # sem schema. Seta CURRENT_SCHEMA pra FI_TITULO/FI_CTACORLANCA resolverem.
+    if ORACLE_SCHEMA:
+        cur = conn.cursor()
+        try: cur.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {ORACLE_SCHEMA}")
+        finally: cur.close()
+    return conn
 
 # ─── INIT FIREBASE ──────────────────────────────────────────────────────────
 sa_path = Path(FIREBASE_SA)
