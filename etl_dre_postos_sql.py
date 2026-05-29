@@ -64,7 +64,15 @@ def achar_export(dirs):
             continue
         for pat in ("*.xls", "*.xlsx", "**/*.xls", "**/*.xlsx"):
             for c in glob.glob(os.path.join(folder, pat), recursive=True):
-                if os.path.basename(c).startswith("~$"):
+                base = os.path.basename(c)
+                if base.startswith("~$"):
+                    continue
+                # Este ETL é o de CAIXA (DRE_Postos.xlsx, com coluna 'abastec').
+                # O export de COMPETÊNCIA (DRE_Postos_Competencia.xlsx) casa o mesmo
+                # header mas NÃO tem 'abastec' e tem ETL próprio — ignorar aqui,
+                # senão (por ser mais recente) ele vence o max(mtime) e a base sai
+                # sem o "Número Total de Abastecimentos" (some Nº Abast. + Ticket).
+                if "competencia" in base.lower() or "competência" in base.lower():
                     continue
                 if _casa_header(c):
                     ok.append(c)
