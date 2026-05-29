@@ -6057,7 +6057,6 @@
             <div class="dfc-ms-panel" id="lrsFMesPanel" hidden></div>
           </span>
         </span>
-        <label>Empresa <select id="lrsFLoja"></select></label>
       </div>
       <div class="lojasrs-container">
         <table class="lojasrs-table" id="lojasrsTable"></table>
@@ -6074,7 +6073,6 @@
             <div class="dfc-ms-panel" id="lpctFMesPanel" hidden></div>
           </span>
         </span>
-        <label>Empresa <select id="lpctFLoja"></select></label>
       </div>
       <div class="lojasrs-container">
         <table class="lojasrs-table" id="lojaspctTable"></table>
@@ -8819,8 +8817,11 @@ function _syncFiltrosBar(prefix) {
   const selLoja = document.getElementById(prefix + "FLoja");
   // O dropdown de Mês é OPCIONAL (ex.: a Análise Horizontal não tem). Ano e
   // Empresa são obrigatórios pra a barra existir.
-  if (!selAno || !selLoja || !DADOS) return;
+  // Mês e Empresa são OPCIONAIS (a AH não tem Mês; Empresas R$/% não têm Empresa).
+  // Só o Ano é obrigatório pra a barra existir.
+  if (!selAno || !DADOS) return;
   const temMes = !!(mesBtn && mesPanel);
+  const temLoja = !!selLoja;
   const allId = prefix + "FMesAll", cbCls = prefix + "-mes-cb";
   const anos = DADOS.dimensoes.anos || [];
   if (selAno.dataset.k !== anos.join(",")) {
@@ -8849,15 +8850,17 @@ function _syncFiltrosBar(prefix) {
   }
 
   // Empresa: usa os códigos do DADOS (001..011), label "P01".."P11".
-  const lojas = DADOS.dimensoes.lojas || [];
-  const lojaLabel = (l) => /^\d+$/.test(String(l)) ? ("P" + String(l).slice(-2)) : String(l);
-  const lojasK = lojas.join(",");
-  if (selLoja.dataset.k !== lojasK) {
-    selLoja.dataset.k = lojasK;
-    selLoja.innerHTML = `<option value="">Todas as empresas</option>`
-      + lojas.map(l => `<option value="${l}">${lojaLabel(l)}</option>`).join("");
+  if (temLoja) {
+    const lojas = DADOS.dimensoes.lojas || [];
+    const lojaLabel = (l) => /^\d+$/.test(String(l)) ? ("P" + String(l).slice(-2)) : String(l);
+    const lojasK = lojas.join(",");
+    if (selLoja.dataset.k !== lojasK) {
+      selLoja.dataset.k = lojasK;
+      selLoja.innerHTML = `<option value="">Todas as empresas</option>`
+        + lojas.map(l => `<option value="${l}">${lojaLabel(l)}</option>`).join("");
+    }
+    selLoja.value = (selectedLojas === "Todos" || selectedLojas.size !== 1) ? "" : String([...selectedLojas][0]);
   }
-  selLoja.value = (selectedLojas === "Todos" || selectedLojas.size !== 1) ? "" : String([...selectedLojas][0]);
 
   if (!selAno.dataset.bound) {
     selAno.dataset.bound = "1";
@@ -8896,11 +8899,13 @@ function _syncFiltrosBar(prefix) {
         if (tEl.classList.contains(cbCls)) aplicaMeses();
       });
     }
-    selLoja.addEventListener("change", () => {
-      selectedLojas = selLoja.value ? new Set([selLoja.value]) : "Todos";
-      if (typeof setupLojaMultiselect === "function") setupLojaMultiselect();
-      renderAll();
-    });
+    if (temLoja) {
+      selLoja.addEventListener("change", () => {
+        selectedLojas = selLoja.value ? new Set([selLoja.value]) : "Todos";
+        if (typeof setupLojaMultiselect === "function") setupLojaMultiselect();
+        renderAll();
+      });
+    }
   }
 }
 
@@ -15095,9 +15100,9 @@ async function _renderLojasPostos(mode, tableId) {
     t.innerHTML = `<thead><tr><th class="label-col">RESULTADOS</th></tr></thead><tbody><tr><td style="padding:24px;color:#8b95a7;text-align:center;">Sem dados do Mapa de Resultados para ${ano}.</td></tr></tbody>`;
     return;
   }
-  const codes = (selectedLojas && selectedLojas !== "Todos")
-    ? data.postos.filter(p => selectedLojas.has(p.codigo)).map(p => p.codigo)
-    : data.postos.map(p => p.codigo);
+  // Empresas R$/% mostra SEMPRE todos os postos (são as colunas do relatório —
+  // não tem filtro de Empresa, só Ano e Mês).
+  const codes = data.postos.map(p => p.codigo);
   const lojaLabel = (c) => /^\d+$/.test(String(c)) ? ("P" + String(c).slice(-2)) : String(c);
   let selMonths = null;
   if (selectedMeses && selectedMeses !== "Todos" && selectedMeses.size) selMonths = [...selectedMeses].map(m => m - 1);
