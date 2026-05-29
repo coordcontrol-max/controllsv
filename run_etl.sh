@@ -4,8 +4,10 @@
 #
 # Fluxo:
 #   1. Garante que /mnt/controller está montado (re-monta se preciso)
-#   2. (DESATIVADO) etl.py + upload_to_firestore — meses/ agora vêm do Oracle
-#      via engine (agente da .225, _scheduler_diario 05:00)
+#   2b. _run_tudo_mes.py — atualiza DRE (meses/) + DFC (fluxoCaixa/) do mês
+#       corrente, daqui mesmo. Replica o pipeline 'tudo' do agente da .225
+#       (atualizar + executar_rateio + executar_fluxo + dimensoes) e usa o
+#       Render do João (render_reader) para a venda do mês corrente. ~40-70min.
 #   3. etl_fluxo_segmentos.py    — Excels de postos/outras → dados_fluxo_*/
 #   3b. etl_dfc_outras_lumi.py   — MySQL LUMI (SAC) → dados_fluxo_outras/ (sobrescreve)
 #   4. gera_saldos_iniciais.py + etl_dre_postos.py
@@ -18,8 +20,6 @@
 #   + Loga tudo em logs/etl-YYYYMMDD.log
 #
 # Cada etapa é independente e guardada — falha de uma não derruba as outras.
-# meses/ (DRE) e fluxoCaixa/ no Firestore são atualizados pelo agente da .225
-# (Oracle → engine), NÃO por este script.
 
 set -euo pipefail
 
@@ -77,22 +77,21 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
   echo "----- [1/2] (DESATIVADO) etl.py + upload_to_firestore — fonte agora é Oracle via engine.py -----"
   # echo "----- etl.py (supermercados) -----"   (legado Excel, mantido só como fallback comentado)
 
-  # ░░ DESATIVADO em 2026-05-27 a pedido do usuário ░░
-  # _run_tudo_mes.py NÃO roda mais no cron diário — atualiza só sob demanda
-  # pelo botão "🔄 Atualizar" do Fluxo de Caixa (worker
-  # /root/projeto_dre/cron_dfc_supermercados.sh, agendado a cada minuto).
-  # Pra rodar manual aqui: cd agente && python3 _run_tudo_mes.py
-  echo "----- [2b/8] (DESATIVADO) agente DRE/DFC — só roda via botão 'Atualizar' no DFC -----"
-
-  # Slug pesado fluxo_transitorias (~25min, ~1M linhas) — roda só no cron 03:00.
-  # O botão "Atualizar" do DFC NÃO toca este slug, pra não esperar 25min por
-  # clique. engine_fluxo do botão usa o rawOracle/__fluxo_transitorias daqui.
-  echo "----- [2c/8] DFC — fluxo_transitorias (mês corrente, ~25min) -----"
+  # REATIVADO em 2026-05-29: DRE + DFC do mês corrente direto daqui (independente
+  # da .225 do João). _run_tudo_mes.py replica _executar_task(tipo='tudo'):
+  #   atualizar (18 queries Oracle + render_reader pra venda_atual do João)
+  #   → engine.executar_rateio → meses/{ano-mes} (DRE)
+  #   → engine_fluxo.executar_fluxo → fluxoCaixa/{ano-mes} (DFC)
+  #   → atualizar_dimensoes (snapshots Prevenção).
+  # Inclui o slug pesado fluxo_transitorias (~25min) — por isso roda na madrugada.
+  # ~40-70 min. O botão "🔄 Atualizar" do DFC continua rodando o caminho rápido
+  # (cron_dfc_supermercados.sh) sem fluxo_transitorias.
+  echo "----- [2b/8] _run_tudo_mes.py (DRE + DFC mês corrente, venda via Render do João) -----"
   (
     set -a; . agente/.env; set +a
     cd agente
-    if ! LD_LIBRARY_PATH="/opt/oracle/instantclient_23_5" timeout 3000 python3 /root/projeto_dre/_atualizar_dfc_transitorias.py; then
-      echo "[WARN] fluxo_transitorias falhou — DFC consolidado fica com transitorias da última noite."
+    if ! LD_LIBRARY_PATH="/opt/oracle/instantclient_23_5" timeout 4500 python3 _run_tudo_mes.py; then
+      echo "[WARN] _run_tudo_mes.py falhou — DRE/DFC mês corrente não atualizou. Próx noite tenta de novo."
     fi
   )
 
