@@ -6390,12 +6390,6 @@
     <section id="view-ah" class="view">
       <div class="dre-home-filtros" id="ahFiltros" data-seg-only="postos">
         <label>Ano <select id="ahFAno"></select></label>
-        <span class="home-ms-wrap">Mês
-          <span class="home-ms" id="ahFMesMS">
-            <button type="button" class="dfc-ms-btn" id="ahFMesBtn">Todos os meses</button>
-            <div class="dfc-ms-panel" id="ahFMesPanel" hidden></div>
-          </span>
-        </span>
         <label>Empresa <select id="ahFLoja"></select></label>
       </div>
       <div class="dre-table-card ah-table-wrap">
@@ -8823,7 +8817,10 @@ function _syncFiltrosBar(prefix) {
   const mesBtn = document.getElementById(prefix + "FMesBtn");
   const mesPanel = document.getElementById(prefix + "FMesPanel");
   const selLoja = document.getElementById(prefix + "FLoja");
-  if (!selAno || !mesBtn || !mesPanel || !selLoja || !DADOS) return;
+  // O dropdown de Mês é OPCIONAL (ex.: a Análise Horizontal não tem). Ano e
+  // Empresa são obrigatórios pra a barra existir.
+  if (!selAno || !selLoja || !DADOS) return;
+  const temMes = !!(mesBtn && mesPanel);
   const allId = prefix + "FMesAll", cbCls = prefix + "-mes-cb";
   const anos = DADOS.dimensoes.anos || [];
   if (selAno.dataset.k !== anos.join(",")) {
@@ -8835,19 +8832,21 @@ function _syncFiltrosBar(prefix) {
 
   // Mês = multiselect (um OU mais meses). "Todos" = selectedMeses === "Todos".
   const meses = DADOS.dimensoes.meses || [];
-  const mesesK = meses.map(m => m.num).join(",");
-  if (mesPanel.dataset.k !== mesesK) {
-    mesPanel.dataset.k = mesesK;
-    mesPanel.innerHTML = `<label class="ms-all"><input type="checkbox" id="${allId}"> Todos os meses</label>`
-      + meses.map(m => `<label><input type="checkbox" class="${cbCls}" value="${m.num}"> ${m.nome}</label>`).join("");
+  if (temMes) {
+    const mesesK = meses.map(m => m.num).join(",");
+    if (mesPanel.dataset.k !== mesesK) {
+      mesPanel.dataset.k = mesesK;
+      mesPanel.innerHTML = `<label class="ms-all"><input type="checkbox" id="${allId}"> Todos os meses</label>`
+        + meses.map(m => `<label><input type="checkbox" class="${cbCls}" value="${m.num}"> ${m.nome}</label>`).join("");
+    }
+    const sel = (selectedMeses === "Todos") ? null : selectedMeses;   // null = todos
+    const allCb = mesPanel.querySelector("#" + allId);
+    if (allCb) allCb.checked = !sel || sel.size === 0;
+    mesPanel.querySelectorAll("." + cbCls).forEach(cb => { cb.checked = !!sel && sel.has(Number(cb.value)); });
+    const nomeMes = (n) => (meses.find(m => m.num === n) || {}).nome || ("Mês " + n);
+    mesBtn.textContent = (!sel || sel.size === 0) ? "Todos os meses"
+      : sel.size === 1 ? nomeMes([...sel][0]) : (sel.size + " meses");
   }
-  const sel = (selectedMeses === "Todos") ? null : selectedMeses;   // null = todos
-  const allCb = mesPanel.querySelector("#" + allId);
-  if (allCb) allCb.checked = !sel || sel.size === 0;
-  mesPanel.querySelectorAll("." + cbCls).forEach(cb => { cb.checked = !!sel && sel.has(Number(cb.value)); });
-  const nomeMes = (n) => (meses.find(m => m.num === n) || {}).nome || ("Mês " + n);
-  mesBtn.textContent = (!sel || sel.size === 0) ? "Todos os meses"
-    : sel.size === 1 ? nomeMes([...sel][0]) : (sel.size + " meses");
 
   // Empresa: usa os códigos do DADOS (001..011), label "P01".."P11".
   const lojas = DADOS.dimensoes.lojas || [];
@@ -8880,21 +8879,23 @@ function _syncFiltrosBar(prefix) {
         });
       }, true);
     }
-    const aplicaMeses = () => {
-      const marcados = [...mesPanel.querySelectorAll("." + cbCls)].filter(c => c.checked).map(c => Number(c.value));
-      selectedMeses = marcados.length ? new Set(marcados) : "Todos";
-      if (typeof setupMesMultiselect === "function") setupMesMultiselect();
-      renderAll();
-    };
-    mesPanel.addEventListener("change", (e) => {
-      const tEl = e.target;
-      if (tEl.id === allId) {
-        if (tEl.checked) { selectedMeses = "Todos"; if (typeof setupMesMultiselect === "function") setupMesMultiselect(); renderAll(); }
-        else { renderAll(); }
-        return;
-      }
-      if (tEl.classList.contains(cbCls)) aplicaMeses();
-    });
+    if (temMes) {
+      const aplicaMeses = () => {
+        const marcados = [...mesPanel.querySelectorAll("." + cbCls)].filter(c => c.checked).map(c => Number(c.value));
+        selectedMeses = marcados.length ? new Set(marcados) : "Todos";
+        if (typeof setupMesMultiselect === "function") setupMesMultiselect();
+        renderAll();
+      };
+      mesPanel.addEventListener("change", (e) => {
+        const tEl = e.target;
+        if (tEl.id === allId) {
+          if (tEl.checked) { selectedMeses = "Todos"; if (typeof setupMesMultiselect === "function") setupMesMultiselect(); renderAll(); }
+          else { renderAll(); }
+          return;
+        }
+        if (tEl.classList.contains(cbCls)) aplicaMeses();
+      });
+    }
     selLoja.addEventListener("change", () => {
       selectedLojas = selLoja.value ? new Set([selLoja.value]) : "Todos";
       if (typeof setupLojaMultiselect === "function") setupLojaMultiselect();
@@ -14859,17 +14860,12 @@ async function _renderAHPostos() {
     if (prev && prev.postos && prev.postos.length) topsPrev = _drepMerge(prev, codigos);
   } catch (_) {}
 
-  // Meses com venda (colunas)
+  // Meses com venda (colunas). A AH mostra SEMPRE todos os meses com dado — é uma
+  // análise mês-a-mês (não tem filtro de Mês; só Ano e Empresa).
   const vendas = tops.find(n => n.label === "Total das Vendas");
   let cols = [];
   for (let i = 0; i < 12; i++) if (vendas && Math.abs(vendas.meses[i]) > 0.005) cols.push(i);
   if (!cols.length) for (let i = 0; i < 12; i++) if (tops.some(n => n._has[i])) cols.push(i);
-  // Respeita o filtro global de Mês (selectedMeses, 1-based → índice mês-1).
-  if (selectedMeses && selectedMeses !== "Todos" && selectedMeses.size) {
-    const want = new Set([...selectedMeses].map(m => m - 1));
-    const f = cols.filter(i => want.has(i));
-    if (f.length) cols = f;
-  }
   if (!cols.length) {
     t.innerHTML = `<thead><tr><th>RESULTADOS</th></tr></thead><tbody><tr><td style="padding:24px;color:#8b95a7;text-align:center;">Nenhum mês com dado.</td></tr></tbody>`;
     return;
