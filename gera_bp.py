@@ -56,6 +56,9 @@ def main():
     conn = oracledb.connect(user=os.environ['ORACLE_USER'], password=os.environ['ORACLE_PASSWORD'],
                             dsn=os.environ.get('ORACLE_DSN', '10.61.1.1:1521/orcl'))
     cur = conn.cursor()
+    _schema = os.environ.get("ORACLE_SCHEMA", "CONSINCO")
+    if _schema:
+        cur.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {_schema}")
 
     # 1) títulos abertos na posição D (emitido<=D e não quitado até D)
     inlist = ",".join(f"'{c}'" for c in BP_SET)
