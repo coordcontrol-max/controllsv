@@ -6225,6 +6225,12 @@
           </div>
         </div>
 
+        <!-- Volume (linha) — Recebimentos × Pagamentos por mês (espelha o DFC do Supervendas) -->
+        <div class="dfc-resumo-card" style="margin-top:12px;">
+          <div class="dfc-resumo-card-title">Volume — Recebimentos × Pagamentos</div>
+          <div class="dfc-resumo-chart-wrap"><canvas id="dfcResumoVolume"></canvas></div>
+        </div>
+
         <!-- Linha 2: Evolução Tipos de Recebimento (%) -->
         <div class="dfc-resumo-card" style="margin-top:12px;">
           <div class="dfc-resumo-card-title">Evolução Mensal — Tipos de Recebimento (%)</div>
@@ -10574,7 +10580,7 @@ function _ensureDFCLojaPicker(selectId) {
 // ════════════════════════════════════════════════════════════════════════════
 const _dfcResumoCharts = {};
 // Helpers de loading state. _dfcLoadOn liga spinner em vários wraps; _dfcLoadOff desliga.
-const _DFC_CHART_IDS = ["dfcResumoEvolucao", "dfcResumoTopLojas"];
+const _DFC_CHART_IDS = ["dfcResumoEvolucao", "dfcResumoTopLojas", "dfcResumoVolume"];
 function _dfcLoadOn(ids) {
   (ids || _DFC_CHART_IDS).forEach(id => {
     const wrap = document.getElementById(id)?.parentElement;
@@ -10809,6 +10815,37 @@ async function renderDFCResumo() {
       scales: { x: { ticks: { color: corText } }, y: { ticks: { color: corText, callback: fmtAxis } } },
     },
   });
+
+  // ── Chart "Volume" (linha) — Recebimentos × Pagamentos por mês (espelha o DFC
+  // do Supervendas). Recebimentos = corPos (azul nos postos); Pagamentos = vermelho.
+  const volCanvas = document.getElementById("dfcResumoVolume");
+  if (volCanvas) {
+    _dfcResumoCharts.vol?.destroy();
+    const _hex2rgba = (hex, a) => {
+      const h = String(hex).replace("#", "");
+      const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+    };
+    _dfcResumoCharts.vol = new Chart(volCanvas, {
+      type: "line",
+      data: {
+        labels: MESES_ABREV,
+        datasets: [
+          { label: "Recebimentos", data: recebPorMes, borderColor: corPos, backgroundColor: _hex2rgba(corPos, .15), tension: 0.3, fill: false, borderWidth: 2, pointRadius: 3, pointHoverRadius: 5 },
+          { label: "Pagamentos",   data: pagtoPorMes.map(v => Math.abs(v)), borderColor: corNeg, backgroundColor: _hex2rgba(corNeg, .15), tension: 0.3, fill: false, borderWidth: 2, pointRadius: 3, pointHoverRadius: 5 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { labels: { color: corText } },
+          tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: R$ ${fmtBR(ctx.parsed.y)}` } },
+        },
+        scales: { x: { ticks: { color: corText } }, y: { ticks: { color: corText, callback: fmtAxis } } },
+      },
+    });
+  }
 
   // ── Chart 2: Ranking de TODAS as lojas — com seletor de Linha.
   // Quando linha = "__SALDO__" usa saldo do período; senão usa o valor
