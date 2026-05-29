@@ -122,6 +122,31 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
     echo "[WARN] gera_saldos_iniciais.py falhou — Saldo Inicial DFC ficará desatualizado."
   fi
 
+  # Checagem de frescor dos exports do Petros (gerados pelo Automate do Petros,
+  # não por este script). Se o Automate falhou numa noite, os ETLs abaixo sobem
+  # dado DEFASADO sem erro — este aviso deixa isso visível no log. Só WARN.
+  echo "----- [4a/7] frescor dos exports do Petros (Automate) -----"
+  PETROS_DIR="/mnt/controller/03 - POSTOS/Automate"
+  PETROS_MAXAGE_H=20
+  if [ -d "$PETROS_DIR" ]; then
+    _chk_petros() {  # $1=rótulo  $2=arquivo exato
+      local p="$PETROS_DIR/$2"
+      if [ ! -f "$p" ]; then echo "[WARN] export Petros AUSENTE: $2 ($1)"; return; fi
+      local age=$(( ( $(date +%s) - $(stat -c %Y "$p") ) / 3600 ))
+      if [ "$age" -ge "$PETROS_MAXAGE_H" ]; then
+        echo "[WARN] export Petros DEFASADO: $2 ($1) tem ${age}h — Automate pode ter falhado"
+      else echo "  ok: $2 (${age}h)"; fi
+    }
+    _chk_petros "DRE caixa"       "DRE_Postos.xlsx"
+    _chk_petros "DRE competência" "DRE_Postos_Competencia.xlsx"
+    _chk_petros "DFC"             "DFC_Postos.xlsx"
+    _chk_petros "Perdas"          "perdas.xlsx"
+    find "$PETROS_DIR" -maxdepth 1 -iname '*titaberto*pagar*'   -mmin -1200 2>/dev/null | grep -q . || echo "[WARN] export Petros AUSENTE/DEFASADO: TITABERTO *pagar* (Títulos em Aberto)"
+    find "$PETROS_DIR" -maxdepth 1 -iname '*titaberto*receber*' -mmin -1200 2>/dev/null | grep -q . || echo "[WARN] export Petros AUSENTE/DEFASADO: TITABERTO *receber* (Títulos em Aberto)"
+  else
+    echo "[WARN] pasta de exports do Petros não montada: $PETROS_DIR"
+  fi
+
   echo "----- [4b/7] etl_dre_postos.py (DRE Postos — planilha /mnt/controller) -----"
   if ! python3 etl_dre_postos.py; then
     echo "[WARN] etl_dre_postos.py falhou — DRE Postos não foi regenerado."
