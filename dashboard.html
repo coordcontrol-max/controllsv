@@ -196,6 +196,12 @@
   body[data-view="fluxocaixa-dashboard"] #filterToggle { display: none; }
   /* Dashboard DRE (home): filtros inline na barra do topo — esconde o funil */
   body[data-view="home"] #filterToggle { display: none; }
+  /* Postos: Mapa (controles próprios) + AH/Empresas R$/% (barra inline própria) —
+     esconde o funil global nessas views. */
+  body[data-segmento="postos"][data-view="dre-postos"] #filterToggle,
+  body[data-segmento="postos"][data-view="ah"] #filterToggle,
+  body[data-segmento="postos"][data-view="lojasrs"] #filterToggle,
+  body[data-segmento="postos"][data-view="lojaspct"] #filterToggle { display: none; }
   .dfc-dash-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 14px; }
   .dfc-dash-filtros label { font-size: 12px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
   .dfc-dash-filtros select {
@@ -6043,6 +6049,16 @@
 
     <!-- Lojas R$ view -->
     <section id="view-lojasrs" class="view">
+      <div class="dre-home-filtros" id="lrsFiltros" data-seg-only="postos">
+        <label>Ano <select id="lrsFAno"></select></label>
+        <span class="home-ms-wrap">Mês
+          <span class="home-ms" id="lrsFMesMS">
+            <button type="button" class="dfc-ms-btn" id="lrsFMesBtn">Todos os meses</button>
+            <div class="dfc-ms-panel" id="lrsFMesPanel" hidden></div>
+          </span>
+        </span>
+        <label>Empresa <select id="lrsFLoja"></select></label>
+      </div>
       <div class="lojasrs-container">
         <table class="lojasrs-table" id="lojasrsTable"></table>
       </div>
@@ -6050,6 +6066,16 @@
 
     <!-- Lojas % view -->
     <section id="view-lojaspct" class="view">
+      <div class="dre-home-filtros" id="lpctFiltros" data-seg-only="postos">
+        <label>Ano <select id="lpctFAno"></select></label>
+        <span class="home-ms-wrap">Mês
+          <span class="home-ms" id="lpctFMesMS">
+            <button type="button" class="dfc-ms-btn" id="lpctFMesBtn">Todos os meses</button>
+            <div class="dfc-ms-panel" id="lpctFMesPanel" hidden></div>
+          </span>
+        </span>
+        <label>Empresa <select id="lpctFLoja"></select></label>
+      </div>
       <div class="lojasrs-container">
         <table class="lojasrs-table" id="lojaspctTable"></table>
       </div>
@@ -6362,6 +6388,16 @@
 
     <!-- ANÁLISE HORIZONTAL: cada mês selecionado no filtro global vs. mês anterior -->
     <section id="view-ah" class="view">
+      <div class="dre-home-filtros" id="ahFiltros" data-seg-only="postos">
+        <label>Ano <select id="ahFAno"></select></label>
+        <span class="home-ms-wrap">Mês
+          <span class="home-ms" id="ahFMesMS">
+            <button type="button" class="dfc-ms-btn" id="ahFMesBtn">Todos os meses</button>
+            <div class="dfc-ms-panel" id="ahFMesPanel" hidden></div>
+          </span>
+        </span>
+        <label>Empresa <select id="ahFLoja"></select></label>
+      </div>
       <div class="dre-table-card ah-table-wrap">
         <table class="dre-table ah-table" id="ahTable"></table>
       </div>
@@ -8781,12 +8817,14 @@ function buildMiniTrend(bars, cfg, valColor, barCls, nMeses) {
 
 // Barra de filtros visível no topo do Dashboard DRE (Ano/Mês/Empresa).
 // Sincroniza com os filtros globais (fAno / selectedMeses / selectedLojas) e o drawer.
-function _syncHomeFiltros() {
-  const selAno = document.getElementById("homeFAno");
-  const mesBtn = document.getElementById("homeFMesBtn");
-  const mesPanel = document.getElementById("homeFMesPanel");
-  const selLoja = document.getElementById("homeFLoja");
+function _syncHomeFiltros() { _syncFiltrosBar("home"); }
+function _syncFiltrosBar(prefix) {
+  const selAno = document.getElementById(prefix + "FAno");
+  const mesBtn = document.getElementById(prefix + "FMesBtn");
+  const mesPanel = document.getElementById(prefix + "FMesPanel");
+  const selLoja = document.getElementById(prefix + "FLoja");
   if (!selAno || !mesBtn || !mesPanel || !selLoja || !DADOS) return;
+  const allId = prefix + "FMesAll", cbCls = prefix + "-mes-cb";
   const anos = DADOS.dimensoes.anos || [];
   if (selAno.dataset.k !== anos.join(",")) {
     selAno.dataset.k = anos.join(",");
@@ -8800,23 +8838,18 @@ function _syncHomeFiltros() {
   const mesesK = meses.map(m => m.num).join(",");
   if (mesPanel.dataset.k !== mesesK) {
     mesPanel.dataset.k = mesesK;
-    mesPanel.innerHTML = `<label class="ms-all"><input type="checkbox" id="homeFMesAll"> Todos os meses</label>`
-      + meses.map(m => `<label><input type="checkbox" class="home-mes-cb" value="${m.num}"> ${m.nome}</label>`).join("");
+    mesPanel.innerHTML = `<label class="ms-all"><input type="checkbox" id="${allId}"> Todos os meses</label>`
+      + meses.map(m => `<label><input type="checkbox" class="${cbCls}" value="${m.num}"> ${m.nome}</label>`).join("");
   }
-  // Reflete selectedMeses nos checkboxes + rótulo do botão.
   const sel = (selectedMeses === "Todos") ? null : selectedMeses;   // null = todos
-  const allCb = mesPanel.querySelector("#homeFMesAll");
+  const allCb = mesPanel.querySelector("#" + allId);
   if (allCb) allCb.checked = !sel || sel.size === 0;
-  mesPanel.querySelectorAll(".home-mes-cb").forEach(cb => {
-    cb.checked = !!sel && sel.has(Number(cb.value));
-  });
+  mesPanel.querySelectorAll("." + cbCls).forEach(cb => { cb.checked = !!sel && sel.has(Number(cb.value)); });
   const nomeMes = (n) => (meses.find(m => m.num === n) || {}).nome || ("Mês " + n);
   mesBtn.textContent = (!sel || sel.size === 0) ? "Todos os meses"
-    : sel.size === 1 ? nomeMes([...sel][0])
-    : (sel.size + " meses");
+    : sel.size === 1 ? nomeMes([...sel][0]) : (sel.size + " meses");
 
-  // Usa os MESMOS códigos de loja do DADOS.fatos.porLinha (senão o filtro não casa
-  // e tudo zera). Label formatado "P01".."P11" a partir do código "001".."011".
+  // Empresa: usa os códigos do DADOS (001..011), label "P01".."P11".
   const lojas = DADOS.dimensoes.lojas || [];
   const lojaLabel = (l) => /^\d+$/.test(String(l)) ? ("P" + String(l).slice(-2)) : String(l);
   const lojasK = lojas.join(",");
@@ -8833,7 +8866,6 @@ function _syncHomeFiltros() {
       const f = document.getElementById("fAno");
       if (f) { f.value = selAno.value; f.dispatchEvent(new Event("change")); }
     });
-    // Mês multiselect: abre/fecha painel
     // Abre/fecha o painel via UM handler global (captura) usando o ATRIBUTO hidden
     // (a classe "hidden" não tem regra CSS aqui). Robusto contra stopPropagation.
     if (!window._homeMsGlobalBound) {
@@ -8843,26 +8875,25 @@ function _syncHomeFiltros() {
         const btnWrap = btn ? btn.closest(".home-ms") : null;
         document.querySelectorAll(".home-ms .dfc-ms-panel").forEach(panel => {
           const wrap = panel.closest(".home-ms");
-          if (btnWrap && wrap === btnWrap) panel.hidden = !panel.hidden;   // botão do próprio → alterna
-          else if (!panel.contains(ev.target)) panel.hidden = true;        // clicou fora → fecha
+          if (btnWrap && wrap === btnWrap) panel.hidden = !panel.hidden;
+          else if (!panel.contains(ev.target)) panel.hidden = true;
         });
       }, true);
     }
-    // recalcula selectedMeses a partir dos checkboxes
     const aplicaMeses = () => {
-      const marcados = [...mesPanel.querySelectorAll(".home-mes-cb")].filter(c => c.checked).map(c => Number(c.value));
+      const marcados = [...mesPanel.querySelectorAll("." + cbCls)].filter(c => c.checked).map(c => Number(c.value));
       selectedMeses = marcados.length ? new Set(marcados) : "Todos";
       if (typeof setupMesMultiselect === "function") setupMesMultiselect();
-      renderAll();   // re-renderiza (e _syncHomeFiltros reflete o estado)
+      renderAll();
     };
     mesPanel.addEventListener("change", (e) => {
-      const t = e.target;
-      if (t.id === "homeFMesAll") {
-        if (t.checked) { selectedMeses = "Todos"; if (typeof setupMesMultiselect === "function") setupMesMultiselect(); renderAll(); }
-        else { renderAll(); }   // desmarcar "Todos" sem escolher mês = mantém Todos (reflete de volta)
+      const tEl = e.target;
+      if (tEl.id === allId) {
+        if (tEl.checked) { selectedMeses = "Todos"; if (typeof setupMesMultiselect === "function") setupMesMultiselect(); renderAll(); }
+        else { renderAll(); }
         return;
       }
-      if (t.classList.contains("home-mes-cb")) aplicaMeses();
+      if (tEl.classList.contains(cbCls)) aplicaMeses();
     });
     selLoja.addEventListener("change", () => {
       selectedLojas = selLoja.value ? new Set([selLoja.value]) : "Todos";
@@ -14804,6 +14835,7 @@ function renderAHTable() {
 async function _renderAHPostos() {
   const t = document.getElementById("ahTable");
   if (!t) return;
+  if (typeof _syncFiltrosBar === "function") _syncFiltrosBar("ah");
   const ano = parseInt(document.getElementById("fAno")?.value, 10) || DADOS._ano;
   let data = (typeof _drepCached === "function") ? _drepCached(ano) : null;
   if (!data && typeof _drepLoadAno === "function") {
@@ -15056,6 +15088,7 @@ const renderLojasPct = () => renderLojasPivot("pct", "lojaspctTable");
 async function _renderLojasPostos(mode, tableId) {
   const t = document.getElementById(tableId);
   if (!t) return;
+  if (typeof _syncFiltrosBar === "function") _syncFiltrosBar(mode === "pct" ? "lpct" : "lrs");
   const ano = parseInt(document.getElementById("fAno")?.value, 10) || DADOS._ano;
   let data = (typeof _drepCached === "function") ? _drepCached(ano) : null;
   if (!data && typeof _drepLoadAno === "function") {
