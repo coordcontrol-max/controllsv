@@ -21,6 +21,9 @@ oracledb.init_oracle_client(lib_dir=os.environ["ORACLE_CLIENT_DIR"])
 dsn = f"{os.environ['ORACLE_HOST']}:{os.environ['ORACLE_PORT']}/{os.environ['ORACLE_SERVICE']}"
 conn = oracledb.connect(user=os.environ["ORACLE_USER"], password=os.environ["ORACLE_PASSWORD"], dsn=dsn)
 cur = conn.cursor()
+_schema = os.environ.get("ORACLE_SCHEMA", "CONSINCO")
+if _schema:
+    cur.execute(f"ALTER SESSION SET CURRENT_SCHEMA = {_schema}")
 
 SQL = """
 WITH CONTRATOS_ATIVOS AS (
