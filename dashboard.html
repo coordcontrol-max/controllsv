@@ -889,6 +889,11 @@
   body[data-view="lojasrs"]    #dreTabs,
   body[data-view="lojaspct"]   #dreTabs,
   body[data-view="analise2"]   #dreTabs { display: flex; }
+  /* Abas do Fluxo de Caixa — só nos POSTOS (super usa o menu lateral). */
+  body[data-segmento="postos"][data-view="fluxocaixa-dashboard"] #dfcTabs,
+  body[data-segmento="postos"][data-view="dfc-mensal"]           #dfcTabs,
+  body[data-segmento="postos"][data-view="dfc-postos"]           #dfcTabs,
+  body[data-segmento="postos"][data-view="dfc-consolidado"]      #dfcTabs { display: flex; }
   .report-tabs button {
     flex: 0 0 auto; padding: 8px 14px;
     font-size: 12px; font-weight: 700; font-family: inherit;
@@ -6006,6 +6011,14 @@
       <button data-view="ah">Análise Horizontal</button>
       <button data-view="lojasrs">Lojas em R$</button>
       <button data-view="lojaspct">Lojas em %</button>
+    </nav>
+
+    <!-- Abas in-report do Fluxo de Caixa dos POSTOS (estilo Supervendas) -->
+    <nav class="report-tabs" id="dfcTabs" aria-label="Abas do Fluxo de Caixa">
+      <button data-view="fluxocaixa-dashboard">Dashboard DFC</button>
+      <button data-view="dfc-mensal">DFC Mensal</button>
+      <button data-view="dfc-postos">DFC Diário</button>
+      <button data-view="dfc-consolidado">DFC Consolidado</button>
     </nav>
 
     <!-- Sub-nav da Importação -->
