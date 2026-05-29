@@ -102,6 +102,14 @@ if LD_LIBRARY_PATH=/opt/oracle/instantclient_23_5 timeout 1800 \
 then
   T1=$(date +%s)
   echo "  ✓ DFC realizado em $((T1-T0))s" >> "$LOG"
+  # 2b) Detalhe título-a-título do DFC (drilldown da UI) — best-effort, lê o
+  #     rawOracle/__fluxo_* recém-gravado e reusa o classifier (bate exato).
+  cd /root/projeto_dre
+  if LD_LIBRARY_PATH=/opt/oracle/instantclient_23_5 timeout 600 python3 gera_fluxocaixa_detalhe.py "$ANO" "$MES" >> "$LOG" 2>&1; then
+    echo "  ✓ detalhe DFC (drilldown) atualizado" >> "$LOG"
+  else
+    echo "  ⚠ detalhe DFC falhou — drilldown pode ficar defasado" >> "$LOG"
+  fi
   # 3) Títulos em Aberto: Oracle → JSON
   cd /root/projeto_dre
   if LD_LIBRARY_PATH=/opt/oracle/instantclient_23_5 timeout 300 python3 gera_titulos_aberto.py >> "$LOG" 2>&1; then

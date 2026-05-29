@@ -27,6 +27,30 @@ def _to_date(v):
     return None
 
 
+def _detalhe_titulo(row: dict, fonte: str) -> dict:
+    """Campos identificadores do título p/ o drilldown do DFC (gera_fluxocaixa_detalhe).
+    Chaves compactas: p=pessoa/favorecido, o=observação/histórico, c=nº documento.
+    NÃO afeta o engine_fluxo (que só lê linha/valor/data/nroempresa)."""
+    if fonte == "fluxo_opfin":
+        pessoa = _val(row, "FAVORECIDO") or ""
+        obs = _val(row, "HISTORICO") or _val(row, "DESCOPERACAO") or ""
+        ndoc = _val(row, "NRODOCUMENTO")
+        serie = _val(row, "SERIEDOCUMENTO")
+    else:
+        pessoa = _val(row, "NOMERAZAO") or ""
+        obs = _val(row, "OBSERVACAO") or ""
+        ndoc = _val(row, "NROTITULO")
+        serie = _val(row, "SERIETITULO")
+    doc = "" if ndoc is None else str(ndoc).strip()
+    if serie not in (None, ""):
+        doc = f"{doc}/{serie}" if doc else str(serie)
+    return {
+        "p": str(pessoa).strip()[:60],
+        "o": str(obs).strip()[:100],
+        "c": doc[:24],
+    }
+
+
 def _val(row: dict, *names):
     for n in names:
         if n in row and row[n] is not None:
@@ -386,6 +410,7 @@ def classify_fluxo_pago(rows: list[dict]) -> tuple[list[dict], dict[str, int]]:
             "valor": round(float(valor) * sign, 2),
             "_fonte": "fluxo_pago",
             "_codespecie": codespecie,
+            "_det": _detalhe_titulo(r, "fluxo_pago"),
         })
     return fatos, nao_mapeados
 
@@ -414,6 +439,7 @@ def classify_fluxo_juros(rows: list[dict]) -> list[dict]:
             "valor": round(float(valor) * sign, 2),
             "_fonte": "fluxo_juros",
             "_codespecie": codespecie,
+            "_det": _detalhe_titulo(r, "fluxo_juros"),
         })
     return fatos
 
@@ -484,6 +510,7 @@ def classify_fluxo_opfin(rows: list[dict]) -> tuple[list[dict], dict[int, int]]:
             "valor": round(float(valor) * sign, 2),
             "_fonte": "fluxo_opfin",
             "_codoperacao": codop,
+            "_det": _detalhe_titulo(r, "fluxo_opfin"),
         })
     return fatos, nao_mapeados
 
