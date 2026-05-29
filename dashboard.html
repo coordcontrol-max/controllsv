@@ -5735,9 +5735,6 @@
             <button data-view="dfc-consolidado"      class="side-item">DFC Consolidado</button>
             <button data-view="fluxocaixa-lojas"     class="side-item">DFC Lojas</button>
             <button data-view="transferencias-inter" class="side-item" data-seg-only="intercompany">Transferências / Conciliação</button>
-            <button data-view="comparativo-protege"  class="side-item">Comparativo Protege</button>
-            <button data-view="taxas-cartoes"        class="side-item">Taxas Cartões</button>
-            <button data-view="mutuos-entre-grupos"  class="side-item">Mútuos Entre Grupos</button>
           </div>
         </div>
         <!-- Sub-aba: Títulos em Aberto (Postos · Adaptive) — só no segmento Postos -->
@@ -5800,6 +5797,22 @@
           </button>
           <div class="side-sub-sub-list" id="apcSubList">
             <button data-view="apuracao-contratos" class="side-item">Contratos de Retorno</button>
+          </div>
+        </div>
+        <!-- Sub-aba: Auditorias (Comparativo Protege / Taxas Cartões / Mútuos) -->
+        <div class="side-subsection has-children" id="sectionAuditorias">
+          <button class="side-subsection-title side-expander" data-section-toggle="aud"
+                  aria-expanded="false" aria-controls="audSubList">
+            <span>Auditorias</span>
+            <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+          <div class="side-sub-sub-list" id="audSubList">
+            <button data-view="comparativo-protege"  class="side-item">Comparativo Protege</button>
+            <button data-view="taxas-cartoes"         class="side-item">Taxas Cartões</button>
+            <button data-view="mutuos-entre-grupos"   class="side-item">Mútuos Entre Grupos</button>
           </div>
         </div>
       </div>
