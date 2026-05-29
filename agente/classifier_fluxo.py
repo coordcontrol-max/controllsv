@@ -351,7 +351,10 @@ def classify_fluxo_pago(rows: list[dict]) -> tuple[list[dict], dict[str, int]]:
             continue
         nro = _val(r, "NROEMPRESA")
         valor = _val(r, "VLROPERACAO")
-        data = _to_date(_val(r, "DTAOPERACAO", "DTAQUITACAO", "DTACONTABILIZA"))
+        # DFC realizado é por DTAOPERACAO (dia do caixa). Sem fallback p/
+        # DTAQUITACAO/DTACONTABILIZA: dia sem operação (ex.: domingo) não pode
+        # ter lançamento de caixa.
+        data = _to_date(_val(r, "DTAOPERACAO"))
         obrigdireito = _val(r, "OBRIGDIREITO")
         if data is None or valor is None:
             continue
@@ -393,7 +396,7 @@ def classify_fluxo_juros(rows: list[dict]) -> list[dict]:
     for r in rows:
         nro = _val(r, "NROEMPRESA")
         valor = _val(r, "VLROPERACAO")
-        data = _to_date(_val(r, "DTAOPERACAO", "DTAQUITACAO", "DTACONTABILIZA"))
+        data = _to_date(_val(r, "DTAOPERACAO"))  # estrito: só dia de operação
         obrigdireito = _val(r, "OBRIGDIREITO")
         codespecie = _val(r, "CODESPECIE")
         if codespecie in CODESPECIE_IGNORAR_FLUXO:
