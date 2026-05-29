@@ -270,9 +270,10 @@ for r in cur.fetchall():
     por_dia[dta][od] = {"sld": round(float(r[2] or 0), 2), "qtd": int(r[3])}
 print(f"  {len(por_dia)} dias")
 
-print("[8a/8] Detalhe titulo-a-titulo (janela 30d passado / 120d futuro)...")
-# Pra alimentar o modal de Detalhamento quando o usuario clicar numa celula
-# de dia >= hoje no DFC. Janela menor pra controlar o tamanho do JSON.
+print("[8a/8] Detalhe titulo-a-titulo (TODOS os titulos em aberto)...")
+# Alimenta o modal de Detalhamento (DFC Diario + cards de Titulos em Aberto do
+# BP). SEM janela de vencimento — precisa cobrir TODO o universo em aberto
+# (inclusive vencidos antigos) pra bater com o agregado por especie/aging.
 cur.execute("""
 SELECT t.OBRIGDIREITO, t.CODESPECIE,
        TO_CHAR(NVL(t.DTAPROGRAMADA, t.DTAVENCIMENTO), 'YYYY-MM-DD') AS DTA,
@@ -285,8 +286,6 @@ FROM   FI_TITULO t
 JOIN   GE_PESSOA p ON p.SEQPESSOA = t.SEQPESSOA
 WHERE  t.ABERTOQUITADO='A' AND t.SITUACAO<>'C'
   AND  t.OBRIGDIREITO IN ('D','O')
-
-  AND  NVL(t.DTAPROGRAMADA, t.DTAVENCIMENTO) BETWEEN TRUNC(SYSDATE) - 30 AND TRUNC(SYSDATE) + 120
   AND  (t.VLRNOMINAL - t.VLRPAGO) <> 0
 """)
 det = []
@@ -294,9 +293,7 @@ for r in cur.fetchall():
     od, cod, dta, nro_emp, nrotit, serie, parc, razao, seqp, sld_raw, obs = r
     if cod in CODESPECIE_IGNORAR_FLUXO:
         continue
-    linha = CODESPECIE_TO_LINHA_FLUXO.get(cod)
-    if not linha:
-        continue
+    linha = CODESPECIE_TO_LINHA_FLUXO.get(cod)  # pode ser None (espécie sem linha DFC) — mantém p/ drilldown por espécie
     if cod == "CARTAO":
         if any(p in (razao or "") for p in CARTAO_PROPRIO_RAZOES):
             linha = "Recbto de Venda em Cartão Próprio"
