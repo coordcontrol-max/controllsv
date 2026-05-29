@@ -119,10 +119,12 @@ for (ano, mes) in meses_alvo:
             real_linhas = real_dim.get('linhas') or []
             real_dias = real_dim.get('dias') or []
             real_saldoInicial = float(real.get('saldoInicial') or 0)
-            # Reconstrói dia → linha → valor a partir do porLinha (d é 1-based no idx de dias_list)
+            # Reconstrói dia → linha → valor a partir do porLinha. engine_fluxo
+            # grava 'd' 0-based (idia = enumerate(dias)); o frontend também lê
+            # 0-based (fluxoValorDia: dIdx = dias.indexOf(dia)). Ler 0-based.
             tmp = defaultdict(lambda: defaultdict(float))
             for r in (real.get('porLinha') or []):
-                d_idx = (r.get('d') or 0) - 1
+                d_idx = (r.get('d') or 0)
                 if d_idx < 0 or d_idx >= len(real_dias): continue
                 dd = real_dias[d_idx]   # 'DD'
                 date_obj = dt.date(ano, mes, int(dd))
@@ -170,7 +172,7 @@ for (ano, mes) in meses_alvo:
     g_idx = {g: i for i, g in enumerate(grupos_list)}
     a_idx = {a: i for i, a in enumerate(agrups_list)}
     l_idx = {l: i for i, l in enumerate(linhas_list)}
-    d_idx = {dd: i+1 for i, dd in enumerate(dias_list)}   # 1-based como no real
+    d_idx = {dd: i for i, dd in enumerate(dias_list)}   # 0-based (igual engine_fluxo + frontend fluxoValorDia)
 
     porLinha = []
     porAg_acc = defaultdict(float)
