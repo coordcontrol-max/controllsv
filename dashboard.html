@@ -5999,7 +5999,6 @@
       <button data-view="ah">Análise Horizontal</button>
       <button data-view="lojasrs">Lojas em R$</button>
       <button data-view="lojaspct">Lojas em %</button>
-      <button data-view="analise2">Análise 2.0</button>
     </nav>
 
     <!-- Sub-nav da Importação -->
@@ -14787,9 +14786,15 @@ async function _renderAHPostos() {
 
   // Meses com venda (colunas)
   const vendas = tops.find(n => n.label === "Total das Vendas");
-  const cols = [];
+  let cols = [];
   for (let i = 0; i < 12; i++) if (vendas && Math.abs(vendas.meses[i]) > 0.005) cols.push(i);
   if (!cols.length) for (let i = 0; i < 12; i++) if (tops.some(n => n._has[i])) cols.push(i);
+  // Respeita o filtro global de Mês (selectedMeses, 1-based → índice mês-1).
+  if (selectedMeses && selectedMeses !== "Todos" && selectedMeses.size) {
+    const want = new Set([...selectedMeses].map(m => m - 1));
+    const f = cols.filter(i => want.has(i));
+    if (f.length) cols = f;
+  }
   if (!cols.length) {
     t.innerHTML = `<thead><tr><th>RESULTADOS</th></tr></thead><tbody><tr><td style="padding:24px;color:#8b95a7;text-align:center;">Nenhum mês com dado.</td></tr></tbody>`;
     return;
@@ -14867,7 +14872,13 @@ async function _renderAHPostos() {
 /* ============================================================
    Lojas R$ / Lojas % views (pivot table)
 ============================================================ */
+let _lojaspCollapsed = new Set();   // Empresas R$/% Postos — linhas recolhidas
+let _lojaspInit = false;
+
 function renderLojasPivot(mode, tableId) {
+  // Postos: pivot baseado no MAPA DE RESULTADOS (cascata _drepMerge), postos nas
+  // colunas. Respeita Ano (fAno), Mês (selectedMeses) e Empresa (selectedLojas).
+  if ((document.body.dataset.segmento || "") === "postos") { _renderLojasPostos(mode, tableId); return; }
   const { ano, mes, loja } = getFilters();
   const lojasCols = (loja === "Todos")
     ? DADOS.dimensoes.lojas.filter(l => /^[LP]\d+$/.test(l)).sort()
@@ -14994,6 +15005,96 @@ function renderLojasPivot(mode, tableId) {
 }
 const renderLojasRS  = () => renderLojasPivot("rs",  "lojasrsTable");
 const renderLojasPct = () => renderLojasPivot("pct", "lojaspctTable");
+
+// Empresas em R$ / Empresas em % dos POSTOS — pivot baseado no Mapa de Resultados:
+// postos nas colunas, linhas = cascata do Mapa (_drepMerge). "rs" = R$ no período;
+// "pct" = AV% (linha ÷ Total das Vendas do posto). Período = meses selecionados
+// (ou Total). Sinal de exibição igual ao Mapa.
+async function _renderLojasPostos(mode, tableId) {
+  const t = document.getElementById(tableId);
+  if (!t) return;
+  const ano = parseInt(document.getElementById("fAno")?.value, 10) || DADOS._ano;
+  let data = (typeof _drepCached === "function") ? _drepCached(ano) : null;
+  if (!data && typeof _drepLoadAno === "function") {
+    t.innerHTML = `<thead><tr><th class="label-col">RESULTADOS</th></tr></thead><tbody><tr><td style="padding:24px;color:#8b95a7;text-align:center;">Carregando Mapa de Resultados…</td></tr></tbody>`;
+    data = await _drepLoadAno(ano);
+  }
+  if (!data || !data.postos || !data.postos.length) {
+    t.innerHTML = `<thead><tr><th class="label-col">RESULTADOS</th></tr></thead><tbody><tr><td style="padding:24px;color:#8b95a7;text-align:center;">Sem dados do Mapa de Resultados para ${ano}.</td></tr></tbody>`;
+    return;
+  }
+  const codes = (selectedLojas && selectedLojas !== "Todos")
+    ? data.postos.filter(p => selectedLojas.has(p.codigo)).map(p => p.codigo)
+    : data.postos.map(p => p.codigo);
+  const lojaLabel = (c) => /^\d+$/.test(String(c)) ? ("P" + String(c).slice(-2)) : String(c);
+  let selMonths = null;
+  if (selectedMeses && selectedMeses !== "Todos" && selectedMeses.size) selMonths = [...selectedMeses].map(m => m - 1);
+
+  const tops = _drepMerge(data, new Set(codes));
+  const byPosto = {};
+  codes.forEach(c => byPosto[c] = _drepMerge(data, new Set([c])));
+  if (!_lojaspInit) { _lojaspCollapsed = new Set(_drepCollapsibleKeys(tops)); _lojaspInit = true; }
+
+  const periodSum = (node) => {
+    if (!node) return null;
+    if (!selMonths) return node._hasT ? node.total : null;
+    let s = 0, tem = false;
+    for (const i of selMonths) if (node._has[i]) { s += node.meses[i]; tem = true; }
+    return tem ? s : null;
+  };
+  const fRs = (v) => v == null ? "—" : fmtBRLNum(v);
+  const fPct = (v) => v == null ? "—" : fmtPctSimple(v);
+  const vendaPosto = (c) => periodSum(_drepFindNode(byPosto[c], "Total das Vendas"));
+
+  let html = `<thead><tr><th class="label-col">RESULTADOS</th>`
+    + codes.map(c => `<th>${lojaLabel(c)}</th>`).join("")
+    + `<th class="total-col">Total</th></tr></thead><tbody>`;
+  let zebra = 0;
+  const walk = (node, signParent, lvl) => {
+    let sign = signParent != null ? signParent : 1;
+    if (/^\(-\)/.test(node.label)) sign = -1;
+    else if (/^\(\+\)/.test(node.label) || node.label === "Receita") sign = 1;
+    const useSign = /^\(=\)/.test(node.label) ? 1 : sign;
+    const key = _drepKey(node);
+    const hasKids = node.children && node.children.length > 0;
+    const collapsed = _lojaspCollapsed.has(key);
+    const tog = hasKids
+      ? `<span class="toggle" data-lojaspkey="${_drepEsc(key)}">${collapsed ? "+" : "−"}</span>`
+      : `<span class="toggle-empty"></span>`;
+    const vals = codes.map(c => { const raw = periodSum(_drepFindNode(byPosto[c], node.label)); return raw == null ? null : useSign * raw; });
+    let cells = "";
+    codes.forEach((c, idx) => {
+      const v = vals[idx];
+      let txt;
+      if (mode === "pct") { const vp = vendaPosto(c); txt = (v != null && vp) ? fPct(v / vp * 100) : "—"; }
+      else txt = fRs(v);
+      cells += `<td class="${v != null && v < 0 ? "neg" : ""}">${txt}</td>`;
+    });
+    const hasTot = vals.some(v => v != null);
+    const tot = vals.reduce((s, v) => v != null ? s + v : s, 0);
+    let totTxt;
+    if (mode === "pct") {
+      const totVenda = codes.reduce((s, c) => { const vp = vendaPosto(c); return vp ? s + vp : s; }, 0);
+      totTxt = (hasTot && totVenda) ? fPct(tot / totVenda * 100) : "—";
+    } else totTxt = hasTot ? fRs(tot) : "—";
+    const cls = `lvl-${lvl} ${zebra++ % 2 === 0 ? "alt" : ""}`;
+    html += `<tr class="${cls}"><td class="label">${tog}${_drepEsc(node.label)}</td>${cells}`
+          + `<td class="total${hasTot && tot < 0 ? " neg" : ""}">${totTxt}</td></tr>`;
+    if (hasKids && !collapsed) node.children.forEach(ch => walk(ch, sign, lvl + 1));
+  };
+  tops.forEach(n => walk(n, 1, 1));
+  html += `</tbody>`;
+  t.innerHTML = html;
+
+  t.querySelectorAll(".toggle[data-lojaspkey]").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const k = el.dataset.lojaspkey;
+      if (_lojaspCollapsed.has(k)) _lojaspCollapsed.delete(k); else _lojaspCollapsed.add(k);
+      _renderLojasPostos(mode, tableId);
+    });
+  });
+}
 
 /* ============================================================
    ANÁLISE 2.0 — META x REAL
@@ -25661,6 +25762,12 @@ async function applySegmento(seg, opts = {}) {
     window._dfcDefaultExpanded = false;   // re-aplica default expansion
   }
   document.body.dataset.segmento = seg;
+  // Rótulo das abas Lojas R$/% por segmento: nos POSTOS vira "Empresas R$/%".
+  {
+    const ehPostos = seg === "postos";
+    document.querySelectorAll('button[data-view="lojasrs"]').forEach(b => b.textContent = ehPostos ? "Empresas R$" : "Lojas em R$");
+    document.querySelectorAll('button[data-view="lojaspct"]').forEach(b => b.textContent = ehPostos ? "Empresas %" : "Lojas em %");
+  }
   // Sincroniza pill ativa
   document.querySelectorAll(".segment-pill").forEach(p => {
     const isActive = p.dataset.segmento === seg;
