@@ -513,7 +513,8 @@
     display: flex; gap: 14px; align-items: center; justify-content: flex-end;
     margin-bottom: 14px; flex-wrap: wrap;
   }
-  .dre-home-filtros label {
+  .dre-home-filtros label,
+  .dre-home-filtros .home-ms-wrap {
     font-size: 12px; font-weight: 700; color: #6c757d;
     display: flex; gap: 6px; align-items: center; letter-spacing: .3px;
   }
@@ -6014,12 +6015,12 @@
     <section id="view-home" class="view">
       <div class="dre-home-filtros" id="dreHomeFiltros">
         <label>Ano <select id="homeFAno"></select></label>
-        <label class="home-ms-wrap">Mês
+        <span class="home-ms-wrap">Mês
           <span class="home-ms" id="homeFMesMS">
             <button type="button" class="dfc-ms-btn" id="homeFMesBtn">Todos os meses</button>
-            <div class="dfc-ms-panel hidden" id="homeFMesPanel"></div>
+            <div class="dfc-ms-panel" id="homeFMesPanel" hidden></div>
           </span>
-        </label>
+        </span>
         <label>Empresa <select id="homeFLoja"></select></label>
       </div>
       <div class="kpi-grid" id="kpiGrid">
@@ -8833,10 +8834,20 @@ function _syncHomeFiltros() {
       if (f) { f.value = selAno.value; f.dispatchEvent(new Event("change")); }
     });
     // Mês multiselect: abre/fecha painel
-    mesBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      mesPanel.classList.toggle("hidden");
-    });
+    // Abre/fecha o painel via UM handler global (captura) usando o ATRIBUTO hidden
+    // (a classe "hidden" não tem regra CSS aqui). Robusto contra stopPropagation.
+    if (!window._homeMsGlobalBound) {
+      window._homeMsGlobalBound = true;
+      document.addEventListener("click", (ev) => {
+        const btn = ev.target.closest(".dfc-ms-btn");
+        const btnWrap = btn ? btn.closest(".home-ms") : null;
+        document.querySelectorAll(".home-ms .dfc-ms-panel").forEach(panel => {
+          const wrap = panel.closest(".home-ms");
+          if (btnWrap && wrap === btnWrap) panel.hidden = !panel.hidden;   // botão do próprio → alterna
+          else if (!panel.contains(ev.target)) panel.hidden = true;        // clicou fora → fecha
+        });
+      }, true);
+    }
     // recalcula selectedMeses a partir dos checkboxes
     const aplicaMeses = () => {
       const marcados = [...mesPanel.querySelectorAll(".home-mes-cb")].filter(c => c.checked).map(c => Number(c.value));
@@ -8852,11 +8863,6 @@ function _syncHomeFiltros() {
         return;
       }
       if (t.classList.contains("home-mes-cb")) aplicaMeses();
-    });
-    // fecha ao clicar fora
-    document.addEventListener("click", (e) => {
-      const ms = document.getElementById("homeFMesMS");
-      if (ms && !ms.contains(e.target)) mesPanel.classList.add("hidden");
     });
     selLoja.addEventListener("change", () => {
       selectedLojas = selLoja.value ? new Set([selLoja.value]) : "Todos";
