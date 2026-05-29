@@ -10868,25 +10868,67 @@ async function renderDFCResumo() {
   const recebRepr = recebPorMes[mesRepr - 1] || 0;
   const pagtoRepr = pagtoPorMes[mesRepr - 1] || 0;
 
+  // ── Totais por agrupamento no período (p/ os 10 cards reorganizados) ──
+  const _DESP_AGRUPS = ["Despesas Com Pessoal","Despesas Com Serviços Públicos","Despesas Com Aluguéis","Despesas Com Manutenção","Despesas Com Publicidade","Despesas Com Informática","Despesas Jurídicas","Despesas Com Logística","Despesas Com Serviços Terceirizados","Impostos e Taxas Diversas","Despesas Com Vendas","Despesas Com Embalagens e MP","Despesas Gerais"];
+  const _agrupTot = {};
+  let _mutuoReceb = 0, _mutuoPago = 0;
+  for (let m = 1; m <= 12; m++) {
+    if (mesFiltroSet && !mesFiltroSet.has(m)) continue;
+    const a = agrupPorMes[m-1] || {};
+    for (const nome in a) _agrupTot[nome] = (_agrupTot[nome] || 0) + a[nome];
+    const mv = a["Mútuo Entre Grupos"] || 0;
+    if (mv > 0) _mutuoReceb += mv; else _mutuoPago += mv;
+  }
+  const cRecebOper = _agrupTot["Entradas Operacionais"] || 0;
+  const cFornec    = _agrupTot["Fornecedores"] || 0;
+  const cDespesas  = _DESP_AGRUPS.reduce((s, n) => s + (_agrupTot[n] || 0), 0);
+  const cInvest    = _agrupTot["Investimentos / Expansão"] || 0;
+  const cDespFin   = _agrupTot["Despesas Financeiras / Expansão"] || 0;
+  const cRetiradas = _agrupTot["Retiradas de Sócios"] || 0;
+  const cRecebMut  = (_agrupTot["Empréstimos/Mútuos Recebidos"] || 0) + _mutuoReceb;
+  const cPagMut    = (_agrupTot["Empréstimos/Mútuos Pagos"] || 0) + _mutuoPago;
+  const cRecebTot  = cRecebOper + cRecebMut;
+  const cPagTot    = cFornec + cDespesas + cPagMut + cInvest + cDespFin + cRetiradas;
+  const cSaldoLiq  = cRecebTot + cPagTot;
+  const _firstM = mesFiltroSet ? Math.min(...mesFiltroSet) : 1;
+  let cSaldoIni = 0;
+  if (todasEmpresas) {
+    cSaldoIni = Number((_FLUXO_CACHE[_fluxoCacheKey(ano, _firstM, "")] || {}).saldoInicial || 0);
+  } else {
+    for (const loja of lojasUnicas) cSaldoIni += Number((_FLUXO_CACHE[_fluxoCacheKey(ano, _firstM, loja)] || {}).saldoInicial || 0);
+  }
+  const cSaldoFim = cSaldoIni + cSaldoLiq;
+
   const fmtBR = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const sufixoPeriodo = mesFiltro
     ? `${MESES_ABREV[mesFiltro-1]}/${String(ano).slice(2)}`
     : String(ano);
   const sufixoEmp = empFiltro ? ` · ${itens.find(i => String(i.key) === String(empFiltro))?.label || empFiltro}` : "";
 
-  // ── KPIs
+  // ── KPIs (2 linhas de 5 — ordem pedida pelo usuário)
+  const _tipoSaldo = v => v >= 0 ? "pos" : "neg";
+  const _suf = `${sufixoPeriodo}${sufixoEmp}`;
   const kpisHTML = [
-    { lbl: `Recebimentos ${sufixoPeriodo}${sufixoEmp}`, val: recebPeriodo, tipo: "pos" },
-    { lbl: `Pagamentos ${sufixoPeriodo}${sufixoEmp}`,   val: pagtoPeriodo, tipo: "neg" },
-    { lbl: `Saldo Líquido ${sufixoPeriodo}${sufixoEmp}`,val: saldoPeriodo, tipo: saldoPeriodo >= 0 ? "pos" : "neg" },
-    { lbl: `Receb. ${MESES_ABREV[mesRepr-1]}/${String(ano).slice(2)}`, val: recebRepr, tipo: "pos" },
-    { lbl: `Pagto ${MESES_ABREV[mesRepr-1]}/${String(ano).slice(2)}`,  val: pagtoRepr, tipo: "neg" },
+    // Linha 1
+    { lbl: "Saldo inicial",                   val: cSaldoIni, tipo: _tipoSaldo(cSaldoIni) },
+    { lbl: "Recebimentos (total)",            val: cRecebTot, tipo: "pos" },
+    { lbl: "Recebimentos Operacionais",       val: cRecebOper, tipo: "pos" },
+    { lbl: "Recebimentos Mútuos/Empréstimos", val: cRecebMut, tipo: "pos" },
+    { lbl: "Pagamentos Mútuos/Empréstimos",   val: cPagMut, tipo: "neg" },
+    // Linha 2
+    { lbl: "Pagamentos (total)",              val: cPagTot, tipo: "neg" },
+    { lbl: "Fornecedores",                    val: cFornec, tipo: "neg" },
+    { lbl: "Despesas (total)",                val: cDespesas, tipo: "neg" },
+    { lbl: "Saldo final",                     val: cSaldoFim, tipo: _tipoSaldo(cSaldoFim) },
+    { lbl: "Saldo Líquido",                   val: cSaldoLiq, tipo: _tipoSaldo(cSaldoLiq) },
   ].map(k => `
-    <div class="dfc-resumo-kpi ${k.tipo}">
+    <div class="dfc-resumo-kpi ${k.tipo}" title="${escapeHtml(_suf)}">
       <span class="lbl">${escapeHtml(k.lbl)}</span>
       <span class="val">R$ ${fmtBR(k.val)}</span>
     </div>`).join("");
-  document.getElementById("dfcResumoKpis").innerHTML = kpisHTML;
+  const _kpiBox = document.getElementById("dfcResumoKpis");
+  _kpiBox.innerHTML = kpisHTML;
+  _kpiBox.style.gridTemplateColumns = "repeat(5, 1fr)";   // 2 linhas de 5
 
   // Cores
   const corPos = seg === "postos" ? "#3b82f6" : seg === "outras" ? "#94a3b8" : "#1f7a4d";
