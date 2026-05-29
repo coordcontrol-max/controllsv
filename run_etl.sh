@@ -52,6 +52,11 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
     echo "[mount] /mnt/controller não está montado — tentando via /etc/fstab"
     mount -a 2>&1 || echo "[WARN] mount -a falhou; segue pra ver o que dá"
   fi
+  # Share digitaliza (contratos + planilha de empréstimos) — não está no fstab.
+  if ! mountpoint -q /mnt/digitaliza; then
+    mkdir -p /mnt/digitaliza
+    mount -t drvfs '\\10.61.1.13\digitaliza' /mnt/digitaliza 2>&1 || echo "[WARN] mount digitaliza falhou — endividamento usa o que houver."
+  fi
 
   SM_OK=1   # supermercados (sempre 1 agora — engine assume)
   SEG_OK=1  # postos/outras
@@ -222,6 +227,11 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
   echo "----- [5b/7] gera_titulos_movimento.py (Movimento de Títulos: incluído×liquidado por mês → Firestore) -----"
   if ! python3 gera_titulos_movimento.py "$(date +%Y)"; then
     echo "[WARN] gera_titulos_movimento.py falhou — titulosMovimento mantém o anterior."
+  fi
+
+  echo "----- [5c/7] gera_endividamento.py (Endividamento Bancário: contratos planilha × pago Oracle/Firestore → Firestore) -----"
+  if ! python3 gera_endividamento.py "$(date +%Y)"; then
+    echo "[WARN] gera_endividamento.py falhou — endividamento mantém o anterior."
   fi
 
   echo "----- [6/7] gera_supermercados_extras.py (taxas cartões + protege) -----"
