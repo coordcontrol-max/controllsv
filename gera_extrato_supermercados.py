@@ -105,14 +105,15 @@ _DEST_SKIP_PATTERNS = (
 # de "categoria" no comentário, com o valor da linha SEGUINTE em col c.
 # Match exato após normalização (NFKD + upper + strip).
 # Tupla: (chave_match, nome_exibido, signo).
-# Convenção do usuário: "debitado=negativo, não debitado=positivo".
+# Convenção do usuário:
 #   - TARIFAS / OUTROS PAG: positivo no Excel = debitado → INVERTER (signo -1).
-#   - PAG TESOURARIA: negativo no Excel = debitado → MANTER (signo +1).
+#   - PAG TESOURARIA: negativo no Excel = debitado → INVERTER (signo -1) pra
+#     sempre sair POSITIVO no comentário (ajuste pedido pelo usuário).
 #   - TRANSFER PROTEGE: convenção não especificada → manter (raro como label).
 _CAT_LABELS = (
     ("TARIFAS",                 "Tarifas",                -1),
     ("OUTROS PAG",              "Outros Pag.",            -1),
-    ("PAG TESOURARIA",          "Pag. Tesouraria",        +1),
+    ("PAG TESOURARIA",          "Pag. Tesouraria",        -1),
     ("TRANSFER PROTEGE",        "Transferência Protege",  +1),
     ("TRANSFERENCIA PROTEGE",   "Transferência Protege",  +1),
     ("TRANSF PROTEGE",          "Transferência Protege",  +1),
