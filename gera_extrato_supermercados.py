@@ -140,15 +140,21 @@ def _extrai_blocos(ws, mapa_nroemp_loja: dict[str, str]) -> list[dict]:
             nroemp = mat.group(1).lstrip("0") or "0"
             loja_cod = mapa_nroemp_loja.get(nroemp, "OUTROS")
             # Coleta as observações do col Destino (c+5 = col "Destino" no layout)
-            # nas linhas entre o header (r) e o saldo (saldo_row).
+            # + o valor da mesma linha (c+4 = col "Valor"), nas linhas entre o
+            # header (r) e o saldo (saldo_row).
             obs = []
             r_fim = saldo_row if saldo_row else r + 10
-            destino_col = c + 5      # Banco c+2, Conta c+3, Valor c+4, Destino c+5
+            valor_col   = c + 4      # Banco c+2, Conta c+3, Valor c+4, Destino c+5
+            destino_col = c + 5
+            seen_txt = set()
             for rr in range(r + 1, r_fim):
                 destino = ws.cell(rr, destino_col).value
                 if _is_obs_relevante(destino):
                     txt = str(destino).strip()
-                    if txt not in obs: obs.append(txt)
+                    if txt in seen_txt: continue
+                    seen_txt.add(txt)
+                    val = _num(ws.cell(rr, valor_col).value)
+                    obs.append({"texto": txt, "valor": val})
             blocos.append({"loja": loja_cod, "nroempresa": nroemp,
                             "nome_raw": str(nome).strip(),
                             "autorizado": autoriz, "saldo": saldo,
@@ -235,7 +241,14 @@ def gerar(ano: int, mes: int) -> None:
             cur = cells.get(cell_key) or {}
             if cur and not cur.get("_auto"):
                 continue   # comentário manual — não toca
-            texto = " · ".join(obs_list)[:2000]
+            linhas = []
+            total = 0.0
+            for o in obs_list:
+                linhas.append(f"{o['texto']} — R$ {o['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                total += o["valor"]
+            linhas.append("")
+            linhas.append(f"TOTAL: R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            texto = "\n".join(linhas)[:2000]
             cells_updates[cell_key] = {
                 "texto": texto, "autor": "auto (conciliação)",
                 "em": dt.datetime.now().isoformat(timespec="seconds"),
@@ -246,10 +259,15 @@ def gerar(ano: int, mes: int) -> None:
         # ordenando por loja, pra quem olha "Todas as lojas".
         if obsPorLoja:
             todas = []
+            total_g = 0.0
             for loja in sorted(obsPorLoja.keys()):
                 for o in obsPorLoja[loja]:
-                    todas.append(f"[{loja}] {o}")
+                    vfmt = f"R$ {o['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                    todas.append(f"[{loja}] {o['texto']} — {vfmt}")
+                    total_g += o["valor"]
             if todas:
+                todas.append("")
+                todas.append(f"TOTAL: R$ {total_g:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                 k_glob = f"difPagAutorizado|{dd}|"
                 cur_g = cells.get(k_glob) or {}
                 if not cur_g or cur_g.get("_auto"):
