@@ -253,6 +253,20 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
     echo "[WARN] gera_endividamento.py falhou — endividamento mantém o anterior."
   fi
 
+  echo "----- [5d/7] gera_extrato_supermercados.py (Extrato per-loja: AUTORIZADO DIRETORIA + SALDO PLANILHA → Firestore) -----"
+  # Lê /mnt/exporta/FINANCEIRO/CONCILIAÇÃO/PLANILHA DE CONCILIAÇÃO/AAAA/MM - MES/
+  # e popula extratoBancario/{AAAA-MM}.dias[DD].porLoja (uso pelo DFC Consolidado
+  # com filtro de loja). Monta o share on-demand pq não está no fstab.
+  if ! mountpoint -q /mnt/exporta; then
+    mkdir -p /mnt/exporta
+    mount -t drvfs '\\10.61.1.102\exporta' /mnt/exporta 2>&1 || echo "[WARN] mount /mnt/exporta falhou — extrato supermercado pulado."
+  fi
+  if mountpoint -q /mnt/exporta; then
+    if ! python3 gera_extrato_supermercados.py "$(date +%Y)" "$(date +%-m)"; then
+      echo "[WARN] gera_extrato_supermercados.py falhou — extratoBancario mantém o anterior."
+    fi
+  fi
+
   echo "----- [6/7] gera_supermercados_extras.py (taxas cartões + protege) -----"
   if ! python3 gera_supermercados_extras.py; then
     echo "[WARN] gera_supermercados_extras.py falhou."
