@@ -104,14 +104,19 @@ _DEST_SKIP_PATTERNS = (
 # Labels da coluna esquerda do bloco (categoria de pagamento) que viram linhas
 # de "categoria" no comentário, com o valor da linha SEGUINTE em col c.
 # Match exato após normalização (NFKD + upper + strip).
+# Tupla: (chave_match, nome_exibido, signo).
+# Convenção do usuário: "debitado=negativo, não debitado=positivo".
+#   - TARIFAS / OUTROS PAG: positivo no Excel = debitado → INVERTER (signo -1).
+#   - PAG TESOURARIA: negativo no Excel = debitado → MANTER (signo +1).
+#   - TRANSFER PROTEGE: convenção não especificada → manter (raro como label).
 _CAT_LABELS = (
-    ("TARIFAS", "Tarifas"),
-    ("OUTROS PAG", "Outros Pag."),
-    ("PAG TESOURARIA", "Pag. Tesouraria"),
-    ("TRANSFER PROTEGE", "Transferência Protege"),
-    ("TRANSFERENCIA PROTEGE", "Transferência Protege"),
-    ("TRANSF PROTEGE", "Transferência Protege"),
-    ("TRANSFER. PROTEGE", "Transferência Protege"),
+    ("TARIFAS",                 "Tarifas",                -1),
+    ("OUTROS PAG",              "Outros Pag.",            -1),
+    ("PAG TESOURARIA",          "Pag. Tesouraria",        +1),
+    ("TRANSFER PROTEGE",        "Transferência Protege",  +1),
+    ("TRANSFERENCIA PROTEGE",   "Transferência Protege",  +1),
+    ("TRANSF PROTEGE",          "Transferência Protege",  +1),
+    ("TRANSFER. PROTEGE",       "Transferência Protege",  +1),
 )
 
 
@@ -165,20 +170,23 @@ def _extrai_blocos(ws, mapa_nroemp_loja: dict[str, str]) -> list[dict]:
             seen_txt = set()
             for rr in range(r + 1, r_fim):
                 # 1) Destino vermelho (linhas de observação) na coluna direita.
+                # Convenção: positivo no Excel = debitado, negativo = não debitado.
+                # No comentário queremos debitado=negativo → INVERTER sinal.
                 destino = ws.cell(rr, destino_col).value
                 if _is_obs_relevante(destino):
                     txt = str(destino).strip()
                     if txt not in seen_txt:
                         seen_txt.add(txt)
-                        val = _num(ws.cell(rr, valor_col).value)
+                        val = -_num(ws.cell(rr, valor_col).value)
                         obs.append({"texto": txt, "valor": val})
-                # 2) Label de categoria na coluna esquerda.
+                # 2) Label de categoria na coluna esquerda. Sinal varia por
+                # categoria (ver _CAT_LABELS).
                 lbl = ws.cell(rr, c).value
                 if lbl:
                     nlbl = _norm(str(lbl)).strip()
-                    for chave, nome in _CAT_LABELS:
+                    for chave, nome, signo in _CAT_LABELS:
                         if chave == nlbl and rr + 1 <= r_fim:
-                            v = _num(ws.cell(rr + 1, c).value)
+                            v = _num(ws.cell(rr + 1, c).value) * signo
                             if v:
                                 categorias[nome] = categorias.get(nome, 0.0) + v
                             break
