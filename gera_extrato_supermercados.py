@@ -82,8 +82,22 @@ def _num(v) -> float:
         return 0.0
 
 
-def _extrai_blocos(ws) -> list[dict]:
-    """Lê todos os blocos da aba PAINEL → [{loja, autorizado, saldo}]."""
+def _carrega_mapa_nroemp_loja() -> dict[str, str]:
+    """nroempresa (string) → loja descricao (ex: "L01"). Lê meta/lojas."""
+    items = (db.collection("meta").document("lojas").get().to_dict() or {}).get("items", [])
+    out = {}
+    for x in items:
+        desc = (x.get("descricao") or "").strip()
+        for nro in (x.get("nroempresa") or []):
+            out[str(nro).strip()] = desc
+    return out
+
+
+def _extrai_blocos(ws, mapa_nroemp_loja: dict[str, str]) -> list[dict]:
+    """Lê todos os blocos da aba PAINEL → [{loja, autorizado, saldo}].
+    O número antes do hífen no nome do bloco É o NROEMPRESA — busca no mapa
+    e converte na descricao da loja (ex: nroempresa "1" e "101" ambos → "L01").
+    Blocos sem match (ex: holdings sem entry em meta/lojas) vão pra "OUTROS"."""
     blocos = []
     for r in range(1, ws.max_row + 1):
         for c in range(1, ws.max_column + 1):
@@ -91,11 +105,8 @@ def _extrai_blocos(ws) -> list[dict]:
             if not v: continue
             if "AUTORIZADO DIRETOR" not in _norm(v):
                 continue
-            # nome da loja: 1 linha acima, mesma col
             nome = ws.cell(r - 1, c).value
-            # valor autorizado: 1 linha abaixo, mesma col
             autoriz = _num(ws.cell(r + 1, c).value)
-            # saldo planilha: procura LBL_SALDO em col mesma, ~10-15 linhas pra baixo
             saldo = 0.0
             for rr in range(r + 5, min(r + 20, ws.max_row + 1)):
                 lbl = ws.cell(rr, c).value
@@ -104,22 +115,24 @@ def _extrai_blocos(ws) -> list[dict]:
                     break
             mat = RE_LOJA.match(str(nome or ""))
             if not mat: continue   # "TOTAL DE OPERAÇÕES" etc.
-            loja_num = mat.group(1).lstrip("0") or "0"
-            loja_cod = f"L{int(loja_num):02d}"
-            blocos.append({"loja": loja_cod, "nome_raw": str(nome).strip(),
+            nroemp = mat.group(1).lstrip("0") or "0"
+            loja_cod = mapa_nroemp_loja.get(nroemp, "OUTROS")
+            blocos.append({"loja": loja_cod, "nroempresa": nroemp,
+                            "nome_raw": str(nome).strip(),
                             "autorizado": autoriz, "saldo": saldo})
     return blocos
 
 
-def _processa_dia(path: str) -> tuple[str | None, dict]:
-    """Retorna ('DD', {loja: {totalBancos, pagamentoAutorizado}})."""
+def _processa_dia(path: str, mapa_nroemp_loja: dict[str, str]) -> tuple[str | None, dict]:
+    """Retorna ('DD', {loja: {totalBancos, pagamentoAutorizado}}).
+    Agrupa por descricao da loja (somando todos os nroempresas que compõem ela)."""
     fname = os.path.basename(path)
     mat = RE_DIA.match(fname)
     if not mat: return None, {}
     dd = mat.group(1)
     wb = load_workbook(path, data_only=True)
     if "PAINEL" not in wb.sheetnames: return dd, {}
-    blocos = _extrai_blocos(wb["PAINEL"])
+    blocos = _extrai_blocos(wb["PAINEL"], mapa_nroemp_loja)
     porLoja = {}
     for b in blocos:
         l = b["loja"]
@@ -148,10 +161,12 @@ def gerar(ano: int, mes: int) -> None:
     dias_atual = doc_atual.get("dias", {}) or {}
 
     print(f"\n>>> Extrato Supermercado {chave} — {len(arquivos)} arquivo(s)")
+    mapa = _carrega_mapa_nroemp_loja()
+    print(f"  mapa nroempresa→loja: {len(mapa)} entradas (ex: 1→{mapa.get('1')}, 101→{mapa.get('101')})")
     for fname in arquivos:
         path = os.path.join(pasta, fname)
         try:
-            dd, porLoja = _processa_dia(path)
+            dd, porLoja = _processa_dia(path, mapa)
         except Exception as e:
             print(f"  ✗ {fname}: {e}"); continue
         if not dd or not porLoja:
