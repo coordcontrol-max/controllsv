@@ -248,6 +248,16 @@ def gerar(ano: int, mes: int) -> None:
     def _fmt(v: float) -> str:
         return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
+    def _texto_com_total(linhas: list[str], total: float, limit: int = 5000) -> str:
+        """Junta as linhas + 'TOTAL: …' GARANTINDO que o total fique no final.
+        Se o body estourar `limit`, trunca o body (mantendo o TOTAL intacto)."""
+        total_line = f"\nTOTAL: {_fmt(total)}"
+        body = "\n".join(linhas)
+        budget = limit - len(total_line) - 4   # margem pra "\n…"
+        if len(body) > budget:
+            body = body[:budget].rstrip() + "\n…"
+        return body + total_line
+
     for fname in arquivos:
         path = os.path.join(pasta, fname)
         try:
@@ -292,9 +302,7 @@ def gerar(ano: int, mes: int) -> None:
             for o in obs_list:
                 linhas.append(f"{o['texto']} — {_fmt(o['valor'])}")
                 total += o["valor"]
-            linhas.append("")
-            linhas.append(f"TOTAL: {_fmt(total)}")
-            texto = "\n".join(linhas)[:2000]
+            texto = _texto_com_total(linhas, total)
             cells_updates[cell_key] = {
                 "texto": texto, "autor": "auto (conciliação)",
                 "em": dt.datetime.now().isoformat(timespec="seconds"),
@@ -317,13 +325,11 @@ def gerar(ano: int, mes: int) -> None:
                     todas.append(f"[{loja}] {o['texto']} — {_fmt(o['valor'])}")
                     total_g += o["valor"]
             if todas:
-                todas.append("")
-                todas.append(f"TOTAL: {_fmt(total_g)}")
                 k_glob = f"difPagAutorizado|{dd}|"
                 cur_g = cells.get(k_glob) or {}
                 if not cur_g or cur_g.get("_auto"):
                     cells_updates[k_glob] = {
-                        "texto": "\n".join(todas)[:2000],
+                        "texto": _texto_com_total(todas, total_g),
                         "autor": "auto (conciliação)",
                         "em": dt.datetime.now().isoformat(timespec="seconds"),
                         "_auto": True,
