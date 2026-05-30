@@ -77,21 +77,41 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
   echo "----- [1/2] (DESATIVADO) etl.py + upload_to_firestore — fonte agora é Oracle via engine.py -----"
   # echo "----- etl.py (supermercados) -----"   (legado Excel, mantido só como fallback comentado)
 
-  # REATIVADO em 2026-05-29: DRE + DFC do mês corrente direto daqui (independente
-  # da .225 do João). _run_tudo_mes.py replica _executar_task(tipo='tudo'):
+  # REATIVADO em 2026-05-29 (PR #20): DRE + DFC direto daqui (independente da .225
+  # do João). _run_tudo_mes.py replica _executar_task(tipo='tudo'):
   #   atualizar (18 queries Oracle + render_reader pra venda_atual do João)
   #   → engine.executar_rateio → meses/{ano-mes} (DRE)
   #   → engine_fluxo.executar_fluxo → fluxoCaixa/{ano-mes} (DFC)
   #   → atualizar_dimensoes (snapshots Prevenção).
-  # Inclui o slug pesado fluxo_transitorias (~25min) — por isso roda na madrugada.
-  # ~40-70 min. O botão "🔄 Atualizar" do DFC continua rodando o caminho rápido
-  # (cron_dfc_supermercados.sh) sem fluxo_transitorias.
-  echo "----- [2b/8] _run_tudo_mes.py (DRE + DFC mês corrente, venda via Render do João) -----"
+  # Inclui o slug pesado fluxo_transitorias (~25min). ~40-70 min.
+  #
+  # ⚠ Regra temporal (user 2026-05-30): meses passados ficam ESTÁTICOS após fechar.
+  #   • Dia 1 do mês: roda APENAS o mês ANTERIOR (fechamento final). Mês corrente
+  #     ainda não tem dado útil.
+  #   • Dia 2+: roda APENAS o mês corrente.
+  # Assim, fluxoCaixa/2026-01..04 já estão "fechados" e nunca mais são tocados pelo
+  # cron; só a rodada de fechamento de 1/Mai/26 trouxe Abr ao estado final, e Jan-Mar
+  # já vieram fechados das rodadas anteriores. O recompute manual de 30/05 (mover
+  # 3 linhas pra "Despesas Financeiras / Expansão") foi exceção 1-shot.
+  HOJE_DIA=$(date +%-d)
+  HOJE_ANO=$(date +%Y)
+  HOJE_MES=$(date +%-m)
+  if [ "$HOJE_DIA" -eq 1 ]; then
+    # Fecha mês anterior
+    if [ "$HOJE_MES" -eq 1 ]; then ALVO_ANO=$((HOJE_ANO-1)); ALVO_MES=12
+    else ALVO_ANO=$HOJE_ANO; ALVO_MES=$((HOJE_MES-1)); fi
+    LABEL="fechamento $ALVO_ANO-$(printf '%02d' "$ALVO_MES")"
+  else
+    # Mês corrente
+    ALVO_ANO=$HOJE_ANO; ALVO_MES=$HOJE_MES
+    LABEL="mês corrente $ALVO_ANO-$(printf '%02d' "$ALVO_MES")"
+  fi
+  echo "----- [2b/8] _run_tudo_mes.py ($LABEL — DRE+DFC, venda via Render do João) -----"
   (
     set -a; . agente/.env; set +a
     cd agente
-    if ! LD_LIBRARY_PATH="/opt/oracle/instantclient_23_5" timeout 4500 python3 _run_tudo_mes.py; then
-      echo "[WARN] _run_tudo_mes.py falhou — DRE/DFC mês corrente não atualizou. Próx noite tenta de novo."
+    if ! LD_LIBRARY_PATH="/opt/oracle/instantclient_23_5" timeout 4500 python3 _run_tudo_mes.py "$ALVO_ANO" "$ALVO_MES"; then
+      echo "[WARN] _run_tudo_mes.py $ALVO_ANO-$ALVO_MES falhou. Próx noite tenta de novo."
     fi
   )
 
