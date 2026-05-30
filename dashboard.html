@@ -8212,6 +8212,31 @@ function applyChartTheme() {
 applyChartTheme();
 window.applyChartTheme = applyChartTheme;
 
+// Handler GLOBAL pra fechar qualquer .user-modal (botão × ou clique no backdrop
+// ou Escape). Funciona via delegação no document — imune a problemas de timing
+// nas wirings específicas de cada view (_dfcpBind, _drepBindControls, etc.)
+// que dependem de `window._drepDrillWired` e podem deixar o modal preso aberto.
+document.addEventListener("click", (e) => {
+  // Clique no botão ×
+  const closeBtn = e.target.closest(".user-modal-close");
+  if (closeBtn) {
+    const m = closeBtn.closest(".user-modal");
+    if (m) { m.classList.remove("show"); m.setAttribute("aria-hidden", "true"); }
+    return;
+  }
+  // Clique no backdrop (na própria div .user-modal, fora do .user-modal-card)
+  if (e.target.classList?.contains("user-modal")) {
+    e.target.classList.remove("show");
+    e.target.setAttribute("aria-hidden", "true");
+  }
+}, true);
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  document.querySelectorAll(".user-modal.show").forEach(m => {
+    m.classList.remove("show"); m.setAttribute("aria-hidden", "true");
+  });
+});
+
 // Service worker: registra + força check de update + auto-reload
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
