@@ -93,11 +93,30 @@ def _carrega_mapa_nroemp_loja() -> dict[str, str]:
     return out
 
 
+# Textos no Destino que devem ser IGNORADOS pro comentário (são corriqueiros,
+# não são observações de divergência). Tudo o que NÃO casar com esses padrões
+# E não estiver vazio vira observação a subir no comentário.
+_DEST_SKIP_PATTERNS = (
+    "TARIFA", "TRANSFER", "NAO HOUVE", "NÃO HOUVE",
+    "PROTEGE REALIZADA", "PROTEGE CASH",
+)
+
+
+def _is_obs_relevante(destino: str) -> bool:
+    if not destino: return False
+    n = _norm(destino).strip()
+    if not n or n == "-": return False
+    for p in _DEST_SKIP_PATTERNS:
+        if p in n: return False
+    return True
+
+
 def _extrai_blocos(ws, mapa_nroemp_loja: dict[str, str]) -> list[dict]:
-    """Lê todos os blocos da aba PAINEL → [{loja, autorizado, saldo}].
-    O número antes do hífen no nome do bloco É o NROEMPRESA — busca no mapa
-    e converte na descricao da loja (ex: nroempresa "1" e "101" ambos → "L01").
-    Blocos sem match (ex: holdings sem entry em meta/lojas) vão pra "OUTROS"."""
+    """Lê todos os blocos da aba PAINEL → [{loja, autorizado, saldo, observacoes}].
+    Além de autorizado/saldo, agrega observações relevantes do col Destino
+    (pula TARIFA, TRANSFERENCIA PROTEGE, NÃO HOUVE TARIFA — só observações reais
+    como REAL VLR. DIVERGENTE, ESTORNO EBEG, etc.) pra subir como comentário
+    automático na linha "Diferenças Pag Autorizado" do DFC Consolidado."""
     blocos = []
     for r in range(1, ws.max_row + 1):
         for c in range(1, ws.max_column + 1):
@@ -108,32 +127,47 @@ def _extrai_blocos(ws, mapa_nroemp_loja: dict[str, str]) -> list[dict]:
             nome = ws.cell(r - 1, c).value
             autoriz = _num(ws.cell(r + 1, c).value)
             saldo = 0.0
+            # Acha o limite inferior do bloco — onde "SALDO PLANILHA" aparece.
+            saldo_row = None
             for rr in range(r + 5, min(r + 20, ws.max_row + 1)):
                 lbl = ws.cell(rr, c).value
                 if lbl and "SALDO PLANILHA" in _norm(lbl):
                     saldo = _num(ws.cell(rr, c + 2).value)
+                    saldo_row = rr
                     break
             mat = RE_LOJA.match(str(nome or ""))
-            if not mat: continue   # "TOTAL DE OPERAÇÕES" etc.
+            if not mat: continue
             nroemp = mat.group(1).lstrip("0") or "0"
             loja_cod = mapa_nroemp_loja.get(nroemp, "OUTROS")
+            # Coleta as observações do col Destino (c+5 = col "Destino" no layout)
+            # nas linhas entre o header (r) e o saldo (saldo_row).
+            obs = []
+            r_fim = saldo_row if saldo_row else r + 10
+            destino_col = c + 5      # Banco c+2, Conta c+3, Valor c+4, Destino c+5
+            for rr in range(r + 1, r_fim):
+                destino = ws.cell(rr, destino_col).value
+                if _is_obs_relevante(destino):
+                    txt = str(destino).strip()
+                    if txt not in obs: obs.append(txt)
             blocos.append({"loja": loja_cod, "nroempresa": nroemp,
                             "nome_raw": str(nome).strip(),
-                            "autorizado": autoriz, "saldo": saldo})
+                            "autorizado": autoriz, "saldo": saldo,
+                            "observacoes": obs})
     return blocos
 
 
-def _processa_dia(path: str, mapa_nroemp_loja: dict[str, str]) -> tuple[str | None, dict]:
-    """Retorna ('DD', {loja: {totalBancos, pagamentoAutorizado}}).
+def _processa_dia(path: str, mapa_nroemp_loja: dict[str, str]) -> tuple[str | None, dict, dict]:
+    """Retorna ('DD', {loja: {totalBancos, pagamentoAutorizado}}, {loja: [obs...]}).
     Agrupa por descricao da loja (somando todos os nroempresas que compõem ela)."""
     fname = os.path.basename(path)
     mat = RE_DIA.match(fname)
-    if not mat: return None, {}
+    if not mat: return None, {}, {}
     dd = mat.group(1)
     wb = load_workbook(path, data_only=True)
-    if "PAINEL" not in wb.sheetnames: return dd, {}
+    if "PAINEL" not in wb.sheetnames: return dd, {}, {}
     blocos = _extrai_blocos(wb["PAINEL"], mapa_nroemp_loja)
     porLoja = {}
+    obsPorLoja = {}
     for b in blocos:
         l = b["loja"]
         if l in porLoja:
@@ -141,7 +175,9 @@ def _processa_dia(path: str, mapa_nroemp_loja: dict[str, str]) -> tuple[str | No
             porLoja[l]["pagamentoAutorizado"] += b["autorizado"]
         else:
             porLoja[l] = {"totalBancos": b["saldo"], "pagamentoAutorizado": b["autorizado"]}
-    return dd, porLoja
+        for o in b.get("observacoes", []):
+            obsPorLoja.setdefault(l, []).append(o)
+    return dd, porLoja, obsPorLoja
 
 
 def gerar(ano: int, mes: int) -> None:
@@ -163,17 +199,25 @@ def gerar(ano: int, mes: int) -> None:
     print(f"\n>>> Extrato Supermercado {chave} — {len(arquivos)} arquivo(s)")
     mapa = _carrega_mapa_nroemp_loja()
     print(f"  mapa nroempresa→loja: {len(mapa)} entradas (ex: 1→{mapa.get('1')}, 101→{mapa.get('101')})")
+
+    # Comentários auto na linha difPagAutorizado do DFC Consolidado.
+    # Coleção comentariosCelula/{AAAA-MM}.cells[difPagAutorizado|DD|loja].
+    ref_cmt = db.collection("comentariosCelula").document(chave)
+    cmt_doc = ref_cmt.get().to_dict() or {}
+    cells = (cmt_doc.get("cells") or {})
+    cells_updates = {}   # patches a aplicar
+    OBS_COUNT_TOTAL = 0
+
     for fname in arquivos:
         path = os.path.join(pasta, fname)
         try:
-            dd, porLoja = _processa_dia(path, mapa)
+            dd, porLoja, obsPorLoja = _processa_dia(path, mapa)
         except Exception as e:
             print(f"  ✗ {fname}: {e}"); continue
         if not dd or not porLoja:
             print(f"  ⚠ {fname}: sem dado"); continue
         total_bancos = sum(v["totalBancos"] for v in porLoja.values())
         autoriz_total = sum(v["pagamentoAutorizado"] for v in porLoja.values())
-        # mescla com o doc existente: mantém keys que esse ETL não toca; sobrescreve totalBancos/pagamentoAutorizado/porLoja.
         antigo = dias_atual.get(dd, {}) or {}
         dias_atual[dd] = {
             **antigo,
@@ -183,7 +227,43 @@ def gerar(ano: int, mes: int) -> None:
                               "pagamentoAutorizado": round(v["pagamentoAutorizado"], 2)}
                           for k, v in porLoja.items()},
         }
-        print(f"  ✓ dia {dd}: {len(porLoja)} lojas, totalBancos R$ {total_bancos:,.2f}, autorizDir R$ {autoriz_total:,.2f}")
+        # Comentários por loja (não sobrescreve edições manuais — só atualiza
+        # entries marcadas com _auto=True ou inexistentes).
+        for loja, obs_list in obsPorLoja.items():
+            if not obs_list: continue
+            cell_key = f"difPagAutorizado|{dd}|{loja}"
+            cur = cells.get(cell_key) or {}
+            if cur and not cur.get("_auto"):
+                continue   # comentário manual — não toca
+            texto = " · ".join(obs_list)[:2000]
+            cells_updates[cell_key] = {
+                "texto": texto, "autor": "auto (conciliação)",
+                "em": dt.datetime.now().isoformat(timespec="seconds"),
+                "_auto": True,
+            }
+            OBS_COUNT_TOTAL += len(obs_list)
+        # Comentário consolidado/global (loja vazia): junta tudo do dia
+        # ordenando por loja, pra quem olha "Todas as lojas".
+        if obsPorLoja:
+            todas = []
+            for loja in sorted(obsPorLoja.keys()):
+                for o in obsPorLoja[loja]:
+                    todas.append(f"[{loja}] {o}")
+            if todas:
+                k_glob = f"difPagAutorizado|{dd}|"
+                cur_g = cells.get(k_glob) or {}
+                if not cur_g or cur_g.get("_auto"):
+                    cells_updates[k_glob] = {
+                        "texto": "\n".join(todas)[:2000],
+                        "autor": "auto (conciliação)",
+                        "em": dt.datetime.now().isoformat(timespec="seconds"),
+                        "_auto": True,
+                    }
+        print(f"  ✓ dia {dd}: {len(porLoja)} lojas, totalBancos R$ {total_bancos:,.2f}, autorizDir R$ {autoriz_total:,.2f}, obs={sum(len(o) for o in obsPorLoja.values())}")
+
+    if cells_updates:
+        ref_cmt.set({"cells": cells_updates, "atualizadoEm": firestore.SERVER_TIMESTAMP}, merge=True)
+        print(f"\n✓ comentariosCelula/{chave}: {len(cells_updates)} células atualizadas ({OBS_COUNT_TOTAL} obs)")
 
     ref.set({
         "ano": ano, "mes": mes,
