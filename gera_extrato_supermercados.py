@@ -101,6 +101,19 @@ _DEST_SKIP_PATTERNS = (
     "PROTEGE REALIZADA", "PROTEGE CASH",
 )
 
+# Labels da coluna esquerda do bloco (categoria de pagamento) que viram linhas
+# de "categoria" no comentário, com o valor da linha SEGUINTE em col c.
+# Match exato após normalização (NFKD + upper + strip).
+_CAT_LABELS = (
+    ("TARIFAS", "Tarifas"),
+    ("OUTROS PAG", "Outros Pag."),
+    ("PAG TESOURARIA", "Pag. Tesouraria"),
+    ("TRANSFER PROTEGE", "Transferência Protege"),
+    ("TRANSFERENCIA PROTEGE", "Transferência Protege"),
+    ("TRANSF PROTEGE", "Transferência Protege"),
+    ("TRANSFER. PROTEGE", "Transferência Protege"),
+)
+
 
 def _is_obs_relevante(destino: str) -> bool:
     if not destino: return False
@@ -141,39 +154,54 @@ def _extrai_blocos(ws, mapa_nroemp_loja: dict[str, str]) -> list[dict]:
             loja_cod = mapa_nroemp_loja.get(nroemp, "OUTROS")
             # Coleta as observações do col Destino (c+5 = col "Destino" no layout)
             # + o valor da mesma linha (c+4 = col "Valor"), nas linhas entre o
-            # header (r) e o saldo (saldo_row).
+            # header (r) e o saldo (saldo_row). Também varre a coluna esquerda
+            # (c) procurando labels de categoria (TARIFAS/OUTROS PAG/PAG
+            # TESOURARIA/TRANSFER PROTEGE) — o valor vem da linha seguinte.
             obs = []
+            categorias = {}    # nome amigável → valor (somando se aparecer >1x)
             r_fim = saldo_row if saldo_row else r + 10
             valor_col   = c + 4      # Banco c+2, Conta c+3, Valor c+4, Destino c+5
             destino_col = c + 5
             seen_txt = set()
             for rr in range(r + 1, r_fim):
+                # 1) Destino vermelho (linhas de observação) na coluna direita.
                 destino = ws.cell(rr, destino_col).value
                 if _is_obs_relevante(destino):
                     txt = str(destino).strip()
-                    if txt in seen_txt: continue
-                    seen_txt.add(txt)
-                    val = _num(ws.cell(rr, valor_col).value)
-                    obs.append({"texto": txt, "valor": val})
+                    if txt not in seen_txt:
+                        seen_txt.add(txt)
+                        val = _num(ws.cell(rr, valor_col).value)
+                        obs.append({"texto": txt, "valor": val})
+                # 2) Label de categoria na coluna esquerda.
+                lbl = ws.cell(rr, c).value
+                if lbl:
+                    nlbl = _norm(str(lbl)).strip()
+                    for chave, nome in _CAT_LABELS:
+                        if chave == nlbl and rr + 1 <= r_fim:
+                            v = _num(ws.cell(rr + 1, c).value)
+                            if v:
+                                categorias[nome] = categorias.get(nome, 0.0) + v
+                            break
             blocos.append({"loja": loja_cod, "nroempresa": nroemp,
                             "nome_raw": str(nome).strip(),
                             "autorizado": autoriz, "saldo": saldo,
-                            "observacoes": obs})
+                            "observacoes": obs, "categorias": categorias})
     return blocos
 
 
-def _processa_dia(path: str, mapa_nroemp_loja: dict[str, str]) -> tuple[str | None, dict, dict]:
-    """Retorna ('DD', {loja: {totalBancos, pagamentoAutorizado}}, {loja: [obs...]}).
-    Agrupa por descricao da loja (somando todos os nroempresas que compõem ela)."""
+def _processa_dia(path: str, mapa_nroemp_loja: dict[str, str]) -> tuple[str | None, dict, dict, dict]:
+    """Retorna ('DD', {loja: {totalBancos, pagamentoAutorizado}}, {loja: [obs...]},
+    {loja: {categoria_nome: valor}}). Agrupa por descricao da loja."""
     fname = os.path.basename(path)
     mat = RE_DIA.match(fname)
-    if not mat: return None, {}, {}
+    if not mat: return None, {}, {}, {}
     dd = mat.group(1)
     wb = load_workbook(path, data_only=True)
-    if "PAINEL" not in wb.sheetnames: return dd, {}, {}
+    if "PAINEL" not in wb.sheetnames: return dd, {}, {}, {}
     blocos = _extrai_blocos(wb["PAINEL"], mapa_nroemp_loja)
     porLoja = {}
     obsPorLoja = {}
+    catPorLoja = {}
     for b in blocos:
         l = b["loja"]
         if l in porLoja:
@@ -183,7 +211,10 @@ def _processa_dia(path: str, mapa_nroemp_loja: dict[str, str]) -> tuple[str | No
             porLoja[l] = {"totalBancos": b["saldo"], "pagamentoAutorizado": b["autorizado"]}
         for o in b.get("observacoes", []):
             obsPorLoja.setdefault(l, []).append(o)
-    return dd, porLoja, obsPorLoja
+        for nome, val in (b.get("categorias") or {}).items():
+            catPorLoja.setdefault(l, {})
+            catPorLoja[l][nome] = catPorLoja[l].get(nome, 0.0) + val
+    return dd, porLoja, obsPorLoja, catPorLoja
 
 
 def gerar(ano: int, mes: int) -> None:
@@ -214,10 +245,13 @@ def gerar(ano: int, mes: int) -> None:
     cells_updates = {}   # patches a aplicar
     OBS_COUNT_TOTAL = 0
 
+    def _fmt(v: float) -> str:
+        return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
     for fname in arquivos:
         path = os.path.join(pasta, fname)
         try:
-            dd, porLoja, obsPorLoja = _processa_dia(path, mapa)
+            dd, porLoja, obsPorLoja, catPorLoja = _processa_dia(path, mapa)
         except Exception as e:
             print(f"  ✗ {fname}: {e}"); continue
         if not dd or not porLoja:
@@ -233,41 +267,58 @@ def gerar(ano: int, mes: int) -> None:
                               "pagamentoAutorizado": round(v["pagamentoAutorizado"], 2)}
                           for k, v in porLoja.items()},
         }
+        # Lojas que têm algo a comentar (categorias ou obs vermelhas).
+        lojas_com_cmt = set(obsPorLoja.keys()) | set(catPorLoja.keys())
+
         # Comentários por loja (não sobrescreve edições manuais — só atualiza
         # entries marcadas com _auto=True ou inexistentes).
-        for loja, obs_list in obsPorLoja.items():
-            if not obs_list: continue
+        for loja in lojas_com_cmt:
+            obs_list = obsPorLoja.get(loja, [])
+            cat_dict = catPorLoja.get(loja, {})
+            if not obs_list and not cat_dict: continue
             cell_key = f"difPagAutorizado|{dd}|{loja}"
             cur = cells.get(cell_key) or {}
             if cur and not cur.get("_auto"):
                 continue   # comentário manual — não toca
             linhas = []
             total = 0.0
+            # Categorias primeiro (TARIFAS, OUTROS PAG, PAG TESOURARIA, TRANSFER PROTEGE)
+            for nome in ("Tarifas", "Outros Pag.", "Pag. Tesouraria", "Transferência Protege"):
+                if nome in cat_dict:
+                    v = cat_dict[nome]
+                    linhas.append(f"{nome} — {_fmt(v)}")
+                    total += v
+            # Depois as observações vermelhas.
             for o in obs_list:
-                linhas.append(f"{o['texto']} — R$ {o['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                linhas.append(f"{o['texto']} — {_fmt(o['valor'])}")
                 total += o["valor"]
             linhas.append("")
-            linhas.append(f"TOTAL: R$ {total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            linhas.append(f"TOTAL: {_fmt(total)}")
             texto = "\n".join(linhas)[:2000]
             cells_updates[cell_key] = {
                 "texto": texto, "autor": "auto (conciliação)",
                 "em": dt.datetime.now().isoformat(timespec="seconds"),
                 "_auto": True,
             }
-            OBS_COUNT_TOTAL += len(obs_list)
+            OBS_COUNT_TOTAL += len(obs_list) + len(cat_dict)
         # Comentário consolidado/global (loja vazia): junta tudo do dia
         # ordenando por loja, pra quem olha "Todas as lojas".
-        if obsPorLoja:
+        if lojas_com_cmt:
             todas = []
             total_g = 0.0
-            for loja in sorted(obsPorLoja.keys()):
-                for o in obsPorLoja[loja]:
-                    vfmt = f"R$ {o['valor']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                    todas.append(f"[{loja}] {o['texto']} — {vfmt}")
+            for loja in sorted(lojas_com_cmt):
+                cat_dict = catPorLoja.get(loja, {})
+                for nome in ("Tarifas", "Outros Pag.", "Pag. Tesouraria", "Transferência Protege"):
+                    if nome in cat_dict:
+                        v = cat_dict[nome]
+                        todas.append(f"[{loja}] {nome} — {_fmt(v)}")
+                        total_g += v
+                for o in obsPorLoja.get(loja, []):
+                    todas.append(f"[{loja}] {o['texto']} — {_fmt(o['valor'])}")
                     total_g += o["valor"]
             if todas:
                 todas.append("")
-                todas.append(f"TOTAL: R$ {total_g:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                todas.append(f"TOTAL: {_fmt(total_g)}")
                 k_glob = f"difPagAutorizado|{dd}|"
                 cur_g = cells.get(k_glob) or {}
                 if not cur_g or cur_g.get("_auto"):
