@@ -266,7 +266,7 @@ def gerar(ano: int, mes: int) -> None:
     def _fmt(v: float) -> str:
         return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-    def _texto_com_total(linhas: list[str], total: float, limit: int = 5000) -> str:
+    def _texto_com_total(linhas: list[str], total: float, limit: int = 50000) -> str:
         """Junta as linhas + 'TOTAL: …' GARANTINDO que o total fique no final.
         Se o body estourar `limit`, trunca o body (mantendo o TOTAL intacto)."""
         total_line = f"\nTOTAL: {_fmt(total)}"
