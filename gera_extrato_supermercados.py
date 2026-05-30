@@ -176,18 +176,18 @@ def _extrai_blocos(ws, mapa_nroemp_loja: dict[str, str]) -> list[dict]:
             seen_txt = set()
             for rr in range(r + 1, r_fim):
                 # 1) Destino vermelho (linhas de observação) na coluna direita.
-                # Convenção:
-                #  - geral: positivo no Excel = debitado → INVERTER sinal
-                #  - PROTEGE (transferência protege): sinal já natural
-                #    (negativo no Excel = saiu da conta) → MANTER
+                # Convenção (definida pelo usuário): MANTER o sinal nativo do
+                # Excel pra qualquer linha da coluna Destino. As lojas usam
+                # convenções diferentes pra "VLR DIVERGENTE" e similares, então
+                # inverter à força gerava resultados conceitualmente errados
+                # (ex.: REAL VLR DIVERGENTE L14 dia 18 vinha +2.953 quando o
+                # próprio Excel já tinha -2.953).
                 destino = ws.cell(rr, destino_col).value
                 if _is_obs_relevante(destino):
                     txt = str(destino).strip()
-                    raw_val = _num(ws.cell(rr, valor_col).value)
-                    if txt not in seen_txt and raw_val:
+                    val = _num(ws.cell(rr, valor_col).value)
+                    if txt not in seen_txt and val:
                         seen_txt.add(txt)
-                        is_protege = "PROTEGE" in _norm(txt)
-                        val = raw_val if is_protege else -raw_val
                         obs.append({"texto": txt, "valor": val})
                 # 2) Label de categoria na coluna esquerda. Sinal varia por
                 # categoria (ver _CAT_LABELS).
