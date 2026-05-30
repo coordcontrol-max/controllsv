@@ -124,6 +124,11 @@ def _is_obs_relevante(destino: str) -> bool:
     if not destino: return False
     n = _norm(destino).strip()
     if not n or n == "-": return False
+    # Exceção: qualquer linha com "PROTEGE" no destino passa SEMPRE — caso
+    # típico é "TRANSFERENCIA PROTEGE REALIZADA" com valor ≠ 0 que cairia no
+    # skip "TRANSFER" / "PROTEGE REALIZADA" se não tratada à parte.
+    if "PROTEGE" in n:
+        return True
     for p in _DEST_SKIP_PATTERNS:
         if p in n: return False
     return True
@@ -170,14 +175,18 @@ def _extrai_blocos(ws, mapa_nroemp_loja: dict[str, str]) -> list[dict]:
             seen_txt = set()
             for rr in range(r + 1, r_fim):
                 # 1) Destino vermelho (linhas de observação) na coluna direita.
-                # Convenção: positivo no Excel = debitado, negativo = não debitado.
-                # No comentário queremos debitado=negativo → INVERTER sinal.
+                # Convenção:
+                #  - geral: positivo no Excel = debitado → INVERTER sinal
+                #  - PROTEGE (transferência protege): sinal já natural
+                #    (negativo no Excel = saiu da conta) → MANTER
                 destino = ws.cell(rr, destino_col).value
                 if _is_obs_relevante(destino):
                     txt = str(destino).strip()
-                    if txt not in seen_txt:
+                    raw_val = _num(ws.cell(rr, valor_col).value)
+                    if txt not in seen_txt and raw_val:
                         seen_txt.add(txt)
-                        val = -_num(ws.cell(rr, valor_col).value)
+                        is_protege = "PROTEGE" in _norm(txt)
+                        val = raw_val if is_protege else -raw_val
                         obs.append({"texto": txt, "valor": val})
                 # 2) Label de categoria na coluna esquerda. Sinal varia por
                 # categoria (ver _CAT_LABELS).
