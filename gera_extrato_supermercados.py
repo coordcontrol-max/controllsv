@@ -111,7 +111,7 @@ _DEST_SKIP_PATTERNS = (
 #     sempre sair POSITIVO no comentário (ajuste pedido pelo usuário).
 #   - TRANSFER PROTEGE: convenção não especificada → manter (raro como label).
 _CAT_LABELS = (
-    ("TARIFAS",                 "Tarifas",                -1),
+    ("TARIFAS",                 "Tarifas",                +1),
     ("OUTROS PAG",              "Outros Pag.",            -1),
     ("PAG TESOURARIA",          "Pag. Tesouraria",        -1),
     ("TRANSFER PROTEGE",        "Transferência Protege",  +1),
