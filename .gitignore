@@ -19,6 +19,7 @@ serviceAccount.json
 # ──────────────────────────────────────────────────────────────
 dados.json
 dados_bp/
+dados_bp_postos/
 dados_dre_postos/
 dados_dre_postos_adaptive/
 dados_fluxo_intercompany/
