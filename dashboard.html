@@ -893,15 +893,18 @@
   body[data-segmento="postos"][data-view="fluxocaixa-dashboard"]       #dfcTabs,
   body[data-segmento="postos"][data-view="dfc-mensal"]                 #dfcTabs,
   body[data-segmento="postos"][data-view="dfc-postos"]                 #dfcTabs,
+  body[data-segmento="postos"][data-view="dfc-projetada"]              #dfcTabs,
   body[data-segmento="postos"][data-view="dfc-consolidado"]            #dfcTabs,
   body[data-segmento="outras"][data-view="fluxocaixa-dashboard"]       #dfcTabs,
   body[data-segmento="outras"][data-view="fluxocaixa-anual"]           #dfcTabs,
   body[data-segmento="outras"][data-view="fluxocaixa-diario"]          #dfcTabs,
+  body[data-segmento="outras"][data-view="dfc-projetada"]              #dfcTabs,
   body[data-segmento="outras"][data-view="dfc-consolidado"]            #dfcTabs,
   body[data-segmento="outras"][data-view="fluxocaixa-lojas"]           #dfcTabs,
   body[data-segmento="intercompany"][data-view="fluxocaixa-dashboard"] #dfcTabs,
   body[data-segmento="intercompany"][data-view="fluxocaixa-anual"]     #dfcTabs,
   body[data-segmento="intercompany"][data-view="fluxocaixa-diario"]    #dfcTabs,
+  body[data-segmento="intercompany"][data-view="dfc-projetada"]        #dfcTabs,
   body[data-segmento="intercompany"][data-view="dfc-consolidado"]      #dfcTabs,
   body[data-segmento="intercompany"][data-view="fluxocaixa-lojas"]     #dfcTabs { display: flex; }
   .report-tabs button {
@@ -933,15 +936,18 @@
   body[data-segmento="postos"][data-view="fluxocaixa-dashboard"]       #sectionFCPostos > .side-subsection-title,
   body[data-segmento="postos"][data-view="dfc-mensal"]                 #sectionFCPostos > .side-subsection-title,
   body[data-segmento="postos"][data-view="dfc-postos"]                 #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="postos"][data-view="dfc-projetada"]              #sectionFCPostos > .side-subsection-title,
   body[data-segmento="postos"][data-view="dfc-consolidado"]            #sectionFCPostos > .side-subsection-title,
   body[data-segmento="outras"][data-view="fluxocaixa-dashboard"]       #sectionFCPostos > .side-subsection-title,
   body[data-segmento="outras"][data-view="fluxocaixa-anual"]           #sectionFCPostos > .side-subsection-title,
   body[data-segmento="outras"][data-view="fluxocaixa-diario"]          #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="outras"][data-view="dfc-projetada"]              #sectionFCPostos > .side-subsection-title,
   body[data-segmento="outras"][data-view="dfc-consolidado"]            #sectionFCPostos > .side-subsection-title,
   body[data-segmento="outras"][data-view="fluxocaixa-lojas"]           #sectionFCPostos > .side-subsection-title,
   body[data-segmento="intercompany"][data-view="fluxocaixa-dashboard"] #sectionFCPostos > .side-subsection-title,
   body[data-segmento="intercompany"][data-view="fluxocaixa-anual"]     #sectionFCPostos > .side-subsection-title,
   body[data-segmento="intercompany"][data-view="fluxocaixa-diario"]    #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="intercompany"][data-view="dfc-projetada"]        #sectionFCPostos > .side-subsection-title,
   body[data-segmento="intercompany"][data-view="dfc-consolidado"]      #sectionFCPostos > .side-subsection-title,
   body[data-segmento="intercompany"][data-view="fluxocaixa-lojas"]     #sectionFCPostos > .side-subsection-title {
     background: #fbfaf2; color: var(--brand); font-weight: 700;
@@ -6084,6 +6090,8 @@
       <!-- DFC Diário: postos usa dfc-postos (Adaptive); outras/IC usam fluxocaixa-diario (legado) -->
       <button data-view="dfc-postos"        data-seg-only="postos">DFC Diário</button>
       <button data-view="fluxocaixa-diario" data-seg-hide="postos">DFC Diário</button>
+      <!-- DFC Projetada: postos usa titulos_aberto_{ano}.json; outras/IC = placeholder -->
+      <button data-view="dfc-projetada">DFC Projetada</button>
       <button data-view="dfc-consolidado">DFC Consolidado</button>
       <!-- DFC Lojas só pra outras/IC (postos não tem essa dimensão de lojas) -->
       <button data-view="fluxocaixa-lojas"  data-seg-hide="postos">DFC Lojas</button>
@@ -6696,6 +6704,31 @@
           <table class="dre-table" id="titmTable"></table>
         </div>
         <div class="cmp-legend"><span class="cmp-legend-hint">Títulos em aberto distribuídos pelo <b>mês de vencimento</b> (colunas). Meses já vencidos em vermelho-claro, mês atual em azul. Clique numa natureza pra abrir os fornecedores.</span></div>
+      </div>
+    </section>
+
+    <!-- DFC Projetada — projeção dos próximos N dias a partir dos títulos em aberto.
+         Postos: usa titulos_aberto_{ano}.json do Adaptive (PAGAR/RECEBER com dt_venc).
+         Outras/IC: placeholder (não há fonte unificada equivalente). -->
+    <section id="view-dfc-projetada" class="view">
+      <div class="dfcp-shell">
+        <div class="dfcp-toolbar" data-seg-only="postos" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:var(--panel,#fff);border:1px solid var(--panel-border,#e3e7e4);border-radius:8px;">
+          <label style="font-size:12px;font-weight:600;color:#6c757d;">Posto:
+            <select id="dfcProjetadaPosto" style="margin-left:6px;padding:4px 8px;border:1px solid #d8e0dc;border-radius:6px;font-size:13px;"></select>
+          </label>
+          <label style="font-size:12px;font-weight:600;color:#6c757d;">Horizonte:
+            <select id="dfcProjetadaDias" style="margin-left:6px;padding:4px 8px;border:1px solid #d8e0dc;border-radius:6px;font-size:13px;">
+              <option value="7">Próximos 7 dias</option>
+              <option value="15" selected>Próximos 15 dias</option>
+              <option value="30">Próximos 30 dias</option>
+              <option value="60">Próximos 60 dias</option>
+            </select>
+          </label>
+          <label style="font-size:12px;font-weight:600;color:#6c757d;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="dfcProjetadaIncVenc" style="cursor:pointer;"> Incluir vencidos
+          </label>
+        </div>
+        <div id="dfcProjetadaConteudo"></div>
       </div>
     </section>
 
@@ -15868,6 +15901,8 @@ function renderAll() {
     renderDRELojasChart();
   } else if (currentView === "ah") {
     renderAHTable();
+  } else if (currentView === "dfc-projetada") {
+    _renderDFCProjetada();
   } else if (currentView === "fluxocaixa-dashboard") {
     renderFluxoCaixaDashboard();
   } else if (currentView === "fluxocaixa-anual") {
@@ -25452,6 +25487,152 @@ function _titpBind() {
     _titpExpanded = _titpExpanded.size ? new Set() : new Set(Object.keys(m.porNatureza));
     _titpRenderTable(m);
   };
+}
+
+/* ============================================================
+   DFC PROJETADA — projeção dos próximos N dias a partir dos
+   títulos em aberto. Postos: real (titulos_aberto_{ano}.json).
+   Outras/Intercompany: placeholder (sem fonte unificada hoje).
+============================================================ */
+async function _renderDFCProjetada() {
+  const cont = document.getElementById("dfcProjetadaConteudo");
+  if (!cont) return;
+  const seg = document.body.dataset.segmento || "";
+  if (seg !== "postos") {
+    cont.innerHTML = `<div style="max-width:720px;margin:40px auto;padding:32px 24px;text-align:center;background:var(--panel,#fff);border:1px solid var(--panel-border,#e3e7e4);border-radius:12px;">
+      <div style="font-size:36px;margin-bottom:8px;">🚧</div>
+      <h3 style="margin:0 0 6px;font-size:18px;color:var(--brand,#0a2540);">DFC Projetada para ${seg === "outras" ? "Outras Empresas" : "Intercompany"} — em breve</h3>
+      <p style="margin:0;color:#6c757d;font-size:13px;">Por enquanto, a projeção a partir de títulos em aberto está disponível só pros postos (fonte Adaptive). Pra ${seg === "outras" ? "outras" : "IC"} precisa integrar a base de títulos em aberto do LUMI.</p>
+    </div>`;
+    return;
+  }
+  // ── POSTOS: usa titulos_aberto_{ano}.json (Adaptive) ──
+  const ano = parseInt(document.getElementById("fAno")?.value, 10) || new Date().getFullYear();
+  if (typeof _titpLoad !== "function") { cont.innerHTML = "<p style='padding:20px;color:#c0392b;'>Carregador de títulos não disponível.</p>"; return; }
+  cont.innerHTML = "<div style='padding:40px;text-align:center;color:#8b95a7;'>Carregando títulos em aberto…</div>";
+  const data = await _titpLoad(ano);
+  if (!data || !data.postos || !data.postos.length) {
+    cont.innerHTML = `<div style='padding:40px;text-align:center;color:#8b95a7;'>Sem dados de títulos em aberto pra ${ano}.</div>`;
+    return;
+  }
+  // Posto select
+  const selPosto = document.getElementById("dfcProjetadaPosto");
+  if (selPosto && selPosto.dataset.k !== data.postos.map(p => p.codigo).join(",")) {
+    selPosto.dataset.k = data.postos.map(p => p.codigo).join(",");
+    selPosto.innerHTML = `<option value="">Todos os postos</option>`
+      + data.postos.map(p => `<option value="${p.codigo}">${/^\d+$/.test(p.codigo) ? "P" + p.codigo.slice(-2) : p.codigo}</option>`).join("");
+  }
+  const selDias = document.getElementById("dfcProjetadaDias");
+  const selInc = document.getElementById("dfcProjetadaIncVenc");
+  const btnRefresh = document.getElementById("dfcProjetadaRefresh");   // pode não existir
+  [selPosto, selDias, selInc].forEach(el => {
+    if (el && !el.dataset.bound) { el.dataset.bound = "1"; el.addEventListener("change", () => _renderDFCProjetada()); }
+  });
+  if (btnRefresh && !btnRefresh.dataset.bound) {
+    btnRefresh.dataset.bound = "1";
+    btnRefresh.addEventListener("click", () => { delete _titpCache[ano]; _renderDFCProjetada(); });
+  }
+  const postoSel = selPosto ? selPosto.value : "";
+  const nDias = parseInt(selDias?.value || "15", 10);
+  const incVenc = !!(selInc && selInc.checked);
+
+  // Agrega titulos do(s) posto(s) selecionado(s) por dia de vencimento.
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const fim = new Date(hoje.getTime() + (nDias - 1) * 86400000);
+  const fmtIso = (d) => d.toISOString().slice(0, 10);
+  // dias[isoDate] = { receb, pag, titulos:[] }
+  const dias = {};
+  const codigos = postoSel ? [postoSel] : data.postos.map(p => p.codigo);
+  let recebVencidos = 0, pagVencidos = 0;
+  const procTit = (t, lado) => {
+    if (!t.dt_venc || !t.vl_aberto) return;
+    const dv = new Date(t.dt_venc + "T00:00:00"); if (isNaN(dv)) return;
+    const v = Math.abs(Number(t.vl_aberto) || 0);
+    if (dv < hoje) {
+      if (incVenc) {
+        // bucketeia em "hoje" (dia 0)
+        const k = fmtIso(hoje);
+        dias[k] = dias[k] || { receb: 0, pag: 0 };
+        if (lado === "RECEBER") dias[k].receb += v; else dias[k].pag += v;
+      } else {
+        if (lado === "RECEBER") recebVencidos += v; else pagVencidos += v;
+      }
+      return;
+    }
+    if (dv > fim) return;
+    const k = fmtIso(dv);
+    dias[k] = dias[k] || { receb: 0, pag: 0 };
+    if (lado === "RECEBER") dias[k].receb += v; else dias[k].pag += v;
+  };
+  for (const cod of codigos) {
+    const pd = data.dados[cod]; if (!pd) continue;
+    for (const t of (pd.RECEBER?.titulos || [])) procTit(t, "RECEBER");
+    for (const t of (pd.PAGAR?.titulos || []))   procTit(t, "PAGAR");
+  }
+
+  // Monta lista de dias
+  const colunas = [];
+  for (let i = 0; i < nDias; i++) {
+    const d = new Date(hoje.getTime() + i * 86400000);
+    colunas.push({ iso: fmtIso(d), date: d });
+  }
+  const _DOW = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const fmtBRLNum2 = (v) => (v == null || Math.abs(v) < 0.005) ? "" : v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtData = (d) => `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+  // Totais e saldo acumulado
+  let acum = 0; let totReceb = 0, totPag = 0;
+  const linhasReceb = [], linhasPag = [], linhasSaldo = [], linhasAcum = [];
+  for (const c of colunas) {
+    const d = dias[c.iso] || { receb: 0, pag: 0 };
+    totReceb += d.receb; totPag += d.pag;
+    const saldoDia = d.receb - d.pag;
+    acum += saldoDia;
+    const _cellCls = (v) => v < 0 ? "dfcp-neg" : v > 0 ? "dfcp-pos" : "";
+    linhasReceb.push({ v: d.receb, txt: fmtBRLNum2(d.receb), cls: d.receb > 0 ? "dfcp-pos" : "" });
+    linhasPag.push({ v: d.pag, txt: fmtBRLNum2(-d.pag), cls: d.pag > 0 ? "dfcp-neg" : "" });
+    linhasSaldo.push({ v: saldoDia, txt: fmtBRLNum2(saldoDia), cls: _cellCls(saldoDia) });
+    linhasAcum.push({ v: acum, txt: fmtBRLNum2(acum), cls: _cellCls(acum) });
+  }
+  const totSaldo = totReceb - totPag;
+
+  // Render
+  let html = `<div class="dfcp-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+    <div class="dfc-resumo-kpi pos"><span class="lbl">Recebimentos previstos</span><span class="val">R$ ${fmtBRLNum2(totReceb) || "0,00"}</span></div>
+    <div class="dfc-resumo-kpi neg"><span class="lbl">Pagamentos previstos</span><span class="val">R$ -${fmtBRLNum2(totPag) || "0,00"}</span></div>
+    <div class="dfc-resumo-kpi ${totSaldo >= 0 ? 'pos' : 'neg'}"><span class="lbl">Saldo Projetado (${nDias} dias)</span><span class="val">R$ ${fmtBRLNum2(totSaldo) || "0,00"}</span></div>
+  </div>`;
+  if (!incVenc && (recebVencidos > 0 || pagVencidos > 0)) {
+    html += `<div style="margin-bottom:10px;padding:8px 12px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#92400e;">
+      <strong>⚠ Vencidos excluídos:</strong> R\$ ${fmtBRLNum2(recebVencidos)} a receber e R\$ ${fmtBRLNum2(pagVencidos)} a pagar. Marque "Incluir vencidos" pra bucketar em hoje.
+    </div>`;
+  }
+  html += `<div class="cmp-table-wrap" style="overflow-x:auto;max-width:100%;"><table class="dfc-table" style="min-width:100%;font-size:11px;">
+    <thead>
+      <tr><th style="text-align:left;position:sticky;left:0;background:var(--brand);color:#fff;z-index:2;">Linha</th>
+        ${colunas.map(c => {
+          const isHoje = c.iso === fmtIso(hoje);
+          return `<th style="text-align:right;min-width:80px;${isHoje ? 'background:#0a2540;' : ''}">
+            <div style="font-weight:700;">${fmtData(c.date)}</div>
+            <div style="font-size:10px;opacity:.7;font-weight:400;">${_DOW[c.date.getDay()]}</div>
+          </th>`;
+        }).join("")}
+        <th style="text-align:right;background:#0a2540;color:#fff;font-weight:700;">Total</th>
+      </tr>
+    </thead><tbody>`;
+  const _linhaHtml = (label, arr, total, totalCls) => {
+    return `<tr><td style="text-align:left;font-weight:600;position:sticky;left:0;background:var(--panel,#fff);z-index:1;">${label}</td>
+      ${arr.map(c => `<td style="text-align:right;${c.cls === 'dfcp-pos' ? 'color:#1f7a4d;' : c.cls === 'dfcp-neg' ? 'color:#c0392b;' : ''}">${c.txt}</td>`).join("")}
+      <td style="text-align:right;font-weight:700;background:#f0f4f1;${totalCls === 'pos' ? 'color:#1f7a4d;' : totalCls === 'neg' ? 'color:#c0392b;' : ''}">${fmtBRLNum2(total) || "0,00"}</td>
+    </tr>`;
+  };
+  html += _linhaHtml("Recebimentos", linhasReceb, totReceb, "pos");
+  html += _linhaHtml("Pagamentos",   linhasPag.map(c => ({...c, txt: c.v > 0 ? "-" + fmtBRLNum2(c.v) : ""})), -totPag, "neg");
+  html += _linhaHtml("Saldo do Dia", linhasSaldo, totSaldo, totSaldo >= 0 ? "pos" : "neg");
+  html += _linhaHtml("Saldo Acumulado", linhasAcum, acum, acum >= 0 ? "pos" : "neg");
+  html += `</tbody></table></div>`;
+  html += `<div style="margin-top:10px;font-size:11px;color:#8b95a7;">Fonte: títulos em aberto do Adaptive (${data.fonte || "—"}) · gerado ${data.geradoEm ? data.geradoEm.slice(0, 16).replace("T", " ") : "—"}</div>`;
+  cont.innerHTML = html;
 }
 
 async function renderTitulosPostos() {
