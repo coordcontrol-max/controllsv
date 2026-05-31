@@ -10787,6 +10787,63 @@ async function renderDFCResumo() {
       });
     }
   }
+  // ── Modo R$/% (botões na toolbar). Persiste em localStorage. (Funcional p/ ver
+  //    os cards — extensão completa pra todas as tabelas DFC é trabalho seguinte.)
+  document.querySelectorAll(".dfc-modo-btn").forEach(btn => {
+    const _modoView = (function () { try { return localStorage.getItem("dfcModoView") === "pct" ? "pct" : "valor"; } catch (_) { return "valor"; } })();
+    btn.classList.toggle("active", btn.dataset.modo === _modoView);
+    if (!btn._wired) {
+      btn._wired = true;
+      btn.addEventListener("click", () => {
+        try { localStorage.setItem("dfcModoView", btn.dataset.modo); } catch (_) {}
+        renderDFCResumo();
+      });
+    }
+  });
+  // ── Ocultar zerados: classe no body esconde cards com valor 0.
+  const cbZeros = document.getElementById("dfcOcultarZerados");
+  if (cbZeros) {
+    try { cbZeros.checked = localStorage.getItem("dfcOcultarZerados") === "1"; } catch (_) {}
+    document.body.classList.toggle("dfc-ocultar-zerados", cbZeros.checked);
+    if (!cbZeros._wired) {
+      cbZeros._wired = true;
+      cbZeros.addEventListener("change", () => {
+        try { localStorage.setItem("dfcOcultarZerados", cbZeros.checked ? "1" : "0"); } catch (_) {}
+        document.body.classList.toggle("dfc-ocultar-zerados", cbZeros.checked);
+      });
+    }
+  }
+  // ── Apenas abertos: estado persistido (filtragem em tabelas DFC é seguinte).
+  const cbApenas = document.getElementById("dfcApenasAbertos");
+  if (cbApenas) {
+    try { cbApenas.checked = localStorage.getItem("dfcApenasAbertos") === "1"; } catch (_) {}
+    if (!cbApenas._wired) {
+      cbApenas._wired = true;
+      cbApenas.addEventListener("change", () => {
+        try { localStorage.setItem("dfcApenasAbertos", cbApenas.checked ? "1" : "0"); } catch (_) {}
+      });
+    }
+  }
+  // ── Botão Atualizar (delega pro refresh global) + status inline.
+  const btnAt = document.getElementById("dfcDashAtualizar");
+  const stEl  = document.getElementById("dfcDashStatusInline");
+  if (btnAt && !btnAt._wired) {
+    btnAt._wired = true;
+    btnAt.addEventListener("click", async () => {
+      const _t = new Date();
+      const _hm = _t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      const _dm = _t.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      if (stEl) stEl.textContent = `Processando desde ${_dm}, ${_hm}…`;
+      btnAt.disabled = true;
+      try {
+        if (typeof runGlobalRefresh === "function") await runGlobalRefresh();
+        else await renderDFCResumo();
+      } finally {
+        btnAt.disabled = false;
+        if (stEl) stEl.textContent = `Atualizado ${_hm}`;
+      }
+    });
+  }
   // Liga spinners em todos os cards antes de qualquer carregamento
   _dfcLoadOn();
   await ensureDFCCollections();
@@ -10959,6 +11016,8 @@ async function renderDFCResumo() {
   // ── KPIs (2 linhas de 5) — espelha o Dashboard DFC do Supervendas:
   //   Linha 1: Saldo Inicial · Recebimentos (total) · Recebimentos Operacionais · Mútuos+Empréstimos · Pagamentos (total)
   //   Linha 2: Fornecedores [+Δ] · Despesas+Invest+Fin+Sócios [+Δ] · Saldo Final · Saldo Líquido · NCG
+  // Modo R$/% vem da toolbar (dfcModoView). Em pct, mostra % de Entradas Op.
+  const _modoViewCards = (function () { try { return localStorage.getItem("dfcModoView") === "pct" ? "pct" : "valor"; } catch (_) { return "valor"; } })();
   const _tipoSaldo = v => v >= 0 ? "pos" : "neg";
   const _suf = `${sufixoPeriodo}${sufixoEmp}`;
   const cMutuosEmp     = cRecebMut + cPagMut;                                    // saldo líquido do bloco mútuos
@@ -10987,12 +11046,22 @@ async function renderDFCResumo() {
     { lbl: "Saldo final",                         val: cSaldoFim,      tipo: _tipoSaldo(cSaldoFim) },
     { lbl: "Saldo Líquido",                       val: cSaldoLiq,      tipo: _tipoSaldo(cSaldoLiq) },
     { lbl: "NCG",                                 val: cNCG,           tipo: _tipoSaldo(cNCG) },
-  ].map(k => `
-    <div class="dfc-resumo-kpi ${k.tipo}" title="${escapeHtml(_suf)}">
+  ].map(k => {
+    const _zero = Math.abs(k.val || 0) < 0.005;
+    let _valTxt;
+    if (_modoViewCards === "pct") {
+      const _pct = cRecebOper ? (k.val / cRecebOper) * 100 : null;
+      _valTxt = (_pct == null || !isFinite(_pct)) ? "—" : `${_pct.toFixed(1).replace(".", ",")}%`;
+    } else {
+      _valTxt = `R$ ${fmtBR(k.val)}`;
+    }
+    return `
+    <div class="dfc-resumo-kpi ${k.tipo}${_zero ? ' zero' : ''}" title="${escapeHtml(_suf)}">
       <span class="lbl">${escapeHtml(k.lbl)}</span>
-      <span class="val">R$ ${fmtBR(k.val)}</span>
+      <span class="val">${_valTxt}</span>
       ${k.extra ? `<span class="dfc-resumo-kpi-extra ${k.extra.tipo}">${escapeHtml(k.extra.html)}</span>` : ""}
-    </div>`).join("");
+    </div>`;
+  }).join("");
   const _kpiBox = document.getElementById("dfcResumoKpis");
   _kpiBox.innerHTML = kpisHTML;
   _kpiBox.style.gridTemplateColumns = "repeat(5, 1fr)";   // 2 linhas de 5
