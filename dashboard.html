@@ -5211,6 +5211,14 @@
   .dfc-resumo-kpi .sub {
     font-size: 11px; color: #6c757d; margin-top: 4px; display: block;
   }
+  /* Linha de delta nos cards (Δ R$ X · Y% das Entradas Op) */
+  .dfc-resumo-kpi-extra {
+    font-size: 10px; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;
+  }
+  .dfc-resumo-kpi-extra.pos { color: #1f7a4d; }
+  .dfc-resumo-kpi-extra.neg { color: #c0392b; }
+  body.dark .dfc-resumo-kpi-extra.pos { color: #5fc88d; }
+  body.dark .dfc-resumo-kpi-extra.neg { color: #ff6b6b; }
   .dfc-resumo-kpi.neg .val { color: #c0392b; }
   .dfc-resumo-kpi.pos .val { color: #774c22; }
   body[data-segmento="postos"] .dfc-resumo-kpi .val { color: #0a2540; }
@@ -10948,26 +10956,42 @@ async function renderDFCResumo() {
     : String(ano);
   const sufixoEmp = empFiltro ? ` · ${itens.find(i => String(i.key) === String(empFiltro))?.label || empFiltro}` : "";
 
-  // ── KPIs (2 linhas de 5 — ordem pedida pelo usuário)
+  // ── KPIs (2 linhas de 5) — espelha o Dashboard DFC do Supervendas:
+  //   Linha 1: Saldo Inicial · Recebimentos (total) · Recebimentos Operacionais · Mútuos+Empréstimos · Pagamentos (total)
+  //   Linha 2: Fornecedores [+Δ] · Despesas+Invest+Fin+Sócios [+Δ] · Saldo Final · Saldo Líquido · NCG
   const _tipoSaldo = v => v >= 0 ? "pos" : "neg";
   const _suf = `${sufixoPeriodo}${sufixoEmp}`;
+  const cMutuosEmp     = cRecebMut + cPagMut;                                    // saldo líquido do bloco mútuos
+  const cDespInvFinSoc = cDespesas + cInvest + cDespFin + cRetiradas;            // bloco "Despesas + Invest + Fin + Sócios"
+  const cNCG           = cRecebOper + cFornec + cDespesas + cInvest + cDespFin + cRetiradas;
+  // Δ = (Entradas Operacionais) + valor do card (com sinal). % = Δ ÷ Entradas Op × 100.
+  // Mostra "quanto sobra das Entradas Op depois desse gasto" — positivo = sobra.
+  const _fmtPct1 = pct => isFinite(pct) ? ((pct >= 0 ? "" : "-") + Math.abs(pct).toFixed(1).replace(".", ",") + "%") : "—";
+  const _extraDiff = (valorCard) => {
+    const diff = cRecebOper + valorCard;
+    const pct = cRecebOper ? (diff / cRecebOper) * 100 : 0;
+    return { html: `Δ R$ ${fmtBR(diff)} · ${_fmtPct1(pct)} das Entradas Op`, tipo: _tipoSaldo(diff) };
+  };
+  const _xFornec  = _extraDiff(cFornec);
+  const _xDespExt = _extraDiff(cDespInvFinSoc);
   const kpisHTML = [
     // Linha 1
-    { lbl: "Saldo inicial",                   val: cSaldoIni, tipo: _tipoSaldo(cSaldoIni) },
-    { lbl: "Recebimentos (total)",            val: cRecebTot, tipo: "pos" },
-    { lbl: "Recebimentos Operacionais",       val: cRecebOper, tipo: "pos" },
-    { lbl: "Recebimentos Mútuos/Empréstimos", val: cRecebMut, tipo: "pos" },
-    { lbl: "Pagamentos Mútuos/Empréstimos",   val: cPagMut, tipo: "neg" },
+    { lbl: "Saldo inicial",                       val: cSaldoIni,      tipo: _tipoSaldo(cSaldoIni) },
+    { lbl: "Recebimentos (total)",                val: cRecebTot,      tipo: "pos" },
+    { lbl: "Recebimentos Operacionais",           val: cRecebOper,     tipo: "pos" },
+    { lbl: "Mútuos + Empréstimos",                val: cMutuosEmp,     tipo: _tipoSaldo(cMutuosEmp) },
+    { lbl: "Pagamentos (total)",                  val: cPagTot,        tipo: "neg" },
     // Linha 2
-    { lbl: "Pagamentos (total)",              val: cPagTot, tipo: "neg" },
-    { lbl: "Fornecedores",                    val: cFornec, tipo: "neg" },
-    { lbl: "Despesas (total)",                val: cDespesas, tipo: "neg" },
-    { lbl: "Saldo final",                     val: cSaldoFim, tipo: _tipoSaldo(cSaldoFim) },
-    { lbl: "Saldo Líquido",                   val: cSaldoLiq, tipo: _tipoSaldo(cSaldoLiq) },
+    { lbl: "Fornecedores",                        val: cFornec,        tipo: "neg", extra: _xFornec },
+    { lbl: "Despesas + Invest + Fin + Sócios",    val: cDespInvFinSoc, tipo: "neg", extra: _xDespExt },
+    { lbl: "Saldo final",                         val: cSaldoFim,      tipo: _tipoSaldo(cSaldoFim) },
+    { lbl: "Saldo Líquido",                       val: cSaldoLiq,      tipo: _tipoSaldo(cSaldoLiq) },
+    { lbl: "NCG",                                 val: cNCG,           tipo: _tipoSaldo(cNCG) },
   ].map(k => `
     <div class="dfc-resumo-kpi ${k.tipo}" title="${escapeHtml(_suf)}">
       <span class="lbl">${escapeHtml(k.lbl)}</span>
       <span class="val">R$ ${fmtBR(k.val)}</span>
+      ${k.extra ? `<span class="dfc-resumo-kpi-extra ${k.extra.tipo}">${escapeHtml(k.extra.html)}</span>` : ""}
     </div>`).join("");
   const _kpiBox = document.getElementById("dfcResumoKpis");
   _kpiBox.innerHTML = kpisHTML;
