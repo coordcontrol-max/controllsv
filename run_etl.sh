@@ -309,9 +309,14 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
     echo "[WARN] etl_metas_prevencao_bonus.py falhou — metas de prevenção mantêm os valores anteriores."
   fi
 
-  echo "----- [6d/8] gera_bp.py (Balanço Patrimonial — recalcula só o mês corrente) -----"
+  echo "----- [6d/8] gera_bp.py (Balanço Patrimonial Supermercados — recalcula só o mês corrente) -----"
   if ! python3 gera_bp.py; then
     echo "[WARN] gera_bp.py falhou — dados_bp mantém os valores anteriores."
+  fi
+
+  echo "----- [6d2/8] gera_bp_postos.py (BP Postos — fontes locais: fluxo, DRE postos, títulos em aberto) -----"
+  if ! python3 gera_bp_postos.py; then
+    echo "[WARN] gera_bp_postos.py falhou — dados_bp_postos mantém os valores anteriores."
   fi
 
   # Projeção DFC pros meses futuros (mês corrente + meses a frente com títulos

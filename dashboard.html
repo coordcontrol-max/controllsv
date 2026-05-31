@@ -5584,7 +5584,6 @@
      Esconde PowerBI, Títulos em Aberto, Importação e Operacional pros 2 segmentos novos. */
   body[data-segmento="postos"] #sectionPB,
   body[data-segmento="postos"] #sectionTA,
-  body[data-segmento="postos"] #sectionBP,
   body[data-segmento="postos"] #sectionImportacao,
   body[data-segmento="postos"] #sectionOperacional,
   body[data-segmento="outras"] #sectionPB,
@@ -25960,12 +25959,19 @@ let _BP_LOADING = null;
 let _bpCharts = { ativo: null, passivo: null, evolucao: null, liquidez: null, endivid: null };
 
 async function loadBP(ano) {
-  if (_BP_DATA && _BP_DATA.ano === ano) return _BP_DATA;
+  // BP postos lê /dados_bp_postos/{ano}.json (gera_bp_postos.py);
+  // demais segmentos lêem /dados_bp/{ano}.json (gera_bp.py).
+  // Cache invalida quando muda segmento OU ano.
+  const seg = document.body.dataset.segmento || "supermercados";
+  const fonte = (seg === "postos") ? `/dados_bp_postos/${ano}.json`
+                                   : `/dados_bp/${ano}.json`;
+  if (_BP_DATA && _BP_DATA.ano === ano && _BP_DATA._fonte === fonte) return _BP_DATA;
   if (_BP_LOADING) return _BP_LOADING;
   _BP_LOADING = (async () => {
     try {
-      const r = await fetch(`/dados_bp/${ano}.json`, { cache: "no-cache" });
+      const r = await fetch(fonte, { cache: "no-cache" });
       _BP_DATA = r.ok ? await r.json() : null;
+      if (_BP_DATA) _BP_DATA._fonte = fonte;
     } catch (_) { _BP_DATA = null; }
     _BP_LOADING = null;
     return _BP_DATA;
