@@ -6295,12 +6295,24 @@
       <div class="dfc-resumo">
         <!-- Filtros inline (substituem o funil global nesta view) -->
         <div class="dfc-dash-filtros" id="dfcDashFiltros">
+          <div class="dfc-modo-grp" role="group" aria-label="Modo de exibição" title="R$ = valores absolutos. % = % das Entradas Operacionais.">
+            <button type="button" class="dfc-modo-btn active" data-modo="valor">R$</button>
+            <button type="button" class="dfc-modo-btn" data-modo="pct">%</button>
+          </div>
           <label id="dfcDashLojaLbl">Posto: <select id="dfcDashLoja"></select></label>
           <label>Ano: <select id="dfcDashAno"></select></label>
           <label>Mês: <select id="dfcDashMes"></select></label>
           <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:600;" title="Inclui a projeção dos títulos em aberto (meses/dias futuros). Vale para todos os relatórios DFC.">
             <input type="checkbox" id="dfcProjetadoToggle" style="cursor:pointer;"> Incluir projetado (títulos em aberto)
           </label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:600;" title="Esconde cards/linhas com valor zero.">
+            <input type="checkbox" id="dfcOcultarZerados" style="cursor:pointer;"> Ocultar zerados
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:600;" title="Mostra apenas os títulos em aberto (vencimentos futuros). Esconde o realizado.">
+            <input type="checkbox" id="dfcApenasAbertos" style="cursor:pointer;"> Apenas abertos
+          </label>
+          <button id="dfcDashAtualizar" type="button" class="dfc-atualizar-btn" title="Atualiza DFC realizado + Títulos em Aberto + Projeção futura.">🔄 Atualizar</button>
+          <span id="dfcDashStatusInline" class="dfc-status-inline"></span>
         </div>
 
         <!-- KPI cards -->
