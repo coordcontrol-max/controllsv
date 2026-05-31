@@ -890,10 +890,20 @@
   body[data-view="lojaspct"]   #dreTabs,
   body[data-view="analise2"]   #dreTabs { display: flex; }
   /* Abas do Fluxo de Caixa — só nos POSTOS (super usa o menu lateral). */
-  body[data-segmento="postos"][data-view="fluxocaixa-dashboard"] #dfcTabs,
-  body[data-segmento="postos"][data-view="dfc-mensal"]           #dfcTabs,
-  body[data-segmento="postos"][data-view="dfc-postos"]           #dfcTabs,
-  body[data-segmento="postos"][data-view="dfc-consolidado"]      #dfcTabs { display: flex; }
+  body[data-segmento="postos"][data-view="fluxocaixa-dashboard"]       #dfcTabs,
+  body[data-segmento="postos"][data-view="dfc-mensal"]                 #dfcTabs,
+  body[data-segmento="postos"][data-view="dfc-postos"]                 #dfcTabs,
+  body[data-segmento="postos"][data-view="dfc-consolidado"]            #dfcTabs,
+  body[data-segmento="outras"][data-view="fluxocaixa-dashboard"]       #dfcTabs,
+  body[data-segmento="outras"][data-view="fluxocaixa-anual"]           #dfcTabs,
+  body[data-segmento="outras"][data-view="fluxocaixa-diario"]          #dfcTabs,
+  body[data-segmento="outras"][data-view="dfc-consolidado"]            #dfcTabs,
+  body[data-segmento="outras"][data-view="fluxocaixa-lojas"]           #dfcTabs,
+  body[data-segmento="intercompany"][data-view="fluxocaixa-dashboard"] #dfcTabs,
+  body[data-segmento="intercompany"][data-view="fluxocaixa-anual"]     #dfcTabs,
+  body[data-segmento="intercompany"][data-view="fluxocaixa-diario"]    #dfcTabs,
+  body[data-segmento="intercompany"][data-view="dfc-consolidado"]      #dfcTabs,
+  body[data-segmento="intercompany"][data-view="fluxocaixa-lojas"]     #dfcTabs { display: flex; }
   .report-tabs button {
     flex: 0 0 auto; padding: 8px 14px;
     font-size: 12px; font-weight: 700; font-family: inherit;
@@ -914,13 +924,26 @@
     background: #fbfaf2; color: var(--brand); font-weight: 700;
     border-left: 3px solid var(--accent); padding-left: 21px;
   }
-  /* Postos: "Fluxo de Caixa" é item ÚNICO (navega pelas abas do topo). Esconde a
-     versão expansível (#sectionFC) e mostra a entrada única (#sectionFCPostos). */
-  body[data-segmento="postos"] #sectionFC { display: none; }
-  body[data-segmento="postos"][data-view="fluxocaixa-dashboard"] #sectionFCPostos > .side-subsection-title,
-  body[data-segmento="postos"][data-view="dfc-mensal"]           #sectionFCPostos > .side-subsection-title,
-  body[data-segmento="postos"][data-view="dfc-postos"]           #sectionFCPostos > .side-subsection-title,
-  body[data-segmento="postos"][data-view="dfc-consolidado"]      #sectionFCPostos > .side-subsection-title {
+  /* Postos/Outras/Intercompany: "Fluxo de Caixa" é item ÚNICO (navega pelas abas
+     do topo). Esconde a versão expansível (#sectionFC) e mostra a entrada única
+     (#sectionFCPostos — vale pros 3 segmentos do controllsv). */
+  body[data-segmento="postos"]       #sectionFC,
+  body[data-segmento="outras"]       #sectionFC,
+  body[data-segmento="intercompany"] #sectionFC { display: none; }
+  body[data-segmento="postos"][data-view="fluxocaixa-dashboard"]       #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="postos"][data-view="dfc-mensal"]                 #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="postos"][data-view="dfc-postos"]                 #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="postos"][data-view="dfc-consolidado"]            #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="outras"][data-view="fluxocaixa-dashboard"]       #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="outras"][data-view="fluxocaixa-anual"]           #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="outras"][data-view="fluxocaixa-diario"]          #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="outras"][data-view="dfc-consolidado"]            #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="outras"][data-view="fluxocaixa-lojas"]           #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="intercompany"][data-view="fluxocaixa-dashboard"] #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="intercompany"][data-view="fluxocaixa-anual"]     #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="intercompany"][data-view="fluxocaixa-diario"]    #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="intercompany"][data-view="dfc-consolidado"]      #sectionFCPostos > .side-subsection-title,
+  body[data-segmento="intercompany"][data-view="fluxocaixa-lojas"]     #sectionFCPostos > .side-subsection-title {
     background: #fbfaf2; color: var(--brand); font-weight: 700;
     border-left: 3px solid var(--accent); padding-left: 21px;
   }
@@ -5726,8 +5749,10 @@
             <span>Demonstrativo De Resultado</span>
           </button>
         </div>
-        <!-- Postos: Fluxo de Caixa como item ÚNICO (navega pelas abas do topo) -->
-        <div class="side-subsection" id="sectionFCPostos" data-seg-only="postos">
+        <!-- Postos/Outras/Intercompany: Fluxo de Caixa como item ÚNICO (navega
+             pelas abas do topo). Super foi removido do controllsv, então mostra
+             nos 3 segmentos sem data-seg-only. -->
+        <div class="side-subsection" id="sectionFCPostos">
           <button class="side-subsection-title" data-view="fluxocaixa-dashboard">
             <span>Fluxo de Caixa</span>
           </button>
@@ -6045,9 +6070,15 @@
     <!-- Abas in-report do Fluxo de Caixa dos POSTOS (estilo Supervendas) -->
     <nav class="report-tabs" id="dfcTabs" aria-label="Abas do Fluxo de Caixa">
       <button data-view="fluxocaixa-dashboard">Dashboard DFC</button>
-      <button data-view="dfc-mensal">DFC Mensal</button>
-      <button data-view="dfc-postos">DFC Diário</button>
+      <!-- DFC Mensal: postos usa dfc-mensal (Adaptive); outras/IC usam fluxocaixa-anual (legado) -->
+      <button data-view="dfc-mensal"        data-seg-only="postos">DFC Mensal</button>
+      <button data-view="fluxocaixa-anual"  data-seg-hide="postos">DFC Mensal</button>
+      <!-- DFC Diário: postos usa dfc-postos (Adaptive); outras/IC usam fluxocaixa-diario (legado) -->
+      <button data-view="dfc-postos"        data-seg-only="postos">DFC Diário</button>
+      <button data-view="fluxocaixa-diario" data-seg-hide="postos">DFC Diário</button>
       <button data-view="dfc-consolidado">DFC Consolidado</button>
+      <!-- DFC Lojas só pra outras/IC (postos não tem essa dimensão de lojas) -->
+      <button data-view="fluxocaixa-lojas"  data-seg-hide="postos">DFC Lojas</button>
     </nav>
 
     <!-- Sub-nav da Importação -->
