@@ -14798,9 +14798,16 @@ async function renderDFCConsolidado() {
     if (exSnap.exists()) extrato = exSnap.data();
   } catch (e) { console.warn("extratoBancario indisponível no DFC Consolidado:", e); }
 
-  // Comentários/justificativas por linha × dia (comentariosDFC/{ano-mes}).
+  // Comentários/justificativas por linha × dia (comentariosDFC/{ano-mes}[-seg]).
   // Estrutura: { "difPagAutorizado": { "14": "texto...", ... }, ... }
-  const _cmtChave = `${ano}-${String(mes).padStart(2, "0")}`;
+  // Postos/Outras usam sufixo pra não colidir com o doc de supermercados — os
+  // comentários auto da conciliação (gera_pagamento_autorizado.py) também
+  // gravam com sufixo. Supermercados mantém chave legada sem sufixo.
+  const _cmtSeg = document.body.dataset.segmento || "supermercados";
+  const _cmtSuf = (_cmtSeg === "postos") ? "-postos"
+                 : (_cmtSeg === "outras") ? "-outras"
+                 : "";
+  const _cmtChave = `${ano}-${String(mes).padStart(2, "0")}${_cmtSuf}`;
   let comentariosDFC = {};
   try {
     const cmSnap = await getDoc(doc(window._fbDb, "comentariosDFC", _cmtChave));
