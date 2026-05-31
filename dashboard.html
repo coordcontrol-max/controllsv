@@ -2858,6 +2858,11 @@
   /* Células comentáveis (Diferenças Pag Autorizado) — clique direito justifica.
      Marca com triângulo no canto superior direito quando há comentário. */
   .dfc-table tbody td.dfc-cmt-cell { cursor: context-menu; }
+  /* Drilldown por entidade (DFC Consolidado postos/outras): clique esquerdo
+     abre modal listando bancos[DD].porEntidade. Visual sutil: cursor pointer
+     + leve highlight no hover, sem sublinhar pra não poluir a grade. */
+  .dfc-table tbody td.dfc-drill-cell { cursor: pointer; }
+  .dfc-table tbody td.dfc-drill-cell:hover { background: rgba(58, 168, 142, 0.12); }
   .dfc-table tbody td.dfc-cmt-has { position: relative; }
   .dfc-table tbody td.dfc-cmt-has::after {
     content: ""; position: absolute; top: 0; right: 0;
@@ -8044,6 +8049,21 @@
       <div id="drepDrillMeta" style="font-size:12px; color:#8b95a7; margin-bottom:8px;"></div>
       <div id="drepDrillWrap" style="max-height:60vh; overflow:auto; border:1px solid var(--border,#d8e0dc); border-radius:6px;"></div>
       <div id="drepDrillFoot" style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700; padding:8px 4px 0; color:#0d3b2a;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Drilldown por Entidade (DFC Consolidado Postos/Outras · clique nas
+     células de Pagamento Autorizado / Total Bancos / Diferenças Pag Autorizado) -->
+<div class="user-modal" id="dfcDrillModal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="user-modal-card" style="max-width: 720px; width: 92vw;">
+    <div class="user-modal-header">
+      <h3 id="dfcDrillTitle">Detalhamento por entidade</h3>
+      <button class="user-modal-close" id="dfcDrillClose" aria-label="Fechar">×</button>
+    </div>
+    <div class="user-modal-body" style="padding: 16px 20px;">
+      <div id="dfcDrillMeta" style="font-size:12px; color:#8b95a7; margin-bottom:10px;"></div>
+      <div id="dfcDrillBody" style="max-height:60vh; overflow:auto;"></div>
     </div>
   </div>
 </div>
@@ -14815,6 +14835,15 @@ async function renderDFCConsolidado() {
   } catch (e) { console.warn("comentariosDFC indisponível:", e); }
   // Expõe pro handler de clique direito (escopo global leve)
   window._dfcCmtCtx = { ano, mes, chave: _cmtChave, dados: comentariosDFC };
+  // Drilldown por entidade (DFC Consolidado postos/outras): expõe o bloco
+  // bancos[DD].porEntidade pra abrir um modal com o detalhamento por entidade
+  // quando o user clica nas células de Pagamento Autorizado / Total Bancos /
+  // Diferenças Pag Autorizado. Supermercados tem seu drilldown via porLoja
+  // do extratoBancario — não usa esse caminho.
+  window._dfcDrillCtx = {
+    ano, mes, segmento: _cmtSeg,
+    bancos: (docMes?.bancos) || {},
+  };
   const _extratoDia = (campo, d) => {
     const v = extrato?.dias?.[d]?.[campo];
     return (v == null || v === "") ? null : Number(v);
@@ -15031,6 +15060,12 @@ async function renderDFCConsolidado() {
     // Linha que aceita comentário/justificativa por dia (clique direito).
     const isComentavel = (def.id === "difPagAutorizado");
     const cmtLinha = isComentavel ? (comentariosDFC[def.id] || {}) : null;
+    // Linha que aceita drilldown por entidade (clique esquerdo). Só nas
+    // estruturas POSTOS/OUTRAS (tipo:"banco" lê de docMes.bancos[d]) — o
+    // gera_pagamento_autorizado.py popula bancos[DD].porEntidade.
+    const _seg = _cmtSeg;   // já calculado no escopo da função
+    const _drillIds = new Set(["pagamentoAutorizado", "totalBancos", "difPagAutorizado"]);
+    const isDrilldown = (_seg === "postos" || _seg === "outras") && _drillIds.has(def.id);
     html += `<tr class="${cls}"><td class="lbl">${escapeHtml(def.label)}</td>`;
     for (let i = 0; i < NCOLS; i++) {
       const v = vals[i];
@@ -15047,6 +15082,10 @@ async function renderDFCConsolidado() {
         const txt = cmtLinha[dia];
         extraAttr = ` data-cmt-linha="${def.id}" data-cmt-dia="${dia}"`;
         if (txt) { classes.push("dfc-cmt-has"); extraAttr += ` title="${escapeHtml(txt)}"`; }
+      }
+      if (isDrilldown) {
+        classes.push("dfc-drill-cell");
+        extraAttr += ` data-drill-campo="${def.id}" data-drill-dia="${cols[i]}"`;
       }
       const clsAttr = classes.length ? ` class="${classes.join(" ")}"` : "";
       const neg = (!isBloco && isNeg) ? ' style="color:#c0392b;"' : "";
@@ -16255,6 +16294,7 @@ async function bootstrap() {
   setupGlobalRefresh();
   setupDetalhamento();
   setupCmtModal();
+  setupDfcDrillModal();
   setupComparativoDRE();
   setupDrePbExcel();
   setupMetasDRE();
@@ -16614,6 +16654,116 @@ function setupCmtModal() {
   });
   // ESC fecha
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("show")) fechar(); });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Drilldown por entidade na DFC Consolidado postos/outras
+// Click esquerdo em célula .dfc-drill-cell (pagamentoAutorizado / totalBancos /
+// difPagAutorizado) abre o modal #dfcDrillModal listando bancos[DD].porEntidade
+// do dia. Sem dado de porEntidade → modal informa "Sem detalhamento por
+// entidade pra este dia." (rodou o ETL antes do refator? abriu mês antigo?)
+// ────────────────────────────────────────────────────────────────────────────
+function setupDfcDrillModal() {
+  const modal = document.getElementById("dfcDrillModal");
+  if (!modal || modal._wired) return;
+  modal._wired = true;
+  const fechar = () => { modal.classList.remove("show"); modal.setAttribute("aria-hidden", "true"); };
+  document.getElementById("dfcDrillClose")?.addEventListener("click", fechar);
+  modal.addEventListener("click", (e) => { if (e.target === modal) fechar(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("show")) fechar();
+  });
+
+  const fmtBRL = v => (v == null || isNaN(v))
+    ? "—"
+    : "R$ " + Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const LABEL_CAMPO = {
+    pagamentoAutorizado: "Pagamento Autorizado",
+    totalBancos:         "Total Bancos (Saldo Planilha)",
+    difPagAutorizado:    "Diferenças Pag Autorizado",
+  };
+
+  document.addEventListener("click", (e) => {
+    const td = e.target.closest("td.dfc-drill-cell");
+    if (!td) return;
+    const ctx = window._dfcDrillCtx;
+    if (!ctx) return;
+    const campo = td.dataset.drillCampo;
+    const dia   = td.dataset.drillDia;
+    if (!campo || !dia) return;
+    e.preventDefault();
+    const meta = document.getElementById("dfcDrillMeta");
+    const body = document.getElementById("dfcDrillBody");
+    const title = document.getElementById("dfcDrillTitle");
+    const MES_NOMES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+    title.textContent = `${LABEL_CAMPO[campo] || campo} — detalhamento por entidade`;
+    meta.innerHTML = `Segmento: <strong>${ctx.segmento}</strong> · Dia: <strong>${dia}/${MES_NOMES[ctx.mes - 1]}/${ctx.ano}</strong>`;
+
+    const banco = ctx.bancos?.[dia] || {};
+    const porEnt = banco.porEntidade || {};
+    const entidades = Object.keys(porEnt);
+    if (!entidades.length) {
+      body.innerHTML = `
+        <div style="padding:24px; text-align:center; color:#8b95a7; font-size:13px;">
+          Sem detalhamento por entidade para este dia.<br>
+          <span style="font-size:11px;">(O ETL gera_pagamento_autorizado.py grava bancos[DD].porEntidade — pode não ter rodado pra este mês ainda.)</span>
+        </div>`;
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden", "false");
+      return;
+    }
+
+    // Pra difPagAutorizado: por entidade = autorizado + categorias + obs.
+    // Pra pagamentoAutorizado: só o valor.
+    // Pra totalBancos: só o valor.
+    const linhas = entidades
+      .map(nome => {
+        const e2 = porEnt[nome] || {};
+        const val = (campo === "totalBancos") ? e2.totalBancos
+                  : (campo === "pagamentoAutorizado") ? e2.pagamentoAutorizado
+                  : (e2.pagamentoAutorizado || 0);  // difPagAutorizado usa autoriz como base
+        return { nome, valor: val || 0, cats: e2.categorias || {}, obs: e2.observacoes || [] };
+      })
+      .sort((a, b) => Math.abs(b.valor) - Math.abs(a.valor));
+
+    const totalAbs = linhas.reduce((s, l) => s + (l.valor || 0), 0);
+
+    let html = `
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="background:#f5f7fa; text-align:left;">
+            <th style="padding:8px 10px; border-bottom:1px solid #e3e8ef;">Entidade</th>
+            <th style="padding:8px 10px; border-bottom:1px solid #e3e8ef; text-align:right;">Valor</th>
+            ${campo === "difPagAutorizado" ? '<th style="padding:8px 10px; border-bottom:1px solid #e3e8ef;">Detalhes</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>`;
+    for (const l of linhas) {
+      html += `<tr style="border-bottom:1px solid #f0f3f7;">
+        <td style="padding:6px 10px;">${escapeHtml(l.nome)}</td>
+        <td style="padding:6px 10px; text-align:right; font-variant-numeric:tabular-nums; ${l.valor < 0 ? 'color:#c0392b;' : ''}">${fmtBRL(l.valor)}</td>`;
+      if (campo === "difPagAutorizado") {
+        const detalhes = [];
+        for (const [k, v] of Object.entries(l.cats)) detalhes.push(`${k} ${fmtBRL(v)}`);
+        for (const o of l.obs) detalhes.push(`${o.texto} ${fmtBRL(o.valor)}`);
+        html += `<td style="padding:6px 10px; font-size:12px; color:#516170;">${escapeHtml(detalhes.join(" · ") || "—")}</td>`;
+      }
+      html += `</tr>`;
+    }
+    html += `</tbody>
+        <tfoot>
+          <tr style="background:#f5f7fa; font-weight:600;">
+            <td style="padding:8px 10px;">TOTAL</td>
+            <td style="padding:8px 10px; text-align:right; font-variant-numeric:tabular-nums;">${fmtBRL(totalAbs)}</td>
+            ${campo === "difPagAutorizado" ? '<td></td>' : ''}
+          </tr>
+        </tfoot>
+      </table>`;
+    body.innerHTML = html;
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+  });
 }
 
 function setupDetalhamento() {
