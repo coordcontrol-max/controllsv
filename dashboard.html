@@ -5211,6 +5211,14 @@
   .dfc-resumo-kpi .sub {
     font-size: 11px; color: #6c757d; margin-top: 4px; display: block;
   }
+  /* Linha de delta nos cards (Δ R$ X · Y% das Entradas Op) */
+  .dfc-resumo-kpi-extra {
+    font-size: 10px; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;
+  }
+  .dfc-resumo-kpi-extra.pos { color: #1f7a4d; }
+  .dfc-resumo-kpi-extra.neg { color: #c0392b; }
+  body.dark .dfc-resumo-kpi-extra.pos { color: #5fc88d; }
+  body.dark .dfc-resumo-kpi-extra.neg { color: #ff6b6b; }
   .dfc-resumo-kpi.neg .val { color: #c0392b; }
   .dfc-resumo-kpi.pos .val { color: #774c22; }
   body[data-segmento="postos"] .dfc-resumo-kpi .val { color: #0a2540; }
@@ -6295,12 +6303,24 @@
       <div class="dfc-resumo">
         <!-- Filtros inline (substituem o funil global nesta view) -->
         <div class="dfc-dash-filtros" id="dfcDashFiltros">
+          <div class="dfc-modo-grp" role="group" aria-label="Modo de exibição" title="R$ = valores absolutos. % = % das Entradas Operacionais.">
+            <button type="button" class="dfc-modo-btn active" data-modo="valor">R$</button>
+            <button type="button" class="dfc-modo-btn" data-modo="pct">%</button>
+          </div>
           <label id="dfcDashLojaLbl">Posto: <select id="dfcDashLoja"></select></label>
           <label>Ano: <select id="dfcDashAno"></select></label>
           <label>Mês: <select id="dfcDashMes"></select></label>
           <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:600;" title="Inclui a projeção dos títulos em aberto (meses/dias futuros). Vale para todos os relatórios DFC.">
             <input type="checkbox" id="dfcProjetadoToggle" style="cursor:pointer;"> Incluir projetado (títulos em aberto)
           </label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:600;" title="Esconde cards/linhas com valor zero.">
+            <input type="checkbox" id="dfcOcultarZerados" style="cursor:pointer;"> Ocultar zerados
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:600;" title="Mostra apenas os títulos em aberto (vencimentos futuros). Esconde o realizado.">
+            <input type="checkbox" id="dfcApenasAbertos" style="cursor:pointer;"> Apenas abertos
+          </label>
+          <button id="dfcDashAtualizar" type="button" class="dfc-atualizar-btn" title="Atualiza DFC realizado + Títulos em Aberto + Projeção futura.">🔄 Atualizar</button>
+          <span id="dfcDashStatusInline" class="dfc-status-inline"></span>
         </div>
 
         <!-- KPI cards -->
@@ -10767,6 +10787,63 @@ async function renderDFCResumo() {
       });
     }
   }
+  // ── Modo R$/% (botões na toolbar). Persiste em localStorage. (Funcional p/ ver
+  //    os cards — extensão completa pra todas as tabelas DFC é trabalho seguinte.)
+  document.querySelectorAll(".dfc-modo-btn").forEach(btn => {
+    const _modoView = (function () { try { return localStorage.getItem("dfcModoView") === "pct" ? "pct" : "valor"; } catch (_) { return "valor"; } })();
+    btn.classList.toggle("active", btn.dataset.modo === _modoView);
+    if (!btn._wired) {
+      btn._wired = true;
+      btn.addEventListener("click", () => {
+        try { localStorage.setItem("dfcModoView", btn.dataset.modo); } catch (_) {}
+        renderDFCResumo();
+      });
+    }
+  });
+  // ── Ocultar zerados: classe no body esconde cards com valor 0.
+  const cbZeros = document.getElementById("dfcOcultarZerados");
+  if (cbZeros) {
+    try { cbZeros.checked = localStorage.getItem("dfcOcultarZerados") === "1"; } catch (_) {}
+    document.body.classList.toggle("dfc-ocultar-zerados", cbZeros.checked);
+    if (!cbZeros._wired) {
+      cbZeros._wired = true;
+      cbZeros.addEventListener("change", () => {
+        try { localStorage.setItem("dfcOcultarZerados", cbZeros.checked ? "1" : "0"); } catch (_) {}
+        document.body.classList.toggle("dfc-ocultar-zerados", cbZeros.checked);
+      });
+    }
+  }
+  // ── Apenas abertos: estado persistido (filtragem em tabelas DFC é seguinte).
+  const cbApenas = document.getElementById("dfcApenasAbertos");
+  if (cbApenas) {
+    try { cbApenas.checked = localStorage.getItem("dfcApenasAbertos") === "1"; } catch (_) {}
+    if (!cbApenas._wired) {
+      cbApenas._wired = true;
+      cbApenas.addEventListener("change", () => {
+        try { localStorage.setItem("dfcApenasAbertos", cbApenas.checked ? "1" : "0"); } catch (_) {}
+      });
+    }
+  }
+  // ── Botão Atualizar (delega pro refresh global) + status inline.
+  const btnAt = document.getElementById("dfcDashAtualizar");
+  const stEl  = document.getElementById("dfcDashStatusInline");
+  if (btnAt && !btnAt._wired) {
+    btnAt._wired = true;
+    btnAt.addEventListener("click", async () => {
+      const _t = new Date();
+      const _hm = _t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      const _dm = _t.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      if (stEl) stEl.textContent = `Processando desde ${_dm}, ${_hm}…`;
+      btnAt.disabled = true;
+      try {
+        if (typeof runGlobalRefresh === "function") await runGlobalRefresh();
+        else await renderDFCResumo();
+      } finally {
+        btnAt.disabled = false;
+        if (stEl) stEl.textContent = `Atualizado ${_hm}`;
+      }
+    });
+  }
   // Liga spinners em todos os cards antes de qualquer carregamento
   _dfcLoadOn();
   await ensureDFCCollections();
@@ -10936,27 +11013,55 @@ async function renderDFCResumo() {
     : String(ano);
   const sufixoEmp = empFiltro ? ` · ${itens.find(i => String(i.key) === String(empFiltro))?.label || empFiltro}` : "";
 
-  // ── KPIs (2 linhas de 5 — ordem pedida pelo usuário)
+  // ── KPIs (2 linhas de 5) — espelha o Dashboard DFC do Supervendas:
+  //   Linha 1: Saldo Inicial · Recebimentos (total) · Recebimentos Operacionais · Mútuos+Empréstimos · Pagamentos (total)
+  //   Linha 2: Fornecedores [+Δ] · Despesas+Invest+Fin+Sócios [+Δ] · Saldo Final · Saldo Líquido · NCG
+  // Modo R$/% vem da toolbar (dfcModoView). Em pct, mostra % de Entradas Op.
+  const _modoViewCards = (function () { try { return localStorage.getItem("dfcModoView") === "pct" ? "pct" : "valor"; } catch (_) { return "valor"; } })();
   const _tipoSaldo = v => v >= 0 ? "pos" : "neg";
   const _suf = `${sufixoPeriodo}${sufixoEmp}`;
+  const cMutuosEmp     = cRecebMut + cPagMut;                                    // saldo líquido do bloco mútuos
+  const cDespInvFinSoc = cDespesas + cInvest + cDespFin + cRetiradas;            // bloco "Despesas + Invest + Fin + Sócios"
+  const cNCG           = cRecebOper + cFornec + cDespesas + cInvest + cDespFin + cRetiradas;
+  // Δ = (Entradas Operacionais) + valor do card (com sinal). % = Δ ÷ Entradas Op × 100.
+  // Mostra "quanto sobra das Entradas Op depois desse gasto" — positivo = sobra.
+  const _fmtPct1 = pct => isFinite(pct) ? ((pct >= 0 ? "" : "-") + Math.abs(pct).toFixed(1).replace(".", ",") + "%") : "—";
+  const _extraDiff = (valorCard) => {
+    const diff = cRecebOper + valorCard;
+    const pct = cRecebOper ? (diff / cRecebOper) * 100 : 0;
+    return { html: `Δ R$ ${fmtBR(diff)} · ${_fmtPct1(pct)} das Entradas Op`, tipo: _tipoSaldo(diff) };
+  };
+  const _xFornec  = _extraDiff(cFornec);
+  const _xDespExt = _extraDiff(cDespInvFinSoc);
   const kpisHTML = [
     // Linha 1
-    { lbl: "Saldo inicial",                   val: cSaldoIni, tipo: _tipoSaldo(cSaldoIni) },
-    { lbl: "Recebimentos (total)",            val: cRecebTot, tipo: "pos" },
-    { lbl: "Recebimentos Operacionais",       val: cRecebOper, tipo: "pos" },
-    { lbl: "Recebimentos Mútuos/Empréstimos", val: cRecebMut, tipo: "pos" },
-    { lbl: "Pagamentos Mútuos/Empréstimos",   val: cPagMut, tipo: "neg" },
+    { lbl: "Saldo inicial",                       val: cSaldoIni,      tipo: _tipoSaldo(cSaldoIni) },
+    { lbl: "Recebimentos (total)",                val: cRecebTot,      tipo: "pos" },
+    { lbl: "Recebimentos Operacionais",           val: cRecebOper,     tipo: "pos" },
+    { lbl: "Mútuos + Empréstimos",                val: cMutuosEmp,     tipo: _tipoSaldo(cMutuosEmp) },
+    { lbl: "Pagamentos (total)",                  val: cPagTot,        tipo: "neg" },
     // Linha 2
-    { lbl: "Pagamentos (total)",              val: cPagTot, tipo: "neg" },
-    { lbl: "Fornecedores",                    val: cFornec, tipo: "neg" },
-    { lbl: "Despesas (total)",                val: cDespesas, tipo: "neg" },
-    { lbl: "Saldo final",                     val: cSaldoFim, tipo: _tipoSaldo(cSaldoFim) },
-    { lbl: "Saldo Líquido",                   val: cSaldoLiq, tipo: _tipoSaldo(cSaldoLiq) },
-  ].map(k => `
-    <div class="dfc-resumo-kpi ${k.tipo}" title="${escapeHtml(_suf)}">
+    { lbl: "Fornecedores",                        val: cFornec,        tipo: "neg", extra: _xFornec },
+    { lbl: "Despesas + Invest + Fin + Sócios",    val: cDespInvFinSoc, tipo: "neg", extra: _xDespExt },
+    { lbl: "Saldo final",                         val: cSaldoFim,      tipo: _tipoSaldo(cSaldoFim) },
+    { lbl: "Saldo Líquido",                       val: cSaldoLiq,      tipo: _tipoSaldo(cSaldoLiq) },
+    { lbl: "NCG",                                 val: cNCG,           tipo: _tipoSaldo(cNCG) },
+  ].map(k => {
+    const _zero = Math.abs(k.val || 0) < 0.005;
+    let _valTxt;
+    if (_modoViewCards === "pct") {
+      const _pct = cRecebOper ? (k.val / cRecebOper) * 100 : null;
+      _valTxt = (_pct == null || !isFinite(_pct)) ? "—" : `${_pct.toFixed(1).replace(".", ",")}%`;
+    } else {
+      _valTxt = `R$ ${fmtBR(k.val)}`;
+    }
+    return `
+    <div class="dfc-resumo-kpi ${k.tipo}${_zero ? ' zero' : ''}" title="${escapeHtml(_suf)}">
       <span class="lbl">${escapeHtml(k.lbl)}</span>
-      <span class="val">R$ ${fmtBR(k.val)}</span>
-    </div>`).join("");
+      <span class="val">${_valTxt}</span>
+      ${k.extra ? `<span class="dfc-resumo-kpi-extra ${k.extra.tipo}">${escapeHtml(k.extra.html)}</span>` : ""}
+    </div>`;
+  }).join("");
   const _kpiBox = document.getElementById("dfcResumoKpis");
   _kpiBox.innerHTML = kpisHTML;
   _kpiBox.style.gridTemplateColumns = "repeat(5, 1fr)";   // 2 linhas de 5
@@ -10968,25 +11073,143 @@ async function renderDFCResumo() {
   const fmtAxis = v => (Math.abs(v) >= 1000000 ? (v/1000000).toFixed(1)+"M"
                         : Math.abs(v) >= 1000 ? (v/1000).toFixed(0)+"k" : v);
 
-  // ── Chart 1: Evolução mensal (barras lado-a-lado)
+  // ── Chart 1: Evolução Mensal — métrica selecionável (dropdown) + média (linha
+  //    tracejada dos meses fechados) + rótulos R$ em cada barra. Espelha o DFC do
+  //    Supervendas.
+  const _BAR_METRICAS = {
+    saldoFim:               "Saldo Final",
+    despInvFinSoc:          "Despesas + Invest + Fin + Sócios",
+    mutuosEmp:              "Mútuos + Empréstimos",
+    recebMenosFornec:       "Recebimentos − Fornecedores",
+    recebMenosDespInvFinSoc:"Recebimentos − (Despesas + Invest + Fin + Sócios)",
+    entradasOp:             "Entradas Operacionais",
+  };
+  let _barMetric = "saldoFim";
+  try { const sv = localStorage.getItem("dfcResumoBarMetric"); if (sv && _BAR_METRICAS[sv]) _barMetric = sv; } catch (_) {}
+  const _evolSel = document.getElementById("dfcResumoEvolMetric");
+  if (_evolSel) {
+    _evolSel.value = _barMetric;
+    if (!_evolSel.dataset.bound) {
+      _evolSel.dataset.bound = "1";
+      _evolSel.addEventListener("change", () => {
+        try { localStorage.setItem("dfcResumoBarMetric", _evolSel.value); } catch (_) {}
+        renderDFCResumo();
+      });
+    }
+  }
+  function _metricaDoMes(m) {
+    if (mesFiltroSet && !mesFiltroSet.has(m + 1)) return null;
+    if (_barMetric === "saldoFim") {
+      if (todasEmpresas) {
+        const doc = _FLUXO_CACHE[_fluxoCacheKey(ano, m + 1, "")];
+        const sfd = doc?.saldoFinalDiario || [];
+        for (let k = sfd.length - 1; k >= 0; k--) if (sfd[k] != null) return Number(sfd[k]);
+        return null;
+      }
+      let s = 0, tem = false;
+      for (const loja of lojasUnicas) {
+        const d = _FLUXO_CACHE[_fluxoCacheKey(ano, m + 1, loja)];
+        const sfd = d?.saldoFinalDiario || [];
+        for (let k = sfd.length - 1; k >= 0; k--) if (sfd[k] != null) { s += Number(sfd[k]); tem = true; break; }
+      }
+      return tem ? s : null;
+    }
+    const ag = agrupPorMes[m] || {};
+    if (Object.keys(ag).length === 0) return null;
+    const t = n => Number(ag[n] || 0);
+    const sumDesp = _DESP_AGRUPS.reduce((s, n) => s + t(n), 0);
+    const despInvFinSoc = sumDesp + t("Investimentos / Expansão") + t("Despesas Financeiras / Expansão") + t("Retiradas de Sócios");
+    const mutuosEmp = t("Mútuo Entre Grupos") + t("Empréstimos/Mútuos Recebidos") + t("Empréstimos/Mútuos Pagos");
+    const fornec = t("Fornecedores");
+    let recebTot = 0;
+    for (const nome of Object.keys(ag)) if (isEntradaName(nome)) recebTot += ag[nome];
+    switch (_barMetric) {
+      case "despInvFinSoc":           return despInvFinSoc;
+      case "mutuosEmp":               return mutuosEmp;
+      case "recebMenosFornec":        return recebTot + fornec;
+      case "recebMenosDespInvFinSoc": return recebTot + despInvFinSoc;
+      case "entradasOp":              return t("Entradas Operacionais");
+    }
+    return null;
+  }
+  const _valoresPorMes = new Array(12).fill(null);
+  for (let m = 0; m < 12; m++) {
+    const v = _metricaDoMes(m);
+    if (v != null && Math.abs(v) > 0.005) _valoresPorMes[m] = v;
+  }
+  // Média dos meses fechados (totalmente no passado).
+  const _now = new Date(), _anoAtual = _now.getFullYear(), _mesAtualIdx = _now.getMonth();
+  const _mesFechado = (m) => (ano < _anoAtual) ? true : (ano > _anoAtual ? false : m < _mesAtualIdx);
+  const _fechados = [];
+  for (let m = 0; m < 12; m++) if (_valoresPorMes[m] != null && _mesFechado(m)) _fechados.push(_valoresPorMes[m]);
+  const _mediaMetrica = _fechados.length ? _fechados.reduce((a, b) => a + b, 0) / _fechados.length : null;
+  const _evolTitle = document.getElementById("dfcResumoEvolTitle");
+  if (_evolTitle) _evolTitle.textContent = `Evolução Mensal — ${_BAR_METRICAS[_barMetric]} × Média`;
+  const _fmtBRLMi = v => {
+    if (v == null || !isFinite(v)) return "—";
+    const abs = Math.abs(v); const sgn = v < 0 ? "-" : "";
+    if (abs >= 1e6) return `R$ ${sgn}${(abs / 1e6).toFixed(2).replace(".", ",")}Mi`;
+    if (abs >= 1e3) return `R$ ${sgn}${(abs / 1e3).toFixed(2).replace(".", ",")}k`;
+    return `R$ ${sgn}${abs.toFixed(2).replace(".", ",")}`;
+  };
+  const _evolLabelsPlugin = {
+    id: "dfcResumoEvolLabels",
+    afterDatasetsDraw(chart) {
+      const ctx = chart.ctx; ctx.save();
+      ctx.font = "10px -apple-system, BlinkMacSystemFont, sans-serif";
+      const dsBar = chart.data.datasets.findIndex(ds => (ds.type || "bar") === "bar");
+      if (dsBar >= 0) {
+        const meta = chart.getDatasetMeta(dsBar);
+        const data = chart.data.datasets[dsBar].data;
+        ctx.fillStyle = corText; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        meta.data.forEach((bar, i) => {
+          const v = data[i]; if (v == null) return;
+          const yTop = (v >= 0) ? bar.y - 4 : bar.y + 12;
+          ctx.fillText(_fmtBRLMi(v), bar.x, yTop);
+        });
+      }
+      const dsLine = chart.data.datasets.findIndex(ds => ds.type === "line");
+      if (dsLine >= 0 && _mediaMetrica != null) {
+        const yScale = chart.scales.y, xScale = chart.scales.x;
+        if (yScale && xScale) {
+          const yMedia = yScale.getPixelForValue(_mediaMetrica);
+          const xLabel = xScale.right - 6;
+          ctx.fillStyle = "#0ea5e9";
+          ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+          ctx.fillText(`média ${_fmtBRLMi(_mediaMetrica)}`, xLabel, yMedia - 4);
+        }
+      }
+      ctx.restore();
+    },
+  };
   _dfcResumoCharts.evol?.destroy();
+  const _datasets = [
+    { type: "bar", label: _BAR_METRICAS[_barMetric], data: _valoresPorMes,
+      backgroundColor: _valoresPorMes.map(v => (v != null && v < 0) ? corNeg : corPos),
+      borderRadius: 3, order: 2 },
+  ];
+  if (_mediaMetrica != null) {
+    _datasets.push({
+      type: "line", label: "Média (meses fechados)",
+      data: new Array(12).fill(_mediaMetrica),
+      borderColor: "#0ea5e9", borderDash: [6, 4], borderWidth: 2,
+      pointRadius: 0, fill: false, tension: 0, order: 1,
+    });
+  }
   _dfcResumoCharts.evol = new Chart(document.getElementById("dfcResumoEvolucao"), {
     type: "bar",
-    data: {
-      labels: MESES_ABREV,
-      datasets: [
-        { label: "Recebimentos", data: recebPorMes, backgroundColor: corPos, borderRadius: 3 },
-        { label: "Pagamentos",   data: pagtoPorMes.map(v => Math.abs(v)), backgroundColor: corNeg, borderRadius: 3 },
-      ],
-    },
+    data: { labels: MESES_ABREV, datasets: _datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 18 } },
       plugins: {
         legend: { labels: { color: corText } },
         tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: R$ ${fmtBR(ctx.parsed.y)}` } },
       },
       scales: { x: { ticks: { color: corText } }, y: { ticks: { color: corText, callback: fmtAxis } } },
     },
+    plugins: [_evolLabelsPlugin],
   });
 
   // ── Chart "Volume" (linha) — Recebimentos × Pagamentos por mês (espelha o DFC
