@@ -5513,6 +5513,63 @@
   body.dark .bp-table tbody tr.bp-row-subtotal td { background: #1f2533; color: var(--accent); }
   body.dark .bp-table tbody tr.bp-row-zero td.bp-val { color: #555c58; }
   body.dark .bp-table tbody tr td.col-pct { color: #8b95a7; }
+  /* ── Painel Comercial Postos ────────────────────────────────────────
+     Cards Real × Meta × Atingimento + ranking por posto. Aproveita o
+     visual dos cards do BP supermercados mas adiciona barra de
+     atingimento e rótulos de Real/Meta abaixo do valor principal. */
+  .pc-shell { padding: 12px 14px; }
+  .pc-kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px; margin-bottom: 16px;
+  }
+  .pc-kpi-card {
+    background: #fff; border: 1px solid var(--border, #e3e8ef); border-radius: 8px;
+    border-top: 3px solid var(--brand, #3aa88e);
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .pc-kpi-card .pc-kpi-lbl {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: #8b95a7; font-weight: 600;
+  }
+  .pc-kpi-card .pc-kpi-val {
+    font-size: 22px; font-weight: 700; color: #2c3e50; font-variant-numeric: tabular-nums;
+  }
+  .pc-kpi-card .pc-kpi-meta {
+    display: flex; justify-content: space-between; font-size: 11px; color: #6c7a8a;
+  }
+  .pc-kpi-card .pc-kpi-meta b { font-weight: 600; color: #4a5868; font-variant-numeric: tabular-nums; }
+  .pc-kpi-card .pc-kpi-bar {
+    height: 4px; background: #ecf0f4; border-radius: 2px; overflow: hidden;
+  }
+  .pc-kpi-card .pc-kpi-bar > span { display: block; height: 100%; transition: width .3s; }
+  .pc-kpi-card.pc-good   .pc-kpi-bar > span { background: #27ae60; }
+  .pc-kpi-card.pc-warn   .pc-kpi-bar > span { background: #e6a23c; }
+  .pc-kpi-card.pc-bad    .pc-kpi-bar > span { background: #e74c3c; }
+  .pc-kpi-card .pc-kpi-pct { font-size: 12px; font-weight: 700; }
+  .pc-kpi-card.pc-good   .pc-kpi-pct { color: #27ae60; }
+  .pc-kpi-card.pc-warn   .pc-kpi-pct { color: #e6a23c; }
+  .pc-kpi-card.pc-bad    .pc-kpi-pct { color: #e74c3c; }
+  .pc-kpi-card.pc-na     .pc-kpi-pct { color: #8b95a7; }
+  .pc-rank-card {
+    background: #fff; border: 1px solid var(--border, #e3e8ef); border-radius: 8px;
+    overflow: hidden;
+  }
+  .pc-rank-head { padding: 12px 16px; border-bottom: 1px solid var(--border, #e3e8ef); display: flex; justify-content: space-between; align-items: baseline; }
+  .pc-rank-head h3 { margin: 0; font-size: 14px; color: #2c3e50; }
+  .pc-rank-sub { font-size: 12px; color: #8b95a7; }
+  .pc-rank-wrap { overflow-x: auto; }
+  .pc-rank-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pc-rank-table th { background: #f5f7fa; padding: 8px 12px; text-align: left; font-weight: 600; color: #4a5868; border-bottom: 1px solid var(--border, #e3e8ef); }
+  .pc-rank-table td { padding: 8px 12px; border-bottom: 1px solid #f0f3f7; font-variant-numeric: tabular-nums; }
+  .pc-rank-table td.pc-good { color: #27ae60; font-weight: 600; }
+  .pc-rank-table td.pc-warn { color: #e6a23c; font-weight: 600; }
+  .pc-rank-table td.pc-bad  { color: #e74c3c; font-weight: 600; }
+  body.dark .pc-kpi-card,
+  body.dark .pc-rank-card { background: #1a1f2b; border-color: #2c3346; }
+  body.dark .pc-kpi-card .pc-kpi-val { color: #e0e6ed; }
+  body.dark .pc-rank-table th { background: #232938; color: #c0c8d0; border-bottom-color: #2c3346; }
+  body.dark .pc-rank-table td { border-bottom-color: #232938; color: #d0d6dc; }
+
   body.dark .bp-kpi-card { background: #1a1f2b; border-color: #2c3346;
     box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
   body.dark .bp-kpi-title { color: #8b95a7; }
@@ -5773,6 +5830,15 @@
         <div class="side-subsection" id="sectionFCPostos">
           <button class="side-subsection-title" data-view="fluxocaixa-dashboard">
             <span>Fluxo de Caixa</span>
+          </button>
+        </div>
+        <!-- Postos: Painel Comercial (espelho do "KPIs Comerciais" do Supervendas).
+             Cards de Real × Meta × Atingimento por indicador (Volume, Faturamento,
+             Abastecimentos, Ticket, Margem%, Perdas%, Lucro Líquido/Litro).
+             Fontes: dados_dre_postos_adaptive/{ano}.json + metas_postos_{ano}.json. -->
+        <div class="side-subsection" id="sectionPainelComercialPostos" data-seg-only="postos">
+          <button class="side-subsection-title" data-view="painel-comercial">
+            <span>Painel Comercial</span>
           </button>
         </div>
         <!-- Sub-aba: Fluxo de Caixa -->
@@ -6631,6 +6697,55 @@
           </div>
           <div class="dre-table-card dre-ind-card" id="drePostosIndCard">
             <table class="dre-table" id="drePostosIndTable"></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAINEL COMERCIAL POSTOS — espelho enxuto do "KPIs Comerciais" do
+         Supervendas. Cards Real × Meta × Atingimento pros indicadores que
+         existem em metas_postos_{ano}.json (Volume, Margem%, Perdas,
+         Abastecimentos, Ticket) + derivados do DRE Adaptive (Faturamento,
+         Lucro Líquido por Litro). Filtros: ano + mês + posto. -->
+    <section id="view-painel-comercial" class="view">
+      <div class="cmp-shell">
+        <div class="cmp-toolbar">
+          <div class="cmp-status" id="pcStatus">Carregando Painel Comercial…</div>
+          <div class="cmp-actions">
+            <label>Ano:
+              <select id="pcAno"></select>
+            </label>
+            <label>Mês:
+              <select id="pcMes"></select>
+            </label>
+            <label>Posto:
+              <select id="pcPosto"></select>
+            </label>
+            <button type="button" class="cmp-btn" id="pcRefreshBtn" title="Recarregar">↻</button>
+          </div>
+        </div>
+        <div class="pc-shell">
+          <div class="pc-kpi-grid" id="pcKpiGrid">
+            <!-- cards inseridos por renderPainelComercial() -->
+          </div>
+          <div class="pc-rank-card">
+            <div class="pc-rank-head">
+              <h3>Ranking de Postos — Atingimento da Meta de Volume</h3>
+              <span class="pc-rank-sub" id="pcRankSub">— mês —</span>
+            </div>
+            <div class="pc-rank-wrap">
+              <table class="pc-rank-table" id="pcRankTable">
+                <thead><tr>
+                  <th>Posto</th>
+                  <th style="text-align:right;">Real (L)</th>
+                  <th style="text-align:right;">Meta (L)</th>
+                  <th style="text-align:right;">Ating</th>
+                  <th style="text-align:right;">Margem %</th>
+                  <th style="text-align:right;">Ticket R$</th>
+                </tr></thead>
+                <tbody id="pcRankBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -8649,6 +8764,7 @@ const TITLES = {
   home:             "Dashboard DRE",
   dre:              "Análise Vertical",
   "dre-postos":     "Mapa de Resultados",
+  "painel-comercial": "Painel Comercial",
   "dfc-postos":     "DFC Diário",
   "dfc-mensal":     "DFC Mensal",
   "titulos-postos": "Títulos em Aberto · Postos",
@@ -15913,6 +16029,11 @@ function renderAll() {
   // independe do DADOS (planilha). Trata antes do guard pra renderizar sempre.
   if (currentView === "dre-postos") {
     renderDREPostos();
+    if (typeof updateFilterBadge === "function") updateFilterBadge();
+    return;
+  }
+  if (currentView === "painel-comercial") {
+    renderPainelComercial();
     if (typeof updateFilterBadge === "function") updateFilterBadge();
     return;
   }
@@ -24669,6 +24790,232 @@ const _DFCP_DESP_AGRUP = {
   // Linha "Despesas" (Adaptive) = transferência do posto SM para a LP → Financiamento
   "Despesas": "Transferências entre Grupos",
 };
+// ════════════════════════════════════════════════════════════════════════════
+// PAINEL COMERCIAL POSTOS — Real × Meta × Atingimento
+//
+// Reaproveita as fontes que o Mapa de Resultados já materializou em DADOS:
+//   - DADOS.fatos.porGrupo + porAgrupamento → Faturamento, Custo, Lucro Bruto,
+//     Despesas, Lucro Líquido por posto/mês (regime caixa, Adaptive).
+//   - DADOS.fatosIndic → linhas "Volume Vendido (Litros)", "Número Total
+//     Abastecimentos", "Ticket Médio (R$)", "Variação de Estoque (Litros)"
+//     etc., já agregadas por posto/mês.
+//   - DADOS.metasPostos[codigoPosto][mes] = {volume, margem, perdas, abast, ticket}.
+//
+// Sem nova fetch: a mesma loadDadosPostos() do Mapa de Resultados já entrega
+// tudo. Sem novo ETL.
+// ════════════════════════════════════════════════════════════════════════════
+let _pcChartCache = null;
+
+function _pcFmt(v, kind) {
+  if (v == null || isNaN(v)) return "—";
+  if (kind === "pct")    return (v * 100).toFixed(1).replace(".", ",") + "%";
+  if (kind === "litros") return Math.round(v).toLocaleString("pt-BR") + " L";
+  if (kind === "qtd")    return Math.round(v).toLocaleString("pt-BR");
+  if (kind === "rl")     return "R$ " + v.toFixed(2).replace(".", ",") + "/L";
+  // brl default
+  return "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function _pcAtingClass(ating, inverso) {
+  if (ating == null) return "pc-na";
+  // inverso = quanto MENOR melhor (Perdas) → atingimento = meta/real (não real/meta)
+  const goodMin = inverso ? 0.95 : 0.95;
+  const warnMin = inverso ? 0.80 : 0.80;
+  if (ating >= goodMin) return "pc-good";
+  if (ating >= warnMin) return "pc-warn";
+  return "pc-bad";
+}
+
+function _pcFiltrosPopular() {
+  // popula ano/mês/posto reaproveitando DADOS (carregado por loadDadosPostos).
+  const anoSel = document.getElementById("pcAno");
+  const mesSel = document.getElementById("pcMes");
+  const posSel = document.getElementById("pcPosto");
+  if (!anoSel || !mesSel || !posSel) return;
+  const anos = (DADOS?.dimensoes?.anos || []);
+  const anoCur = parseInt(anoSel.value) || DADOS?._ano || new Date().getFullYear();
+  if (!anoSel.options.length) {
+    anoSel.innerHTML = anos.map(a => `<option value="${a}" ${a === anoCur ? "selected" : ""}>${a}</option>`).join("");
+  }
+  const meses = (DADOS?.dimensoes?.meses || []);
+  const mesCur = parseInt(mesSel.value) || (meses[meses.length - 1]?.num) || new Date().getMonth() + 1;
+  if (!mesSel.options.length) {
+    mesSel.innerHTML = `<option value="">Todos</option>` +
+      meses.map(m => `<option value="${m.num}" ${m.num === mesCur ? "selected" : ""}>${m.nome}</option>`).join("");
+  }
+  const lojas = (DADOS?.dimensoes?.lojas || []);
+  if (!posSel.options.length) {
+    posSel.innerHTML = `<option value="">Todos os Postos</option>` +
+      lojas.map(l => `<option value="${l}">${l}</option>`).join("");
+  }
+}
+
+function _pcAggReal(ano, mes, postoFiltro) {
+  // Soma no escopo (ano, mes opcional, posto opcional). LOJA nos fatos = p.codigo
+  // (string "001".."011"). fatosIndic tem campos próprios (não LINHA/VALORES).
+  const fa = DADOS?.fatos?.porAgrupamento || [];
+  const fg = DADOS?.fatos?.porGrupo || [];
+  const fi = DADOS?.fatosIndic || [];
+  const fil = (r) => (r.ANO === ano) && (!mes || r.MÊS === mes) && (!postoFiltro || r.LOJA === postoFiltro);
+  const sumGrupo = (g) => fg.filter(r => r.GRUPO === g).filter(fil).reduce((s, r) => s + (r.VALORES || 0), 0);
+  const sumAgrup = (a) => fa.filter(r => r.AGRUPAMENTO === a).filter(fil).reduce((s, r) => s + (r.VALORES || 0), 0);
+  const indFil = fi.filter(fil);
+  const sumIndK = (k) => indFil.reduce((s, r) => s + (r[k] || 0), 0);
+  const fat = sumGrupo("Receita") || sumGrupo("Receitas");   // Adaptive postos: "Receitas" no porGrupo
+  const lucroBruto = sumAgrup("Lucro Bruto");
+  const lucroLiq   = sumAgrup("Lucro Líquido");
+  const volume     = sumIndK("VOL");          // Volume Vendido (Litros) — combustível
+  const abast      = sumIndK("ABAST");        // Número Total de Abastecimentos
+  const vendaComb  = sumIndK("VENDACOMB");    // Total das Vendas combustível R$
+  const varEst     = sumIndK("VAREST");       // Variação de Estoque (R$)
+  const varVol     = sumIndK("VARVOL");       // Variação de Estoque (Litros)
+  const ticket     = abast ? (vendaComb / abast) : null;   // R$ médio por abastecimento
+  // Variação % do volume — convenção do user: perda negativa.
+  // Aqui usamos varVol / volume (decimal, ex.: -0.0512 = -5,12%).
+  const variacaoPct = volume ? (varVol / volume) : null;
+  return { fat, lucroBruto, lucroLiq, volume, abast, vendaComb, varEst, varVol, ticket, variacaoPct };
+}
+
+function _pcAggMeta(ano, mes, postoFiltro) {
+  // metasPostos: { "001": { "5": {volume, margem, perdas, abast, ticket} } }
+  // Sem mes → soma todos os meses; sem posto → soma todos os postos.
+  // postoFiltro = código direto (mesmo formato de LOJA nos fatos e chave em mp).
+  const mp = DADOS?.metasPostos || {};
+  const codes = Object.keys(mp);
+  const filtrarCod = postoFiltro ? codes.filter(c => c === postoFiltro) : codes;
+  let volume = 0, abast = 0, ticketSum = 0, ticketN = 0, margemSum = 0, margemN = 0, perdasSum = 0, perdasN = 0;
+  for (const cod of filtrarCod) {
+    const porMes = mp[cod] || {};
+    const mesesAlvo = mes ? [String(mes)] : Object.keys(porMes);
+    for (const m of mesesAlvo) {
+      const x = porMes[m]; if (!x) continue;
+      volume += (+x.volume || 0);
+      abast  += (+x.abast  || 0);
+      if (x.ticket  != null) { ticketSum += +x.ticket; ticketN++; }
+      if (x.margem  != null) { margemSum += +x.margem; margemN++; }
+      if (x.perdas  != null) { perdasSum += +x.perdas; perdasN++; }
+    }
+  }
+  const ticket = ticketN ? ticketSum / ticketN : null;
+  const margem = margemN ? margemSum / margemN : null;
+  const perdas = perdasN ? perdasSum / perdasN : null;
+  return { volume, abast, ticket, margem, perdas };
+}
+
+function _pcCardHtml({ lbl, val, valKind, real, realKind, meta, metaKind, ating, inverso }) {
+  const klass = _pcAtingClass(ating, inverso);
+  const pct = (ating == null || !isFinite(ating)) ? "—" : (ating * 100).toFixed(0) + "%";
+  const barW = Math.max(0, Math.min(100, (ating || 0) * 100));
+  return `<div class="pc-kpi-card ${klass}">
+    <div class="pc-kpi-lbl">${lbl}</div>
+    <div class="pc-kpi-val">${_pcFmt(val, valKind)}</div>
+    <div class="pc-kpi-meta">
+      <span>Real <b>${_pcFmt(real, realKind)}</b></span>
+      <span>Meta <b>${_pcFmt(meta, metaKind)}</b></span>
+    </div>
+    <div class="pc-kpi-bar"><span style="width:${barW}%;"></span></div>
+    <div class="pc-kpi-meta">
+      <span>Atingimento</span>
+      <span class="pc-kpi-pct">${pct}</span>
+    </div>
+  </div>`;
+}
+
+async function renderPainelComercial() {
+  const status = document.getElementById("pcStatus");
+  if (status) status.textContent = "Carregando Painel Comercial…";
+  // Garante DADOS carregados (mesma fonte do Mapa de Resultados).
+  if (typeof loadDadosPostos === "function" && (!DADOS || !DADOS.fatos)) {
+    try { await loadDadosPostos(); } catch (e) { console.warn("loadDadosPostos falhou:", e); }
+  }
+  if (!DADOS || !DADOS.fatos) {
+    if (status) status.textContent = "Sem dados de Postos disponíveis.";
+    return;
+  }
+  _pcFiltrosPopular();
+  const anoSel = document.getElementById("pcAno");
+  const mesSel = document.getElementById("pcMes");
+  const posSel = document.getElementById("pcPosto");
+  const ano  = parseInt(anoSel?.value) || (DADOS._ano || new Date().getFullYear());
+  const mes  = parseInt(mesSel?.value) || null;
+  const pos  = posSel?.value || null;
+
+  const real = _pcAggReal(ano, mes, pos);
+  const meta = _pcAggMeta(ano, mes, pos);
+
+  // Atingimentos. Pra Perdas, inverso = meta/real (queremos perda real <= meta).
+  const atingVol  = (meta.volume && real.volume) ? (real.volume / meta.volume) : null;
+  const atingAb   = (meta.abast && real.abast)   ? (real.abast / meta.abast)   : null;
+  const atingTk   = (meta.ticket && real.ticket) ? (real.ticket / meta.ticket) : null;
+  const margemReal = real.fat ? (real.lucroBruto / real.fat) : null;
+  const atingMg   = (meta.margem && margemReal != null) ? (margemReal / meta.margem) : null;
+  const perdasReal = real.variacaoPct;   // já calculado em _pcAggReal (VARVOL/VOL)
+  // Perdas: meta negativa (ex.: -0.06). Real negativo (perda) ou positivo (sobra).
+  // Atingimento: |meta| / |real| → quanto maior, melhor (perdemos menos que a meta).
+  const atingPd   = (meta.perdas && perdasReal != null && perdasReal !== 0)
+                    ? Math.abs(meta.perdas) / Math.abs(perdasReal) : null;
+  const fatMeta   = (meta.volume && meta.ticket) ? meta.volume * meta.ticket : null;
+  const atingFat  = (fatMeta && real.fat) ? (real.fat / fatMeta) : null;
+  const llPorL    = real.volume ? (real.lucroLiq / real.volume) : null;
+
+  const cards = [
+    { lbl: "Faturamento",         val: real.fat,      valKind: "brl",    real: real.fat,     realKind: "brl",    meta: fatMeta,     metaKind: "brl",    ating: atingFat },
+    { lbl: "Volume Vendido",      val: real.volume,   valKind: "litros", real: real.volume,  realKind: "litros", meta: meta.volume, metaKind: "litros", ating: atingVol },
+    { lbl: "Nº Abastecimentos",   val: real.abast,    valKind: "qtd",    real: real.abast,   realKind: "qtd",    meta: meta.abast,  metaKind: "qtd",    ating: atingAb },
+    { lbl: "Ticket Médio",        val: real.ticket,   valKind: "brl",    real: real.ticket,  realKind: "brl",    meta: meta.ticket, metaKind: "brl",    ating: atingTk },
+    { lbl: "Margem Bruta",        val: margemReal,    valKind: "pct",    real: margemReal,   realKind: "pct",    meta: meta.margem, metaKind: "pct",    ating: atingMg },
+    { lbl: "Variação de Estoque", val: perdasReal,    valKind: "pct",    real: perdasReal,   realKind: "pct",    meta: meta.perdas, metaKind: "pct",    ating: atingPd, inverso: true },
+    { lbl: "Lucro Líquido / Litro", val: llPorL,      valKind: "rl",     real: llPorL,       realKind: "rl",     meta: null,        metaKind: "rl",     ating: null },
+  ];
+  const grid = document.getElementById("pcKpiGrid");
+  if (grid) grid.innerHTML = cards.map(_pcCardHtml).join("");
+
+  // Ranking de postos por atingimento de volume (mês ou ano filtrado).
+  const lojas = (DADOS?.dimensoes?.lojas || []);
+  const rank = lojas.map(lj => {
+    const r = _pcAggReal(ano, mes, lj);
+    const m = _pcAggMeta(ano, mes, lj);
+    const ating = (m.volume && r.volume) ? (r.volume / m.volume) : null;
+    const margemL = r.fat ? (r.lucroBruto / r.fat) : null;
+    return { lj, real: r.volume, meta: m.volume, ating, margem: margemL, ticket: r.ticket };
+  }).sort((a, b) => (b.ating || 0) - (a.ating || 0));
+  const body = document.getElementById("pcRankBody");
+  if (body) {
+    body.innerHTML = rank.map(x => {
+      const klass = _pcAtingClass(x.ating);
+      const ating = (x.ating == null || !isFinite(x.ating)) ? "—" : (x.ating * 100).toFixed(0) + "%";
+      return `<tr>
+        <td>${x.lj || "—"}</td>
+        <td style="text-align:right;">${_pcFmt(x.real, "litros")}</td>
+        <td style="text-align:right;">${_pcFmt(x.meta, "litros")}</td>
+        <td style="text-align:right;" class="${klass}">${ating}</td>
+        <td style="text-align:right;">${_pcFmt(x.margem, "pct")}</td>
+        <td style="text-align:right;">${_pcFmt(x.ticket, "brl")}</td>
+      </tr>`;
+    }).join("");
+  }
+  const NM = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+              "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  const sub = document.getElementById("pcRankSub");
+  if (sub) sub.textContent = `${ano}${mes ? " · " + NM[mes] : " · Ano todo"}${pos ? " · " + pos : ""}`;
+  if (status) status.textContent = `Atualizado · fonte: Adaptive (DRE Postos) + metas_postos_${ano}.json`;
+
+  // Wire dos selects (idempotente — só uma vez)
+  for (const id of ["pcAno", "pcMes", "pcPosto"]) {
+    const el = document.getElementById(id);
+    if (el && !el._pcWired) { el._pcWired = true; el.addEventListener("change", () => renderPainelComercial()); }
+  }
+  const btn = document.getElementById("pcRefreshBtn");
+  if (btn && !btn._pcWired) {
+    btn._pcWired = true;
+    btn.addEventListener("click", async () => {
+      _BP_DATA = null; // não usado aqui mas pra consistência
+      if (typeof loadDadosPostos === "function") { try { await loadDadosPostos(true); } catch(_){} }
+      renderPainelComercial();
+    });
+  }
+}
+
 function _dfcpAgrupOf(conta) {
   if (conta == null) return "Gerais";
   return _DFCP_DESP_AGRUP[conta] || _DFCP_DESP_AGRUP[String(conta).trim().toUpperCase()] || "Gerais";
