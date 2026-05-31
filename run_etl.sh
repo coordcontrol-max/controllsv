@@ -267,6 +267,23 @@ find logs -name "etl-*.log" -mtime +30 -delete 2>/dev/null || true
     fi
   fi
 
+  echo "----- [5e/7] gera_pagamento_autorizado.py (Conciliação POSTOS+OUTRAS: AUTORIZADO DIRETORIA + SALDO PLANILHA + obs/categorias → JSON local + comentariosDFC) -----"
+  # Lê \\10.61.1.13\cvl\CONTAS A PAGAR\PLANILHA DE CONCILIAÇÃO\AAAA\MM\DD\
+  #   CONCILIAÇÃO BANCARIA - POSTOS.xlsx / -TTR.xlsx (aba PAINEL).
+  # Popula dados_fluxo_{postos,outras}/AAAA-MM.json bancos[DD].{pagamentoAutorizado,
+  # totalBancos, diferencasPagAutorizado, porEntidade} + comentários auto no
+  # Firestore (comentariosDFC/{AAAA-MM}-{seg}.difPagAutorizado.DD).
+  # Espelha gera_extrato_supermercados.py (mesma ideia, fonte diferente).
+  if ! mountpoint -q /mnt/cvl; then
+    mkdir -p /mnt/cvl
+    mount -t drvfs '\\10.61.1.13\cvl' /mnt/cvl 2>&1 || echo "[WARN] mount /mnt/cvl falhou — pag. autorizado postos/outras pulado."
+  fi
+  if mountpoint -q /mnt/cvl; then
+    if ! python3 gera_pagamento_autorizado.py --refresh "$(date +%Y)" "$(date +%-m)"; then
+      echo "[WARN] gera_pagamento_autorizado.py falhou — bancos[DD] mantém o anterior."
+    fi
+  fi
+
   echo "----- [6/7] gera_supermercados_extras.py (taxas cartões + protege) -----"
   if ! python3 gera_supermercados_extras.py; then
     echo "[WARN] gera_supermercados_extras.py falhou."
